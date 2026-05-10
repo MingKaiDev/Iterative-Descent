@@ -1,6 +1,14 @@
 // InteractableProp.cs
 using UnityEngine;
 
+[System.Serializable]
+public class QuestionData
+{
+    public string question;
+    public string[] answers = new string[4];
+    public int correctAnswerIndex;
+}
+
 public class InteractableProp : MonoBehaviour
 {
     [Header("Interaction")]
@@ -14,9 +22,7 @@ public class InteractableProp : MonoBehaviour
     public GameObject puzzleOverlay;
 
     [Header("Puzzle Data")]
-    public string question = "What is the capital of France?";
-    public string[] answers = { "Paris", "London", "Berlin", "Madrid" };
-    public int correctAnswerIndex = 0;
+    public QuestionData[] questions = new QuestionData[5];
 
     private Outline _outline;
     private bool _playerInRange;
@@ -62,14 +68,14 @@ public class InteractableProp : MonoBehaviour
         puzzleOverlay.SetActive(true);
 
         puzzleOverlay.GetComponent<PuzzleUI>()
-            .Setup(question, answers, correctAnswerIndex, ClosePuzzle);
+            .Setup(questions, ClosePuzzle);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 0f;
     }
 
-    public void ClosePuzzle(bool answeredCorrectly)
+    public void ClosePuzzle(bool completed)
     {
         _puzzleOpen = false;
         puzzleOverlay.SetActive(false);
@@ -78,10 +84,8 @@ public class InteractableProp : MonoBehaviour
         Cursor.visible = false;
         Time.timeScale = 1f;
 
-        if (answeredCorrectly)
-        {
-            Debug.Log("Correct! Trigger your game event here.");
-        }
+        if (completed)
+            Debug.Log("All questions completed! Trigger your game event here.");
     }
 
     void OnDrawGizmosSelected()
