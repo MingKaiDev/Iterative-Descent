@@ -26,8 +26,9 @@ public class PlayerMovement : MonoBehaviour
     private float _camYaw;
     private float _camPitch = 15f;
 
-    // Animator hash — matches your "isWalking" Bool parameter
+    // Animator parameter hashes
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
+    private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
 
     void Start()
     {
@@ -50,6 +51,8 @@ public class PlayerMovement : MonoBehaviour
         ApplyGravity();
     }
 
+    // ─── Camera ────────────────────────────────────────────────────────────────
+
     void HandleCameraRotation()
     {
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
@@ -59,12 +62,13 @@ public class PlayerMovement : MonoBehaviour
         _camPitch = Mathf.Clamp(_camPitch, cameraMinY, cameraMaxY);
 
         Quaternion camRotation = Quaternion.Euler(_camPitch, _camYaw, 0f);
-        Vector3 camOffset = camRotation * new Vector3(0f, 0f, -cameraDistance);
         Vector3 focusPoint = transform.position + Vector3.up * cameraHeight;
 
-        cameraTransform.position = focusPoint + camOffset;
+        cameraTransform.position = focusPoint + camRotation * new Vector3(0f, 0f, -cameraDistance);
         cameraTransform.LookAt(focusPoint);
     }
+
+    // ─── Movement ──────────────────────────────────────────────────────────────
 
     void HandleMovement()
     {
@@ -76,26 +80,29 @@ public class PlayerMovement : MonoBehaviour
 
         bool isSprinting = Keyboard.current.leftShiftKey.isPressed;
         bool isMoving = input.magnitude >= 0.1f;
-        float currentSpeed = isSprinting ? sprintSpeed : walkSpeed;
+        bool isRunning = isMoving && isSprinting;
+        float currentSpeed = isRunning ? sprintSpeed : walkSpeed;
 
-        // Drive FSM — Idle <-> Walking
+        // Drive animator FSM: Idle → Walking → Running
         _animator.SetBool(IsWalkingHash, isMoving);
+        _animator.SetBool(IsRunningHash, isRunning);
 
-        if (isMoving)
-        {
-            Vector3 inputDir = new Vector3(input.x, 0f, input.y).normalized;
+        if (!isMoving) return;
 
-            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + _camYaw;
-            float smoothAngle = Mathf.SmoothDampAngle(
-                transform.eulerAngles.y, targetAngle,
-                ref _rotationVelocity, rotationSmoothTime);
+        Vector3 inputDir = new Vector3(input.x, 0f, input.y).normalized;
+        float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + _camYaw;
 
-            transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+        float smoothAngle = Mathf.SmoothDampAngle(
+            transform.eulerAngles.y, targetAngle,
+            ref _rotationVelocity, rotationSmoothTime);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            _controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
-        }
+        transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+
+        Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+        _controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
     }
+
+    // ─── Gravity ───────────────────────────────────────────────────────────────
 
     void ApplyGravity()
     {
