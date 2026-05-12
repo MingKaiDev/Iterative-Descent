@@ -44,7 +44,6 @@ public class InteractableProp : MonoBehaviour
         if (_puzzleOpen) return;
         Transform origin = propCenter != null ? propCenter : transform;
         float dist = Vector3.Distance(origin.position, player.position);
-        print(dist);
         _playerInRange = dist <= interactRadius;
 
         // Toggle outline and prompt based on proximity

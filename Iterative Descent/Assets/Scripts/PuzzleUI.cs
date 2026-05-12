@@ -17,6 +17,9 @@ public class PuzzleUI : MonoBehaviour
     public GameObject summaryPanel;           // Shown at the end
     public TextMeshProUGUI summaryText;       // "You got 4/5 correct!"
 
+    public static event Action OnPuzzleCompleted;               // fires every time puzzle is closed after finishing
+    public static event Action<int, int> OnPuzzleFinished;      // fires with (correctCount, totalQuestions)
+
     private QuestionData[] _questions;
     private Action<bool> _onClose;
     private int _currentIndex;
@@ -141,6 +144,9 @@ public class PuzzleUI : MonoBehaviour
                 btn.gameObject.SetActive(true);
 
             _onClose?.Invoke(_correctCount == _questions.Length);
+
+            OnPuzzleCompleted?.Invoke();
+            OnPuzzleFinished?.Invoke(_correctCount, _questions.Length);
         });
     }
 }
