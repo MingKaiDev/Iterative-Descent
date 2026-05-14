@@ -20,10 +20,6 @@ public class PuzzleEventHandler : MonoBehaviour
     void HandlePuzzleFinished(int correct, int total)
     {
         Debug.Log($"Puzzle done: {correct}/{total}");
-
-        if (correct >= 3)
-        {
-            door.Unlock();
-        }
+        door.Unlock();
     }
 }

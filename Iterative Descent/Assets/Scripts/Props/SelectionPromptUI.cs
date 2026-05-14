@@ -1,0 +1,44 @@
+﻿// SelectionPromptUI.cs
+// Attach to a Screen Space Canvas in the scene (one instance only).
+// Shows "◄ ►  Cycling X objects" hint whenever multiple interactables are in range.
+// Wire up in the Inspector: assign the hint panel + its TMP_Text label.
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+
+public class SelectionPromptUI : MonoBehaviour
+{
+    [Header("UI References")]
+    [Tooltip("A small panel that shows the arrow-key cycling hint.")]
+    public GameObject cycleHintPanel;
+
+    [Tooltip("TMP label inside the hint panel.")]
+    public TMP_Text cycleHintLabel;
+
+    // ── Static registry mirrors PlayerInteractor's _inRange ──────
+    // PlayerInteractor calls UpdateHint() each frame via singleton.
+    public static SelectionPromptUI Instance { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+        if (cycleHintPanel != null) cycleHintPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Called by PlayerInteractor every frame with current in-range list and selected index.
+    /// </summary>
+    public void UpdateHint(List<InteractableBase> inRange, int selectedIndex)
+    {
+        if (cycleHintPanel == null) return;
+
+        bool showHint = inRange.Count > 1;
+        cycleHintPanel.SetActive(showHint);
+
+        if (showHint && cycleHintLabel != null)
+        {
+            string name = inRange[selectedIndex].Handler?.InteractLabel ?? inRange[selectedIndex].gameObject.name;
+            cycleHintLabel.text = $"◄ ►  {selectedIndex + 1} / {inRange.Count}  —  {name}";
+        }
+    }
+}

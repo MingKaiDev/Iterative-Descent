@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Third Person Camera")]
     public Transform cameraTransform;
     public float cameraDistance = 1.5f;
+    public float sideDistance = 0f;
     public float cameraHeight = 1.4f;
     public float cameraSensitivity = 3f;
     public float cameraMinY = -20f;
@@ -64,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
         Quaternion camRotation = Quaternion.Euler(_camPitch, _camYaw, 0f);
         Vector3 focusPoint = transform.position + Vector3.up * cameraHeight;
 
-        cameraTransform.position = focusPoint + camRotation * new Vector3(0f, 0f, -cameraDistance);
+        cameraTransform.position = focusPoint + camRotation * new Vector3(sideDistance, 0f, -cameraDistance);
         cameraTransform.LookAt(focusPoint);
     }
 
