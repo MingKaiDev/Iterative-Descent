@@ -11,7 +11,7 @@ public class PuzzleProp : MonoBehaviour, IInteractable
     public GameObject puzzleOverlay;
 
     // IInteractable
-    public string InteractLabel => "Use Computer";
+    public string InteractLabel => "Read Note";
 
     public void Interact(GameObject interactor)
     {
