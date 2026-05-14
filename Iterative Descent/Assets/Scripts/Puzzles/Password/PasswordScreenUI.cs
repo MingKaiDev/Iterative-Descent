@@ -51,7 +51,6 @@ public class PasswordScreenUI : MonoBehaviour
             closeButton.onClick.AddListener(OnCloseClicked);
         }
 
-        // Check static flag — works even if this panel was never open before
         if (FolderPuzzleSolved)
         {
             StartCoroutine(AutoTypePassword());
@@ -88,11 +87,13 @@ public class PasswordScreenUI : MonoBehaviour
 
         if (entered == correctPassword)
         {
-            OnPC1LoggedIn?.Invoke();
             loginButton.interactable = false;
             passwordInputField.interactable = false;
             SetStatus("Login successful!", unlockedColour);
-            StartCoroutine(CloseAfterDelay(1.2f));
+
+            // Fire event — PasswordEventHandler will call ShowLinkedListPuzzle()
+            // Do NOT call _onClose here; the panel swap is handled externally
+            OnPC1LoggedIn?.Invoke();
         }
         else
         {
@@ -101,12 +102,7 @@ public class PasswordScreenUI : MonoBehaviour
         }
     }
 
-    IEnumerator CloseAfterDelay(float seconds)
-    {
-        yield return new WaitForSecondsRealtime(seconds);
-        OnCloseClicked();
-    }
-
+    // Called only by the X/close button — player manually exits without logging in
     void OnCloseClicked()
     {
         _onClose?.Invoke();

@@ -10,6 +10,9 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
     [Tooltip("Assign the PC Password Panel GameObject in the Canvas.")]
     public GameObject passwordOverlay;
 
+    [Tooltip("Assign the Linked List Puzzle Panel GameObject in the Canvas.")]
+    public GameObject linkedListOverlay;
+
     public string InteractLabel => "Use Computer";
 
     private bool _screenOpen;
@@ -17,6 +20,7 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
     void Awake()
     {
         if (passwordOverlay != null) passwordOverlay.SetActive(false);
+        if (linkedListOverlay != null) linkedListOverlay.SetActive(false);
     }
 
     public void Interact(GameObject interactor)
@@ -36,7 +40,6 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
 
         if (passwordOverlay != null)
         {
-            print("Ayy");
             passwordOverlay.SetActive(true);
             passwordOverlay.GetComponent<PasswordScreenUI>().Setup(CloseScreen);
         }
@@ -46,12 +49,28 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
         Time.timeScale = 0f;
     }
 
+    /// <summary>
+    /// Called by PasswordEventHandler after OnPC1LoggedIn fires.
+    /// Swaps the password panel out for the linked list puzzle panel.
+    /// </summary>
+    public void ShowLinkedListPuzzle()
+    {
+        if (passwordOverlay != null) passwordOverlay.SetActive(false);
+
+        if (linkedListOverlay != null)
+        {
+            linkedListOverlay.SetActive(true);
+            linkedListOverlay.GetComponent<LinkedListPuzzleUI>().InitPuzzle(CloseScreen);
+        }
+    }
+
     public void CloseScreen()
     {
         _screenOpen = false;
         PlayerInteractor.Resume();
 
         if (passwordOverlay != null) passwordOverlay.SetActive(false);
+        if (linkedListOverlay != null) linkedListOverlay.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
