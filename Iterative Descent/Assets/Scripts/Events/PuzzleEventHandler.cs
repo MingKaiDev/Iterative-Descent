@@ -3,8 +3,6 @@ using UnityEngine;
 
 public class PuzzleEventHandler : MonoBehaviour
 {
-    [SerializeField] private DoorController door;
-
     void OnEnable()
     {
         // ✅ CHANGE 3: Subscribe to events
@@ -20,6 +18,5 @@ public class PuzzleEventHandler : MonoBehaviour
     void HandlePuzzleFinished(int correct, int total)
     {
         Debug.Log($"Puzzle done: {correct}/{total}");
-        door.Unlock();
     }
 }

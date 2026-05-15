@@ -5160,7 +5160,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1159521010}
   - component: {fileID: 1159521012}
-  - component: {fileID: 1159521011}
   m_Layer: 0
   m_Name: Door_West
   m_TagString: Untagged
@@ -5185,19 +5184,6 @@ Transform:
   - {fileID: 5508589983774335669}
   m_Father: {fileID: 543450652964662619}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1159521011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1159521009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5154ff85ef7bd0a419094cfe3b3d53a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PuzzleEventHandler
-  door: {fileID: 1159521012}
 --- !u!114 &1159521012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7533,6 +7519,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1665894993}
   - component: {fileID: 1665894994}
+  - component: {fileID: 1665894996}
+  - component: {fileID: 1665894995}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -7568,6 +7556,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PasswordEventHandler
   computerScreen: {fileID: 6229006404336979350}
+--- !u!114 &1665894995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665894992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7afb91635affcfa4eba3f1e883d3fe88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LinkedListEventHandler
+  door: {fileID: 1159521012}
+--- !u!114 &1665894996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665894992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5154ff85ef7bd0a419094cfe3b3d53a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PuzzleEventHandler
 --- !u!65 &1672968723
 BoxCollider:
   m_ObjectHideFlags: 0

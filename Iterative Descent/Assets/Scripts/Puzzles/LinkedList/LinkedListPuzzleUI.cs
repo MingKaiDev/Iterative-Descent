@@ -38,6 +38,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
     private Action _onClose;
     private int[] _solution;          // Correct sorted order
     private List<NodeSlot> _slots = new();
+    private List<GameObject> _spawnedCards = new();
 
     void Awake()
     {
@@ -67,6 +68,10 @@ public class LinkedListPuzzleUI : MonoBehaviour
     private void GeneratePuzzle()
     {
         // Clear previous state
+        foreach (GameObject card in _spawnedCards)
+            if (card != null) Destroy(card);
+        _spawnedCards.Clear();
+
         foreach (Transform t in nodeContainer) Destroy(t.gameObject);
         foreach (Transform t in slotContainer) Destroy(t.gameObject);
         _slots.Clear();
@@ -83,6 +88,8 @@ public class LinkedListPuzzleUI : MonoBehaviour
         {
             GameObject card = Instantiate(nodeCardPrefab, nodeContainer);
             card.GetComponent<LinkedListNodeCard>().Init(val);
+            _spawnedCards.Add(card);
+
         }
 
         // Spawn answer slots
