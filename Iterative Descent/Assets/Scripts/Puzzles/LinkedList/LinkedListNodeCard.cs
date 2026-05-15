@@ -87,7 +87,7 @@ public class LinkedListNodeCard : MonoBehaviour,
 
         // Reparent to canvas root so HLG doesn't control position
         Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null) canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) canvas = FindFirstObjectByType<Canvas>();
         transform.SetParent(canvas.transform, true);
 
         // Snap position to match the slot's world position

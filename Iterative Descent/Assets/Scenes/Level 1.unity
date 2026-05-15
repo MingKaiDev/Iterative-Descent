@@ -2241,6 +2241,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 979139185}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 979139186}
   m_SourcePrefab: {fileID: 100100000, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
 --- !u!1 &618092805
 GameObject:
@@ -3666,6 +3669,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: decfc3f2eddd5b0458bea4125abd1a07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScript
+  gun: {fileID: 0}
+  idleLocalPosition: {x: -0.15, y: 0.37, z: 0.09}
+  idleLocalRotation: {x: 13.9, y: -113.3, z: 68.32}
+  aimLocalPosition: {x: 0.13, y: 0.27, z: -0.09}
+  aimLocalRotation: {x: 3.7, y: -160.6, z: 142.3}
+  gunTransitionSpeed: 10
 --- !u!114 &979139185
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3681,6 +3690,18 @@ MonoBehaviour:
   interactKey: 101
   prevKey: 276
   nextKey: 275
+--- !u!114 &979139186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 979139177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4dd899f34e294f4997972c5b9fc975f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
 --- !u!1 &1001753674
 GameObject:
   m_ObjectHideFlags: 0
@@ -24563,6 +24584,7 @@ GameObject:
   - component: {fileID: 6229006404336979350}
   - component: {fileID: 6229006404336979349}
   - component: {fileID: 6229006404336979348}
+  - component: {fileID: 6229006404336979352}
   m_Layer: 0
   m_Name: Prop_Monitor_Screen
   m_TagString: Untagged
@@ -38830,6 +38852,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0044000004, y: 0.00029999943, z: 0.0029999989}
   m_Center: {x: 0.005, y: 0.015799996, z: 0.013449998}
+--- !u!114 &6229006404336979352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3142923332178458294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!4 &6244944931973034889
 Transform:
   m_ObjectHideFlags: 0
