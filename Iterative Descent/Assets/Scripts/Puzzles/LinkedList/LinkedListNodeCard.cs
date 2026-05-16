@@ -80,18 +80,18 @@ public class LinkedListNodeCard : MonoBehaviour,
         }
     }
 
-    /// <summary>Called by NodeSlot.OnDrop when this card is accepted.</summary>
     public void PlaceInSlot(NodeSlot slot)
     {
         _currentSlot = slot;
 
-        // Reparent to canvas root so HLG doesn't control position
-        Canvas canvas = GetComponentInParent<Canvas>();
-        if (canvas == null) canvas = FindFirstObjectByType<Canvas>();
-        transform.SetParent(canvas.transform, true);
+        transform.SetParent(slot.transform, true);
 
-        // Snap position to match the slot's world position
-        _rect.position = slot.GetComponent<RectTransform>().position;
+        // Reset all rect transform properties to fill/center in the slot
+        _rect.anchorMin = new Vector2(0.5f, 0.5f);
+        _rect.anchorMax = new Vector2(0.5f, 0.5f);
+        _rect.pivot = new Vector2(0.5f, 0.5f);
+        _rect.anchoredPosition = Vector2.zero;
+        _rect.sizeDelta = slot.GetComponent<RectTransform>().sizeDelta; // match slot size
     }
 
     /// <summary>Called by LinkedListPuzzleUI when resetting after wrong answer.</summary>
