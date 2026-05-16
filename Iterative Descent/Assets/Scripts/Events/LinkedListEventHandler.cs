@@ -21,7 +21,7 @@ public class LinkedListEventHandler : MonoBehaviour
 
     void HandleLinkedListSolved(int attempt)
     {
-        Debug.Log("Linked list puzzle solved: unlocking door.");
+        Debug.Log($"[LinkedListEventHandler] Fired on '{gameObject.name}' (scene: {gameObject.scene.name}) — unlocking door.", gameObject);
         door.Unlock();
     }
 }

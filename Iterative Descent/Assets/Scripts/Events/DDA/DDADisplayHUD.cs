@@ -67,7 +67,7 @@ public class DDADisplayHUD : MonoBehaviour
         // ── Panel dimensions ───────────────────────────────────────────────
         int lineH = 20;
         int padV = 8;
-        int lines = 24;
+        int lines = 32;
         int height = lines * lineH + padV * 2;
 
         Rect panel = new Rect(panelX, panelY, panelWidth, height);
@@ -105,9 +105,27 @@ public class DDADisplayHUD : MonoBehaviour
 
             // ── Signal breakdown ───────────────────────────────────────────
             GUILayout.Label("  SIGNAL BREAKDOWN", _dimStyle);
-            DrawBar("  Avg Quiz Score  [55%]", dda.DbgAvgScoreSignal, Color.cyan);
-            DrawBar("  Last Quiz Speed [25%]", dda.DbgLastTimeSignal, Color.yellow);
-            DrawBar("  Pass Rate       [20%]", dda.DbgPassRateSignal, Color.green);
+            GUILayout.Label("  — Quiz —", _dimStyle);
+            if (dda.HasQuizData)
+            {
+                DrawBar("  Avg Quiz Score  [35%]", dda.DbgAvgScoreSignal, Color.cyan);
+                DrawBar("  Last Quiz Speed [15%]", dda.DbgLastTimeSignal, Color.yellow);
+                DrawBar("  Pass Rate       [10%]", dda.DbgPassRateSignal, Color.green);
+            }
+            else
+            {
+                GUILayout.Label("  No quiz data yet.", _dimStyle);
+            }
+            GUILayout.Label("  — Linked List —", _dimStyle);
+            if (dda.HasLinkedListData)
+            {
+                DrawBar("  Accuracy        [25%]", dda.DbgLLWrongSignal, new Color(0.4f, 0.8f, 1f));
+                DrawBar("  Speed           [15%]", dda.DbgLLTimeSignal, new Color(1f, 0.6f, 0.2f));
+            }
+            else
+            {
+                GUILayout.Label("  No linked list data yet.", _dimStyle);
+            }
             HorizontalRule();
         }
         else
@@ -120,14 +138,26 @@ public class DDADisplayHUD : MonoBehaviour
         GUILayout.Label("  QUIZ METRICS", _dimStyle);
         if (m != null && m.TotalQuizAttempts > 0)
         {
-            GUILayout.Label($"  Attempts       : {m.TotalQuizAttempts}   Passed: {m.TotalQuizPassed}", _labelStyle);
-            GUILayout.Label($"  Last Score     : {m.LastQuizScore:P0}   Passed: {(m.LastQuizPassed ? "YES" : "NO")}", _labelStyle);
-            GUILayout.Label($"  Last Time      : {m.LastQuizTime:F1}s", _labelStyle);
-            GUILayout.Label($"  Avg Score      : {m.AverageQuizScore:P0}", _labelStyle);
+            GUILayout.Label($"  Attempts  : {m.TotalQuizAttempts}   Passed: {m.TotalQuizPassed}", _labelStyle);
+            GUILayout.Label($"  Last Score: {m.LastQuizScore:P0}   ({(m.LastQuizPassed ? "PASS" : "FAIL")})", _labelStyle);
+            GUILayout.Label($"  Last Time : {m.LastQuizTime:F1}s   Avg Score: {m.AverageQuizScore:P0}", _labelStyle);
         }
         else
         {
             GUILayout.Label("  No quiz data yet.", _dimStyle);
+        }
+
+        // ── Live linked list metrics ───────────────────────────────────────
+        GUILayout.Label("  LINKED LIST METRICS", _dimStyle);
+        if (m != null && m.TotalLinkedListSolved > 0)
+        {
+            GUILayout.Label($"  Solved    : {m.TotalLinkedListSolved}", _labelStyle);
+            GUILayout.Label($"  Last Wrongs: {m.LastLinkedListWrongAttempts}   Avg: {m.AverageLinkedListWrongAttempts:F1}", _labelStyle);
+            GUILayout.Label($"  Last Time : {m.LastLinkedListTime:F1}s   Avg: {m.AverageLinkedListTime:F1}s", _labelStyle);
+        }
+        else
+        {
+            GUILayout.Label("  No linked list data yet.", _dimStyle);
         }
 
         GUILayout.Space(4);

@@ -62,6 +62,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
     public void InitPuzzle(Action onClose)
     {
         _onClose = onClose;
+        PlayerMetricsTracker.Instance?.NotifyLinkedListStarted();
         if (feedbackText != null) feedbackText.text = "";
         GeneratePuzzle();
     }

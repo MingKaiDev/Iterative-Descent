@@ -57,6 +57,7 @@ public class PuzzleUI : MonoBehaviour
 
     public void Setup(QuestionData[] questions, Action<bool> onClose)
     {
+        PlayerMetricsTracker.Instance?.NotifyQuizStarted();
         _questions = questions;
         _onClose = onClose;
         _currentIndex = 0;

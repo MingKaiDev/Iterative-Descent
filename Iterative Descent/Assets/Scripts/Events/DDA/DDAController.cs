@@ -1,16 +1,22 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Quiz-only Dynamic Difficulty Adjustment controller.
+/// DDA controller driven by quiz AND linked list puzzle signals.
 ///
-/// Reads PlayerMetricsTracker every <evaluationInterval> seconds.
-/// Computes a difficulty score from three quiz signals:
-///   [55%] Average quiz score across the session
-///   [25%] Last quiz completion time (fast = confident = harder)
-///   [20%] Session pass rate (consistency signal)
+/// Signal weights (Inspector-tunable):
+///   QUIZ GROUP     (default 60% combined)
+///     [35%] Average quiz score across session
+///     [15%] Last quiz completion time
+///     [10%] Session pass rate
+///   LINKED LIST GROUP  (default 40% combined)
+///     [25%] Average wrong attempts before solving  (fewer = harder)
+///     [15%] Average solve time                     (faster = harder)
 ///
-/// Output: CurrentScore [0,1] and CurrentTier [0-4] consumed by DDADisplayHUD.
-///         No side effects on gameplay yet — display only for sprint showcase.
+/// Evaluates immediately after any puzzle completes (event-driven),
+/// plus on a periodic timer as a fallback.
+///
+/// Output: CurrentScore [0,1] + CurrentTier [0-4] read by DDADisplayHUD.
+/// No gameplay side effects yet — display only for sprint showcase.
 ///
 /// PPO handoff: assign AgentScoreOverride from DirectorAgent.cs when ready.
 /// Attach to the same persistent GameManager GameObject as PlayerMetricsTracker.
@@ -20,58 +26,61 @@ public class DDAController : MonoBehaviour
     // ── Singleton ──────────────────────────────────────────────────────────
     public static DDAController Instance { get; private set; }
 
-    // ── Inspector ──────────────────────────────────────────────────────────
+    // ── Inspector: Evaluation ─────────────────────────────────────────────
     [Header("Evaluation")]
-    [Tooltip("How often (seconds) the DDA re-evaluates.")]
+    [Tooltip("Fallback re-evaluation interval in seconds.")]
     [SerializeField] private float evaluationInterval = 10f;
 
-    [Tooltip("Score smoothing — 0 = instant updates, 0.9 = very gradual.")]
+    [Tooltip("Score smoothing — 0 = instant, 0.9 = very gradual.")]
     [Range(0f, 0.95f)]
     [SerializeField] private float scoreSmoothing = 0.5f;
 
+    // ── Inspector: Quiz Weights ────────────────────────────────────────────
     [Header("Quiz Signal Weights")]
-    [Tooltip("Weight for average session quiz score. Should be largest.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float avgScoreWeight = 0.55f;
-
-    [Tooltip("Weight for how quickly the player finished their last quiz.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float lastTimeWeight = 0.25f;
-
-    [Tooltip("Weight for pass rate across all quiz attempts this session.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float passRateWeight = 0.20f;
+    [Range(0f, 1f)][SerializeField] private float avgScoreWeight = 0.35f;
+    [Range(0f, 1f)][SerializeField] private float lastTimeWeight = 0.15f;
+    [Range(0f, 1f)][SerializeField] private float passRateWeight = 0.10f;
 
     [Header("Quiz Time Thresholds (seconds)")]
-    [Tooltip("Finishing a quiz under this time is considered fast → pushes difficulty up.")]
     [SerializeField] private float fastQuizTime = 20f;
-
-    [Tooltip("Finishing a quiz over this time is considered slow → pushes difficulty down.")]
     [SerializeField] private float slowQuizTime = 90f;
 
+    // ── Inspector: Linked List Weights ────────────────────────────────────
+    [Header("Linked List Signal Weights")]
+    [Range(0f, 1f)][SerializeField] private float llWrongAttemptsWeight = 0.25f;
+    [Range(0f, 1f)][SerializeField] private float llSolveTimeWeight = 0.15f;
+
+    [Header("Linked List Thresholds")]
+    [Tooltip("Wrong attempts considered 'zero struggle'. 0 wrongs → hardest.")]
+    [SerializeField] private float llMaxWrongAttempts = 8f;
+
+    [Tooltip("Solve time considered fast (seconds). Under this → harder.")]
+    [SerializeField] private float llFastSolveTime = 20f;
+
+    [Tooltip("Solve time considered slow (seconds). Over this → easier.")]
+    [SerializeField] private float llSlowSolveTime = 120f;
+
     // ── Public State (read by DDADisplayHUD) ───────────────────────────────
-    /// <summary>Smoothed difficulty score in [0, 1]. 0 = easiest, 1 = hardest.</summary>
     public float CurrentScore { get; private set; } = 0.5f;
-
-    /// <summary>Discrete tier index [0–4].</summary>
     public int CurrentTier { get; private set; } = 2;
-
-    /// <summary>Human-readable tier labels.</summary>
-    public static readonly string[] TierNames = { "Very Easy", "Easy", "Normal", "Hard", "Very Hard" };
-
-    /// <summary>Last computed raw (unsmoothed) score. Shown in HUD for transparency.</summary>
     public float LastRawScore { get; private set; } = 0.5f;
 
-    /// <summary>Breakdown of individual signal contributions. Shown in HUD.</summary>
+    public static readonly string[] TierNames =
+        { "Very Easy", "Easy", "Normal", "Hard", "Very Hard" };
+
+    // Signal debug values exposed for HUD breakdown
     public float DbgAvgScoreSignal { get; private set; }
     public float DbgLastTimeSignal { get; private set; }
     public float DbgPassRateSignal { get; private set; }
+    public float DbgLLWrongSignal { get; private set; }
+    public float DbgLLTimeSignal { get; private set; }
+    public bool HasQuizData { get; private set; }
+    public bool HasLinkedListData { get; private set; }
 
     // ── PPO Override Hook ─────────────────────────────────────────────────
     /// <summary>
-    /// Set this from DirectorAgent.cs to hand control to the PPO agent.
-    /// Signature:  float Decide(float[] observations)  →  score in [0, 1]
-    /// Leave null to run the heuristic.
+    /// Assign from DirectorAgent.cs to replace heuristic with PPO output.
+    /// Signature: float Decide(float[] observations) → score in [0,1]
     /// </summary>
     public System.Func<float[], float> AgentScoreOverride { get; set; } = null;
 
@@ -87,28 +96,25 @@ public class DDAController : MonoBehaviour
 
     private void OnEnable()
     {
-        // Evaluate immediately whenever a quiz finishes — don't wait for the timer
         PuzzleUI.OnPuzzleFinished += OnQuizFinished;
+        LinkedListPuzzleUI.OnLinkedListSolved += OnLinkedListSolved;
     }
 
     private void OnDisable()
     {
         PuzzleUI.OnPuzzleFinished -= OnQuizFinished;
+        LinkedListPuzzleUI.OnLinkedListSolved -= OnLinkedListSolved;
     }
 
-    private void OnQuizFinished(int correct, int total)
-    {
-        // Tracker processes this event first (subscribed in its own OnEnable),
-        // so by the time we get here the metrics are already updated.
-        // Delay one frame to guarantee tracker has written its values.
-        StartCoroutine(EvaluateNextFrame());
-    }
+    // Event handlers — both delay one frame so the tracker writes first
+    private void OnQuizFinished(int correct, int total) => StartCoroutine(EvaluateNextFrame());
+    private void OnLinkedListSolved(int wrongAttempts) => StartCoroutine(EvaluateNextFrame());
 
     private System.Collections.IEnumerator EvaluateNextFrame()
     {
         yield return null;
         Evaluate();
-        _evalTimer = evaluationInterval; // reset periodic timer so it doesn't double-fire
+        _evalTimer = evaluationInterval; // prevent timer double-firing
     }
 
     private void Update()
@@ -127,18 +133,15 @@ public class DDAController : MonoBehaviour
         PlayerMetricsTracker m = PlayerMetricsTracker.Instance;
         if (m == null) return;
 
-        // No quiz data yet — hold at neutral, skip evaluation
-        if (m.TotalQuizAttempts == 0) return;
+        HasQuizData = m.TotalQuizAttempts > 0;
+        HasLinkedListData = m.TotalLinkedListSolved > 0;
 
-        float rawScore;
-        if (AgentScoreOverride != null)
-        {
-            rawScore = Mathf.Clamp01(AgentScoreOverride(m.GetObservations()));
-        }
-        else
-        {
-            rawScore = ComputeScore(m);
-        }
+        // Nothing to evaluate yet
+        if (!HasQuizData && !HasLinkedListData) return;
+
+        float rawScore = AgentScoreOverride != null
+            ? Mathf.Clamp01(AgentScoreOverride(m.GetObservations()))
+            : ComputeScore(m);
 
         LastRawScore = rawScore;
         CurrentScore = Mathf.Lerp(rawScore, CurrentScore, scoreSmoothing);
@@ -151,27 +154,54 @@ public class DDAController : MonoBehaviour
 
     private float ComputeScore(PlayerMetricsTracker m)
     {
-        // Signal 1: average quiz score across session — already [0,1]
-        float avgScoreSignal = m.AverageQuizScore;
+        float score = 0f;
+        float totalWeight = 0f;
 
-        // Signal 2: last quiz time — fast → 1.0 (harder), slow → 0.0 (easier)
-        float lastTimeSignal = 1f - Mathf.InverseLerp(fastQuizTime, slowQuizTime, m.LastQuizTime);
-        lastTimeSignal = Mathf.Clamp01(lastTimeSignal);
+        // ── Quiz signals ───────────────────────────────────────────────────
+        if (HasQuizData)
+        {
+            // Avg score: high → harder
+            DbgAvgScoreSignal = m.AverageQuizScore;
 
-        // Signal 3: session pass rate
-        float passRate = m.TotalQuizAttempts > 0
-            ? (float)m.TotalQuizPassed / m.TotalQuizAttempts
-            : 0.5f;
+            // Last quiz time: fast → 1.0 (harder), slow → 0.0 (easier)
+            DbgLastTimeSignal = Mathf.Clamp01(
+                1f - Mathf.InverseLerp(fastQuizTime, slowQuizTime, m.LastQuizTime));
 
-        // Store for HUD debug breakdown
-        DbgAvgScoreSignal = avgScoreSignal;
-        DbgLastTimeSignal = lastTimeSignal;
-        DbgPassRateSignal = passRate;
+            // Pass rate
+            DbgPassRateSignal = (float)m.TotalQuizPassed / m.TotalQuizAttempts;
 
-        return Mathf.Clamp01(
-            avgScoreWeight * avgScoreSignal +
-            lastTimeWeight * lastTimeSignal +
-            passRateWeight * passRate);
+            score += avgScoreWeight * DbgAvgScoreSignal
+                         + lastTimeWeight * DbgLastTimeSignal
+                         + passRateWeight * DbgPassRateSignal;
+            totalWeight += avgScoreWeight + lastTimeWeight + passRateWeight;
+        }
+        else
+        {
+            DbgAvgScoreSignal = DbgLastTimeSignal = DbgPassRateSignal = 0f;
+        }
+
+        // ── Linked list signals ────────────────────────────────────────────
+        if (HasLinkedListData)
+        {
+            // Fewer wrong attempts → player is better → harder (signal → 1)
+            DbgLLWrongSignal = Mathf.Clamp01(
+                1f - (m.AverageLinkedListWrongAttempts / llMaxWrongAttempts));
+
+            // Faster solve → harder (signal → 1)
+            DbgLLTimeSignal = Mathf.Clamp01(
+                1f - Mathf.InverseLerp(llFastSolveTime, llSlowSolveTime, m.AverageLinkedListTime));
+
+            score += llWrongAttemptsWeight * DbgLLWrongSignal
+                         + llSolveTimeWeight * DbgLLTimeSignal;
+            totalWeight += llWrongAttemptsWeight + llSolveTimeWeight;
+        }
+        else
+        {
+            DbgLLWrongSignal = DbgLLTimeSignal = 0f;
+        }
+
+        // Normalise by active weight so partial data doesn't artificially pull score down
+        return totalWeight > 0f ? Mathf.Clamp01(score / totalWeight) : 0.5f;
     }
 
     private static int ScoreToTier(float score)

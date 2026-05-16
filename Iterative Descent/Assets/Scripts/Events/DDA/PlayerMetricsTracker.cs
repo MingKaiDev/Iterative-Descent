@@ -61,7 +61,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     /// <summary>Running average score across all quiz attempts this session.</summary>
     public float AverageQuizScore { get; private set; }
 
-    private float _quizStartTime;
+    private float _quizStartTime;      // realtimeSinceStartup — immune to timeScale
     private bool _quizInProgress;
 
     // ── Linked List Puzzle State ───────────────────────────────────────────
@@ -95,7 +95,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     /// </summary>
     public float AverageLinkedListTime { get; private set; }
 
-    private float _linkedListStartTime;
+    private float _linkedListStartTime; // realtimeSinceStartup — immune to timeScale
     private bool _linkedListInProgress;
 
     // ── Unity Lifecycle ────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     /// </summary>
     public void NotifyQuizStarted()
     {
-        _quizStartTime = TotalSessionTime;
+        _quizStartTime = Time.realtimeSinceStartup;
         _quizInProgress = true;
         TotalQuizAttempts++;
         Debug.Log($"[Metrics] Quiz started (attempt #{TotalQuizAttempts})");
@@ -159,7 +159,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     private void HandleQuizFinished(int correct, int total)
     {
         float score = total > 0 ? (float)correct / total : 0f;
-        float timeTaken = _quizInProgress ? TotalSessionTime - _quizStartTime : 0f;
+        float timeTaken = _quizInProgress ? Time.realtimeSinceStartup - _quizStartTime : 0f;
         bool passed = correct == total;
 
         LastQuizScore = score;
@@ -185,7 +185,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     /// </summary>
     public void NotifyLinkedListStarted()
     {
-        _linkedListStartTime = TotalSessionTime;
+        _linkedListStartTime = Time.realtimeSinceStartup;
         _linkedListInProgress = true;
         Debug.Log("[Metrics] Linked list puzzle started.");
     }
@@ -199,7 +199,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     private void HandleLinkedListSolved(int wrongAttempts)
     {
         float timeTaken = _linkedListInProgress
-            ? TotalSessionTime - _linkedListStartTime
+            ? Time.realtimeSinceStartup - _linkedListStartTime
             : 0f;
 
         LastLinkedListWrongAttempts = wrongAttempts;
@@ -347,28 +347,28 @@ public class PlayerMetricsTracker : MonoBehaviour
     }
 
     // ── Debug HUD ──────────────────────────────────────────────────────────
-//    private void OnGUI()
-//    {
-//#if UNITY_EDITOR
-//        GUILayout.BeginArea(new Rect(10, 10, 310, 330));
-//        GUILayout.Label("[Metrics Debug]");
-//        GUILayout.Label($"Session Time       : {TotalSessionTime:F1}s");
-//        GUILayout.Label($"Current Room       : {CurrentRoomID ?? "None"}");
-//        GUILayout.Label($"Room Time          : {CurrentRoomTime:F1}s");
-//        GUILayout.Label($"Avg Room Time      : {GetAverageCompletedRoomTime():F1}s");
-//        GUILayout.Label($"Rooms Visited      : {RoomsVisited}");
-//        GUILayout.Label("── Quiz ──────────────────────────────");
-//        GUILayout.Label($"Last Score         : {LastQuizScore:P0}  Passed: {LastQuizPassed}");
-//        GUILayout.Label($"Last Quiz Time     : {LastQuizTime:F1}s");
-//        GUILayout.Label($"Avg Score          : {AverageQuizScore:P0}");
-//        GUILayout.Label($"Attempts           : {TotalQuizAttempts}  Passed: {TotalQuizPassed}");
-//        GUILayout.Label("── Linked List ───────────────────────");
-//        GUILayout.Label($"Last Wrong Attempts: {LastLinkedListWrongAttempts}  (Total submits: {LastLinkedListTotalSubmits})");
-//        GUILayout.Label($"Last Puzzle Time   : {LastLinkedListTime:F1}s");
-//        GUILayout.Label($"Puzzles Solved     : {TotalLinkedListSolved}");
-//        GUILayout.Label($"Avg Wrong Attempts : {AverageLinkedListWrongAttempts:F1}");
-//        GUILayout.Label($"Avg Solve Time     : {AverageLinkedListTime:F1}s");
-//        GUILayout.EndArea();
-//#endif
-//    }
+    private void OnGUI()
+    {
+#if UNITY_EDITOR
+        GUILayout.BeginArea(new Rect(10, 10, 310, 330));
+        GUILayout.Label("[Metrics Debug]");
+        GUILayout.Label($"Session Time       : {TotalSessionTime:F1}s");
+        GUILayout.Label($"Current Room       : {CurrentRoomID ?? "None"}");
+        GUILayout.Label($"Room Time          : {CurrentRoomTime:F1}s");
+        GUILayout.Label($"Avg Room Time      : {GetAverageCompletedRoomTime():F1}s");
+        GUILayout.Label($"Rooms Visited      : {RoomsVisited}");
+        GUILayout.Label("── Quiz ──────────────────────────────");
+        GUILayout.Label($"Last Score         : {LastQuizScore:P0}  Passed: {LastQuizPassed}");
+        GUILayout.Label($"Last Quiz Time     : {LastQuizTime:F1}s");
+        GUILayout.Label($"Avg Score          : {AverageQuizScore:P0}");
+        GUILayout.Label($"Attempts           : {TotalQuizAttempts}  Passed: {TotalQuizPassed}");
+        GUILayout.Label("── Linked List ───────────────────────");
+        GUILayout.Label($"Last Wrong Attempts: {LastLinkedListWrongAttempts}  (Total submits: {LastLinkedListTotalSubmits})");
+        GUILayout.Label($"Last Puzzle Time   : {LastLinkedListTime:F1}s");
+        GUILayout.Label($"Puzzles Solved     : {TotalLinkedListSolved}");
+        GUILayout.Label($"Avg Wrong Attempts : {AverageLinkedListWrongAttempts:F1}");
+        GUILayout.Label($"Avg Solve Time     : {AverageLinkedListTime:F1}s");
+        GUILayout.EndArea();
+#endif
+    }
 }
