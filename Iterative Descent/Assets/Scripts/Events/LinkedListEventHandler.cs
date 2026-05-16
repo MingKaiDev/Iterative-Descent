@@ -19,7 +19,7 @@ public class LinkedListEventHandler : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
     }
 
-    void HandleLinkedListSolved()
+    void HandleLinkedListSolved(int attempt)
     {
         Debug.Log("Linked list puzzle solved: unlocking door.");
         door.Unlock();

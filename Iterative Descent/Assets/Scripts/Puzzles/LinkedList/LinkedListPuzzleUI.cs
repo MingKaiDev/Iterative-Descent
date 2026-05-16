@@ -20,7 +20,7 @@ using System.Linq;
 public class LinkedListPuzzleUI : MonoBehaviour
 {
     public static LinkedListPuzzleUI Instance { get; private set; }
-    public static event Action OnLinkedListSolved;
+    public static event Action<int> OnLinkedListSolved;
 
     [Header("Prefabs")]
     [SerializeField] private GameObject nodeCardPrefab;
@@ -39,6 +39,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
     private int[] _solution;          // Correct sorted order
     private List<NodeSlot> _slots = new();
     private List<GameObject> _spawnedCards = new();
+    private int attempts;
 
     void Awake()
     {
@@ -140,12 +141,13 @@ public class LinkedListPuzzleUI : MonoBehaviour
         if (correct)
         {
             if (feedbackText != null) feedbackText.text = "Correct! Linked list sorted.";
-            OnLinkedListSolved?.Invoke();
+            OnLinkedListSolved?.Invoke(attempts);
             Invoke(nameof(ClosePanel), 1.5f); // Brief pause before closing
         }
         else
         {
             if (feedbackText != null) feedbackText.text = "Wrong order. Try again.";
+            attempts++;
             StartCoroutine(ClearWrongAfterDelay());
         }
     }

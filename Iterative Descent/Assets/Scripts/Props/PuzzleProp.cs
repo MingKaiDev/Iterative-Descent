@@ -1,4 +1,4 @@
-// PuzzleProp.cs
+Ôªø// PuzzleProp.cs
 using UnityEngine;
 
 public class PuzzleProp : MonoBehaviour, IInteractable
@@ -40,6 +40,7 @@ public class PuzzleProp : MonoBehaviour, IInteractable
         {
             puzzleOverlay.SetActive(true);
             puzzleOverlay.GetComponent<PuzzleUI>().Setup(questions, ClosePuzzle);
+            PlayerMetricsTracker.Instance?.NotifyQuizStarted();
         }
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -49,7 +50,7 @@ public class PuzzleProp : MonoBehaviour, IInteractable
     public void ClosePuzzle(bool completed)
     {
         _puzzleOpen = false;
-        PlayerInteractor.Resume(); // Å© re-enables interactor
+        PlayerInteractor.Resume(); // re-enables interactor
 
         if (puzzleOverlay != null) puzzleOverlay.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
