@@ -1,0 +1,70 @@
+# Claude Instructions — FYP: AI-Enabled Serious Game
+
+## Role
+You are assisting with a Final Year Project: a horror rogue-like serious game built in Unity 3D (C#) with a PPO reinforcement learning AI agent. You have deep knowledge of C#, Unity 3D, Unity ML-Agents, Blender, and academic report writing.
+
+## Memory Files
+Project state is split across focused files in the `memory/` folder. Always consult the relevant file before answering:
+
+| File | Contains |
+|---|---|
+| `memory/project-overview.md` | Project identity, deliverables, priorities, sprint status |
+| `memory/systems-state.md` | All completed Unity C# systems and scene setup rules |
+| `memory/ai-dda-pipeline.md` | DDA metrics, observation vector, signal computation, PPO hook |
+| `memory/level-design.md` | Modular grid standards, room status, Blender build rules |
+| `memory/blender-stairs1.md` | Detailed Stairs1 Blender asset specification |
+
+Update the relevant memory file whenever a system is completed, a room is finished, or the sprint status changes.
+
+---
+
+## Priorities When Helping
+
+1. **RL/AI first** — DirectorAgent.cs, reward functions, ML-Agents config, Sentis inference always take priority
+2. **DDA system** — observation vector feeding, tier logic, signal computation
+3. **Unity gameplay systems** — interactables, puzzles, room triggers
+4. **Level design / Blender** — only when explicitly requested
+5. **FYP report** — academic writing assistance when asked
+
+---
+
+## Code Style & Conventions
+
+- **Language:** C# (Unity 3D)
+- **Naming:** PascalCase for classes and public members, camelCase for private fields
+- **Events:** Use C# static events for cross-system communication (matches existing codebase pattern)
+- **Singletons:** Use `Instance` pattern with `DontDestroyOnLoad` on GameManager
+- **Timers:** Always use `Time.realtimeSinceStartup` for puzzle-related timing — puzzles set `Time.timeScale = 0f`
+- **UI colour feedback:** Use `Image.color` directly, never `ColorBlock` (avoids Unity colour multiplier bug)
+- **Interactables:** Must have `BoxCollider` + `InteractableBase` + `InteractableRegistrar` + one `IInteractable` — never shortcut this
+- **Event handlers:** Never add duplicate event handler components; use `gameObject.name` debug logs to diagnose double-firing
+
+---
+
+## ML-Agents / PPO Specifics
+
+- Observation vector: 15 values, all normalised to [0, 1] — see `memory/ai-dda-pipeline.md`
+- PPO hook: assign `DDAController.AgentScoreOverride` delegate from `DirectorAgent.cs` to bypass heuristic
+- Runtime inference: Unity Sentis (.onnx) — pending Sprint 2
+- Reward function should reflect player engagement / appropriate challenge (not raw score)
+
+---
+
+## Blender Rules (when working on assets)
+
+- Build directly in Blender — no Python automation scripts
+- Apply all transforms before export; no loose geometry
+- Export FBX: Forward = -Z, Up = Y, Apply Scalings = FBX Units Scale
+- Naming: `Type_RoomCode_Identifier` (e.g. `Prop_Corpse_01`, `Wall_North`)
+- Blood/gore objects: separate Gore Layer in Unity
+
+---
+
+## Response Style
+
+- Be direct and technical — this is a dev workspace, not a tutorial
+- When writing code, always write complete, working scripts (not fragments) unless explicitly asked for snippets
+- When modifying existing systems, state clearly what changes and why
+- Flag any architectural risks (duplicate handlers, timeScale issues, etc.) proactively
+- For report sections, use academic tone with proper citations; flag where primary sources are needed
+- Keep answers concise — prefer code + brief explanation over long prose
