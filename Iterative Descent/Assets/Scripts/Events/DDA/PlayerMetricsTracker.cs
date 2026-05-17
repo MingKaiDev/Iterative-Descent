@@ -347,28 +347,28 @@ public class PlayerMetricsTracker : MonoBehaviour
     }
 
     // ── Debug HUD ──────────────────────────────────────────────────────────
-    private void OnGUI()
-    {
-#if UNITY_EDITOR
-        GUILayout.BeginArea(new Rect(10, 10, 310, 330));
-        GUILayout.Label("[Metrics Debug]");
-        GUILayout.Label($"Session Time       : {TotalSessionTime:F1}s");
-        GUILayout.Label($"Current Room       : {CurrentRoomID ?? "None"}");
-        GUILayout.Label($"Room Time          : {CurrentRoomTime:F1}s");
-        GUILayout.Label($"Avg Room Time      : {GetAverageCompletedRoomTime():F1}s");
-        GUILayout.Label($"Rooms Visited      : {RoomsVisited}");
-        GUILayout.Label("── Quiz ──────────────────────────────");
-        GUILayout.Label($"Last Score         : {LastQuizScore:P0}  Passed: {LastQuizPassed}");
-        GUILayout.Label($"Last Quiz Time     : {LastQuizTime:F1}s");
-        GUILayout.Label($"Avg Score          : {AverageQuizScore:P0}");
-        GUILayout.Label($"Attempts           : {TotalQuizAttempts}  Passed: {TotalQuizPassed}");
-        GUILayout.Label("── Linked List ───────────────────────");
-        GUILayout.Label($"Last Wrong Attempts: {LastLinkedListWrongAttempts}  (Total submits: {LastLinkedListTotalSubmits})");
-        GUILayout.Label($"Last Puzzle Time   : {LastLinkedListTime:F1}s");
-        GUILayout.Label($"Puzzles Solved     : {TotalLinkedListSolved}");
-        GUILayout.Label($"Avg Wrong Attempts : {AverageLinkedListWrongAttempts:F1}");
-        GUILayout.Label($"Avg Solve Time     : {AverageLinkedListTime:F1}s");
-        GUILayout.EndArea();
-#endif
-    }
+//    private void OnGUI()
+//    {
+//#if UNITY_EDITOR
+//        GUILayout.BeginArea(new Rect(10, 10, 310, 330));
+//        GUILayout.Label("[Metrics Debug]");
+//        GUILayout.Label($"Session Time       : {TotalSessionTime:F1}s");
+//        GUILayout.Label($"Current Room       : {CurrentRoomID ?? "None"}");
+//        GUILayout.Label($"Room Time          : {CurrentRoomTime:F1}s");
+//        GUILayout.Label($"Avg Room Time      : {GetAverageCompletedRoomTime():F1}s");
+//        GUILayout.Label($"Rooms Visited      : {RoomsVisited}");
+//        GUILayout.Label("── Quiz ──────────────────────────────");
+//        GUILayout.Label($"Last Score         : {LastQuizScore:P0}  Passed: {LastQuizPassed}");
+//        GUILayout.Label($"Last Quiz Time     : {LastQuizTime:F1}s");
+//        GUILayout.Label($"Avg Score          : {AverageQuizScore:P0}");
+//        GUILayout.Label($"Attempts           : {TotalQuizAttempts}  Passed: {TotalQuizPassed}");
+//        GUILayout.Label("── Linked List ───────────────────────");
+//        GUILayout.Label($"Last Wrong Attempts: {LastLinkedListWrongAttempts}  (Total submits: {LastLinkedListTotalSubmits})");
+//        GUILayout.Label($"Last Puzzle Time   : {LastLinkedListTime:F1}s");
+//        GUILayout.Label($"Puzzles Solved     : {TotalLinkedListSolved}");
+//        GUILayout.Label($"Avg Wrong Attempts : {AverageLinkedListWrongAttempts:F1}");
+//        GUILayout.Label($"Avg Solve Time     : {AverageLinkedListTime:F1}s");
+//        GUILayout.EndArea();
+//#endif
+//    }
 }

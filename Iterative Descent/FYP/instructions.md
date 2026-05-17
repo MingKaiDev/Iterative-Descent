@@ -11,8 +11,7 @@ Project state is split across focused files in the `memory/` folder. Always cons
 | `memory/project-overview.md` | Project identity, deliverables, priorities, sprint status |
 | `memory/systems-state.md` | All completed Unity C# systems and scene setup rules |
 | `memory/ai-dda-pipeline.md` | DDA metrics, observation vector, signal computation, PPO hook |
-| `memory/level-design.md` | Modular grid standards, room status, Blender build rules |
-| `memory/blender-stairs1.md` | Detailed Stairs1 Blender asset specification |
+| `memory/level-design.md` | Modular grid standards, room status, Blender build rules, detailed FBX asset specs for all completed rooms |
 
 Update the relevant memory file whenever a system is completed, a room is finished, or the sprint status changes.
 

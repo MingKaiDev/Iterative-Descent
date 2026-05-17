@@ -46,12 +46,57 @@ Proximity → outline (white = in range, yellow = selected) → arrow keys cycle
 
 ---
 
-## Linked List Puzzle — COMPLETE
+## Linked List Puzzle — COMPLETE (redesigned Sprint 1 close-out)
+
+**Concept:** Player reverses a linked list by physically rewiring pointer arrows via drag-and-drop. Tests actual CS knowledge (pointer manipulation), not just sorting. DDA scales node count (3–6) based on current tier.
+
+### Scripts
 
 | Script | Role |
 |---|---|
-| `LinkedListPuzzleUI.cs` | Drag-and-drop node sorting; generates 4 random unique values; player sorts ascending; tracks wrong submissions; fires `OnLinkedListSolved(int wrongAttempts)` on correct solve; auto-closes after 1.5s; calls `PlayerMetricsTracker.Instance?.NotifyLinkedListStarted()` in `InitPuzzle()` |
-| `LinkedListEventHandler.cs` | Listens to `OnLinkedListSolved`; calls `door.Unlock()`; debug log prints `gameObject.name` + scene name to catch duplicate handler bugs |
+| `LinkedListPuzzleUI.cs` | Master controller. Spawns nodes, HEAD, NULL terminal, arrows. Handles all drag callbacks. Checks solution by walking list from HEAD and comparing to reversed values. Fires `OnLinkedListSolved(int wrongAttempts)`. DDA tier → node count (0/1→3, 2→4, 3→5, 4→6). |
+| `LLNodeBlock.cs` | Fixed-position node box. Displays value, holds `NextNode` reference, exposes `HandleRect` (right-edge handle) as arrow source. |
+| `LLNextHandle.cs` | Drag-event relay (child of node or HEAD box). Delegates `OnBeginDrag/OnDrag/OnEndDrag` to `LinkedListPuzzleUI`. `isHead` flag distinguishes HEAD handle from node handles. |
+| `LLHeadPointer.cs` | HEAD pointer box. Fixed position above node row. Has its own `LLNextHandle` child. Tracks `TargetNode`. |
+| `LLNullTerminal.cs` | NULL endpoint. Fixed position to the right of all nodes. RaycastTarget ON — detected via `GetComponentInParent` in hit-test. |
+| `LLArrow.cs` | Dynamic arrow: stretches a UI Image between two RectTransforms each `LateUpdate`. Supports floating mode (drag ghost). Pivot `(0,0.5)`, anchor `(0.5,0.5)` on parent so `anchoredPosition` maps to `InverseTransformPoint` coords. |
+| `LinkedListEventHandler.cs` | Listens to `OnLinkedListSolved`; calls `door.Unlock()`; debug log prints `gameObject.name` + scene name to catch duplicate handler bugs. |
+
+### Old scripts (deprecated, safe to delete)
+- `LinkedListNodeCard.cs` — replaced by `LLNodeBlock.cs`
+- `NodeSlot.cs` — replaced by drop logic inside `LinkedListPuzzleUI`
+
+### Puzzle Flow
+1. `InitPuzzle(onClose)` called by prop → notifies metrics tracker → `GeneratePuzzle()`
+2. N unique values (1–20) generated; `_solution = values.Reversed()`
+3. Nodes laid out horizontally in `nodeContainer`, wired forward (0→1→2→…→null)
+4. HEAD placed above node 0; NULL terminal placed to the right of last node
+5. `RebuildArrows()` creates one `LLArrow` per pointer (HEAD + each node)
+6. Player drags handles to rewire; each successful drop calls `RebuildArrows()`
+7. Submit → walk list from HEAD, detect cycles, compare traversal to `_solution`
+8. Correct: fires event + closes after 1.5s. Wrong: shows traversal vs target, board NOT reset
+
+### Inspector Setup (LinkedListPuzzleUI)
+| Field | Value |
+|---|---|
+| `nodePrefab` | Node prefab (LLNodeBlock + LLNextHandle child) |
+| `headPointerPrefab` | HEAD prefab (LLHeadPointer + LLNextHandle child) |
+| `nullTerminalPrefab` | NULL prefab (LLNullTerminal + Image, RaycastTarget ON) |
+| `arrowPrefab` | Arrow prefab (LLArrow + Image, solid white) |
+| `nodeContainer` | RectTransform — **NO Layout Group; pivot must be (0.5, 0.5)** |
+| `headYOffset` | ~70–80px to place HEAD above node row |
+| `nodeSpacing` | 160px default |
+
+### Node Prefab Hierarchy
+```
+Node (root) — LLNodeBlock
+  ├── Image          (background rect, NO sprite / UI Default)
+  ├── ValueText      (TextMeshProUGUI, white text)
+  └── NextHandle     (LLNextHandle + Image Knob sprite, 20×20, anchor right-middle)
+```
+
+### Arrow Coordinate Note
+`LLArrow` uses `_panelRect.InverseTransformPoint(rectTransform.position)` for both source and target, and `LinkedListPuzzleUI.ScreenToContainer` uses `RectTransformUtility.ScreenPointToLocalPointInRectangle` — both resolve to `nodeContainer` local space and are consistent for Overlay and Camera canvases.
 
 ---
 
