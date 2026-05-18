@@ -1,7 +1,7 @@
 # Claude Instructions — FYP: AI-Enabled Serious Game
 
 ## Role
-You are assisting with a Final Year Project: a horror rogue-like serious game built in Unity 3D (C#) with a PPO reinforcement learning AI agent. You have deep knowledge of C#, Unity 3D, Unity ML-Agents, Blender, and academic report writing.
+You are assisting with a Final Year Project: a horror serious game built in Unity 3D (C#) with a two-system AI architecture. The project is not RL-only — any AI paradigm (supervised, unsupervised, probabilistic, RL, LLM) is in scope depending on fit. You have deep knowledge of C#, Unity 3D, BKT, supervised learning, Sentis, Blender, and academic report writing.
 
 ## Memory Files
 Project state is split across focused files in the `memory/` folder. Always consult the relevant file before answering:
@@ -10,7 +10,8 @@ Project state is split across focused files in the `memory/` folder. Always cons
 |---|---|
 | `memory/project-overview.md` | Project identity, deliverables, priorities, sprint status |
 | `memory/systems-state.md` | All completed Unity C# systems and scene setup rules |
-| `memory/ai-dda-pipeline.md` | DDA metrics, observation vector, signal computation, PPO hook |
+| `memory/ai-dda-pipeline.md` | DDA metrics, observation vector, signal computation, two-system AI overview |
+| `memory/bkt-concept-map.md` | Full 50-concept BKT knowledge graph with prerequisites and content targets |
 | `memory/level-design.md` | Modular grid standards, room status, Blender build rules, detailed FBX asset specs for all completed rooms |
 
 Update the relevant memory file whenever a system is completed, a room is finished, or the sprint status changes.
@@ -19,11 +20,14 @@ Update the relevant memory file whenever a system is completed, a room is finish
 
 ## Priorities When Helping
 
-1. **RL/AI first** — DirectorAgent.cs, reward functions, ML-Agents config, Sentis inference always take priority
-2. **DDA system** — observation vector feeding, tier logic, signal computation
-3. **Unity gameplay systems** — interactables, puzzles, room triggers
+1. **Puzzle AI** — BKT knowledge model, supervised DDA policy, Sentis inference for puzzle adaptation
+2. **Combat DDA** — EnemyDirector.cs, DifficultyProfile ScriptableObjects, chaser parameter tuning
+3. **Unity gameplay systems** — interactables, puzzles, room triggers, player health/combat
 4. **Level design / Blender** — only when explicitly requested
 5. **FYP report** — academic writing assistance when asked
+6. **RL Stalker enemy** — future phase only, not before DDA is complete
+
+**Enemy classification:** `EnemyChaser` = cannon fodder, DDA-tuned parameters only, no RL. Future Stalker = RL-trained intelligent threat (Alien Isolation / Mr. X style), out of scope for Sprint 2–3.
 
 ---
 
@@ -40,12 +44,13 @@ Update the relevant memory file whenever a system is completed, a room is finish
 
 ---
 
-## ML-Agents / PPO Specifics
+## AI / ML Specifics
 
-- Observation vector: 15 values, all normalised to [0, 1] — see `memory/ai-dda-pipeline.md`
-- PPO hook: assign `DDAController.AgentScoreOverride` delegate from `DirectorAgent.cs` to bypass heuristic
-- Runtime inference: Unity Sentis (.onnx) — pending Sprint 2
-- Reward function should reflect player engagement / appropriate challenge (not raw score)
+- **Puzzle AI**: BKT model per CS concept + supervised DDA policy. Observation vector: 15 values (revision planned — see `memory/ai-dda-pipeline.md`). Deploy via Sentis (.onnx).
+- **Combat DDA**: Heuristic `DDAController` tier → `EnemyDirector` → `EnemyChaser` parameters. No ML model needed here yet.
+- **Sentis hook**: `DDAController.AgentScoreOverride` delegate bypasses heuristic when a trained policy is ready. Assign from the Sentis inference wrapper.
+- **Future RL Stalker**: Separate trained policy, separate Sentis `Worker`. Design TBD when that phase begins.
+- Reward / objective for Puzzle AI: hybrid flow (Csikszentmihalyi) + learning gain (BKT delta). See `memory/ai-dda-pipeline.md`.
 
 ---
 

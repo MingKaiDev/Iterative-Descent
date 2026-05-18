@@ -1,7 +1,13 @@
 # AI & DDA Pipeline
 
 ## Overview
-The Dynamic Difficulty Adjustment (DDA) system feeds a 15-value normalised observation vector to a PPO reinforcement learning agent (DirectorAgent). In Sprint 1, the system runs in **heuristic mode** (display only, no gameplay effect). The PPO agent is the Sprint 2 priority.
+The project uses two decoupled AI systems. The existing `DDAController` + `PlayerMetricsTracker` infrastructure is shared foundation, but each system adapts a different game domain.
+
+**System 1 — Puzzle AI (educational layer):** BKT (Bayesian Knowledge Tracing) models player CS knowledge state per concept. A supervised DDA policy (trained offline, deployed via Sentis) takes BKT state + performance metrics and outputs puzzle parameters. This is the Sprint 2–3 priority.
+
+**System 2 — Combat AI (engagement layer):** Heuristic DDA for the basic chaser enemy (`EnemyChaser`) now. An RL-trained Stalker enemy (Alien Isolation / Mr. X style) in a future phase. The two systems are decoupled; puzzle performance does not directly drive combat difficulty.
+
+The `DDAController` heuristic currently runs in **display-only mode**. The `AgentScoreOverride` delegate hook remains in place for when the supervised Puzzle DDA policy is ready.
 
 ---
 
@@ -80,10 +86,10 @@ Puzzles set `Time.timeScale = 0f`, which freezes all `deltaTime`-based clocks. `
 
 ---
 
-## PPO Hook (AgentScoreOverride)
+## AgentScoreOverride Hook
 
-`DDAController` exposes a delegate property `AgentScoreOverride`. When `DirectorAgent.cs` is ready:
-1. Assign the delegate in `DirectorAgent.cs`
+`DDAController` exposes a delegate property `AgentScoreOverride` (`Func<float[], float>`). When the supervised Puzzle DDA policy is ready:
+1. Assign the delegate from the Sentis inference wrapper
 2. The heuristic computation is bypassed entirely
 3. No other changes needed anywhere else
 
@@ -96,12 +102,28 @@ Puzzles set `Time.timeScale = 0f`, which freezes all `deltaTime`-based clocks. `
 
 ---
 
-## Sprint 2 — AI Pending Items
+## Sprint 2–3 — AI Pending Items
 
 | Item | Description |
 |---|---|
-| `DirectorAgent.cs` | PPO agent consuming the 15-value observation vector |
-| Reward function | Design, action space definition, training configuration |
-| `EnemyDirector.cs` | Reads `CurrentTier` to drive enemy spawn rate / speed |
-| `DifficultyProfile` | ScriptableObjects for per-tier configuration |
-| Sentis inference | Load trained .onnx model at runtime via Unity Sentis |
+| BKT model | `BKTModel.cs` — per-concept knowledge state, updates on puzzle events |
+| Concept tagging | MCQ questions and linked list puzzles tagged with CS concept IDs |
+| Supervised DDA policy | Python training → .onnx export → Sentis inference wrapper |
+| `EnemyDirector.cs` | Reads `DDAController.CurrentTier` → applies to `EnemyChaser` speed / spawn delay |
+| `DifficultyProfile` | ScriptableObjects for per-tier parameter presets |
+
+---
+
+## Observation Vector — Revision Needed
+
+The current 15-value vector (indices 0–4 = room timing) has weak signal for a trained model. Planned revision before Sentis deployment:
+
+| Index | Replace with |
+|---|---|
+| 0 | Player health (normalised) |
+| 1 | Recent quiz delta (last score − previous score) |
+| 2 | Puzzle retry count this session |
+| 3 | Enemy encounters without death (normalised) |
+| 4 | Time since last puzzle (normalised 0–300s) |
+
+Indices 5–14 (quiz + linked list metrics) remain unchanged — they carry strong signal.

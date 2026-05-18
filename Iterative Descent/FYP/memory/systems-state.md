@@ -100,6 +100,85 @@ Node (root) — LLNodeBlock
 
 ---
 
+---
+
+## Enemy System — COMPLETE (Sprint 2 partial)
+
+### Architecture
+Interface-driven for future enemy types. Two interfaces + abstract base + two behaviour components + one event bridge.
+
+| Script | Location | Role |
+|---|---|---|
+| `IEnemy.cs` | `Scripts/Enemy/` | Interface: `Activate(Transform)`, `Deactivate()`, `Die()`, `IsDead` |
+| `EnemyBase.cs` | `Scripts/Enemy/` | Abstract MonoBehaviour implementing `IEnemy` + `IDamageable`. Owns health, death, NavMeshAgent ref, Animator ref. Sets `applyRootMotion = false` on Awake to prevent walk-on-spot conflict with NavMeshAgent. Guards all `isStopped` calls with `isOnNavMesh`. |
+| `EnemyChaser.cs` | `Scripts/Enemy/` | Concrete enemy. State machine: Idle → Chasing → Attacking → Dead. Throttles `SetDestination` every 0.2s. Calls `StopAgent()` (isStopped + ResetPath) on enter attack, `ResumeChase()` on exit. |
+| `EnemyAttack.cs` | `Scripts/Enemy/` | Periodic melee. Coroutine drives `_isAttacking` reset — animation events are optional. `hitboxDelay` + `hitboxActiveWindow` control fist collider open window. Trigger: `"Attack"`. |
+| `FistHitboxRelay.cs` | `Scripts/Enemy/` | Attach to fist bone child. Relays `OnTriggerEnter` → `EnemyAttack.OnFistHit()`. Required because Unity's trigger callbacks only fire on the Collider's own GameObject. |
+| `EnemyEventBridge.cs` | `Scripts/Events/` | Listens to `LinkedListPuzzleUI.OnLinkedListSolved`. Waits `activationDelay` seconds (match to door anim duration + suspense), then calls `enemy.Activate(playerTransform)`. |
+
+### Adding a new enemy type
+1. Create `class MyEnemy : EnemyBase`
+2. Override `OnActivate`, `OnDeactivate`, `OnDie`, `OnHit`
+3. Write your own Update / movement logic
+4. `EnemyEventBridge`, `IDamageable`, `TakeDamage` all work unchanged
+
+### Fist Hitbox Hierarchy
+```
+EnemyRoot  (EnemyChaser + EnemyAttack + NavMeshAgent)
+└── CharacterRig  (Animator — applyRootMotion = false)
+    └── ... → Hand_R bone
+        └── FistHitbox  (BoxCollider IsTrigger=true + FistHitboxRelay)
+                            ↑ assign to EnemyAttack.fistHitbox in Inspector
+```
+
+### Animator Parameters Required
+| Name | Type | Driven by |
+|---|---|---|
+| `Speed` | Float | EnemyChaser — agent velocity magnitude |
+| `Attack` | Trigger | EnemyAttack.TryAttack() |
+| `IsDead` | Bool | EnemyChaser.OnDie() |
+
+### Animator Transition Rules
+- `Damaged Walking → zombie attack`: Has Exit Time OFF, Condition: Attack trigger
+- `zombie attack → Damaged Walking`: Has Exit Time ON at 1.0 (full clip), no conditions
+- **Do NOT exit zombie attack before the clip ends** — early exit caused `_isAttacking` to lock up (fixed by coroutine, but still bad practice)
+
+### NavMesh Setup
+- Package: `com.unity.ai.navigation` — already installed
+- Place `NavMeshSurface` on a **scene-root empty GameObject** (`NavMesh_Manager`), NOT on any rotated floor/wall object
+- Use Geometry: **Physics Colliders** (more robust for Blender FBX imports with flipped normals)
+- Collect Objects: All Game Objects, Include Layers: Environment
+- Root cause of "bakes on walls not floor": Blender FBX floor had Rotation X: -89.98 — NavMesh evaluated geometry in warped local space. Fix: Apply All Transforms in Blender before FBX export, OR keep NavMeshSurface on scene root
+
+### Key Behavioural Notes
+- `applyRootMotion = false` is **mandatory** — root motion + NavMeshAgent both drive world position and cancel each other out (walk-on-spot bug)
+- Always guard `_agent.isStopped` and `_agent.SetDestination` with `_agent.isOnNavMesh` — throws errors otherwise
+- Use `_agent.ResetPath()` when stopping to attack — `isStopped = true` alone leaves cached path intact and causes drift
+- `attackRange` inspector field controls stop distance. Default 2f is too small for most humanoid models — use 2.5f or higher
+- `stoppingDistance = Mathf.Max(0f, attackRange - 0.1f)` — stops agent at attack range edge, not inside it
+
+### Enemy Trigger Flow
+```
+LinkedList puzzle solved
+  ├── LinkedListEventHandler → door.Unlock()
+  └── EnemyEventBridge → wait activationDelay → enemy.Activate(player)
+        → State: Chasing → SetDestination every 0.2s
+        → dist ≤ attackRange → StopAgent() → State: Attacking
+        → EnemyAttack.TryAttack() → coroutine → SetTrigger("Attack")
+        → hitboxDelay → fist collider enabled → FistHitboxRelay.OnTriggerEnter
+        → EnemyAttack.OnFistHit → IDamageable.TakeDamage(20, hitPoint)
+        → dist > attackRange*1.25 → ResumeChase() → State: Chasing
+```
+
+### Pending (stubs to wire up later)
+- `OnHit`: hit-stagger animation + blood VFX at hitPoint
+- `OnDie`: ragdoll / proper death anim (currently Destroy after 3s)
+- `EnemyEventBridge`: real SFX + camera shake (currently Debug.Log stub)
+- DDA integration: `EnemyChaser.chaseSpeed` driven by `DDAController.CurrentTier`
+- Player damage reception: wire `EnemyAttack.meleeDamage` into player health system
+
+---
+
 ## Stub
 
 | Script | Role |
