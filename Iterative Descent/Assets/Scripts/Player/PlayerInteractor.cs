@@ -1,14 +1,10 @@
 ﻿// PlayerInteractor.cs
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerInteractor : MonoBehaviour
 {
-    [Header("Settings")]
-    public KeyCode interactKey = KeyCode.E;
-    public KeyCode prevKey = KeyCode.LeftArrow;
-    public KeyCode nextKey = KeyCode.RightArrow;
-
     // ── Pause flag — set by PuzzleProp when UI is open ───────────
     private static bool _paused = false;
     public static void Pause() => _paused = true;
@@ -55,10 +51,10 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (_inRange.Count <= 1) return;
 
-        if (Input.GetKeyDown(nextKey))
+        if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
             _selectedIndex = (_selectedIndex + 1) % _inRange.Count;
 
-        if (Input.GetKeyDown(prevKey))
+        if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
             _selectedIndex = (_selectedIndex - 1 + _inRange.Count) % _inRange.Count;
     }
 
@@ -81,7 +77,7 @@ public class PlayerInteractor : MonoBehaviour
     void HandleInteract()
     {
         if (_inRange.Count == 0) return;
-        if (!Input.GetKeyDown(interactKey)) return;
+        if (!Keyboard.current.eKey.wasPressedThisFrame) return;
         _inRange[_selectedIndex].TryInteract(gameObject);
     }
 }

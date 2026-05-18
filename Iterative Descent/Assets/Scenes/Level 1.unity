@@ -1581,7 +1581,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Outline
   outlineMode: 0
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
-  outlineWidth: 2
+  outlineWidth: 5
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
@@ -7171,7 +7171,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1665894993}
   - component: {fileID: 1665894994}
-  - component: {fileID: 1665894996}
   - component: {fileID: 1665894995}
   - component: {fileID: 1665894997}
   - component: {fileID: 1665894999}
@@ -7225,21 +7224,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LinkedListEventHandler
   door: {fileID: 1159521012}
---- !u!114 &1665894996
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665894992}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5154ff85ef7bd0a419094cfe3b3d53a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PuzzleEventHandler
-  puzzleUIPanel: {fileID: 0}
-  puzzleUI: {fileID: 0}
-  questions: []
 --- !u!114 &1665894997
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95724,6 +95708,7 @@ GameObject:
   - component: {fileID: 6229006404336979350}
   - component: {fileID: 6229006404336979349}
   - component: {fileID: 6229006404336979348}
+  - component: {fileID: 6229006404336979352}
   m_Layer: 0
   m_Name: Prop_Monitor_Screen
   m_TagString: Untagged
@@ -176121,6 +176106,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0044000004, y: 0.00029999943, z: 0.0029999989}
   m_Center: {x: 0.005, y: 0.015799996, z: 0.013449998}
+--- !u!114 &6229006404336979352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3142923332178458294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 5
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1 &6229295102856742127
 GameObject:
   m_ObjectHideFlags: 0

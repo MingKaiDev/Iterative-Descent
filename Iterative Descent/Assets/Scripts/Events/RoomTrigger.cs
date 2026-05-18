@@ -16,25 +16,7 @@ public class RoomTrigger : MonoBehaviour
 
     [Tooltip("Tag on the Player GameObject.")]
     [SerializeField] private string playerTag = "Player";
-    //private void Start()
-    //{
-    //    // Check if player spawned inside this trigger
-    //    Collider col = GetComponent<Collider>();
-    //    Collider[] hits = Physics.OverlapBox(
-    //        col.bounds.center,
-    //        col.bounds.extents,
-    //        transform.rotation
-    //    );
 
-    //    foreach (Collider hit in hits)
-    //    {
-    //        if (hit.CompareTag(playerTag))
-    //        {
-    //            PlayerMetricsTracker.Instance.EnterRoom(roomID);
-    //            break;
-    //        }
-    //    }
-    //}
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag(playerTag)) return;
@@ -50,7 +32,7 @@ public class RoomTrigger : MonoBehaviour
         if (!other.CompareTag(playerTag)) return;
 
         // Only close if this room is still the active one
-        // (prevents stale exits when transitioning directly roomÅ®room)
+        // (prevents stale exits when transitioning directly roomÔøΩÔøΩroom)
         if (PlayerMetricsTracker.Instance != null &&
             PlayerMetricsTracker.Instance.CurrentRoomID == roomID)
         {

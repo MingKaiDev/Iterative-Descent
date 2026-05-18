@@ -39,8 +39,9 @@ public class PuzzleProp : MonoBehaviour, IInteractable
         if (puzzleOverlay != null)
         {
             puzzleOverlay.SetActive(true);
+            // NotifyQuizStarted() is called inside PuzzleUI.Setup() — don't call it
+            // here too or TotalQuizAttempts gets incremented twice per quiz.
             puzzleOverlay.GetComponent<PuzzleUI>().Setup(questions, ClosePuzzle);
-            PlayerMetricsTracker.Instance?.NotifyQuizStarted();
         }
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

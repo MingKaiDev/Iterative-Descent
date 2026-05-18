@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// In-editor and in-build DDA metrics HUD.
@@ -17,7 +18,6 @@
 public class DDADisplayHUD : MonoBehaviour
 {
     [Header("Display")]
-    [SerializeField] private KeyCode toggleKey = KeyCode.H;
     [SerializeField] private bool visibleByDefault = true;
     [SerializeField] private int panelWidth = 320;
     [SerializeField] private int panelX = 10;
@@ -49,7 +49,7 @@ public class DDADisplayHUD : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (Keyboard.current.hKey.wasPressedThisFrame)
             _visible = !_visible;
     }
 

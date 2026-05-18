@@ -297,7 +297,9 @@ public class LinkedListPuzzleUI : MonoBehaviour
         {
             SetFeedback("Correct!  List reversed successfully.", success: true);
             OnLinkedListSolved?.Invoke(_attempts);
-            Invoke(nameof(ClosePanel), 1.5f);
+            // Use WaitForSecondsRealtime — Invoke respects Time.timeScale which is
+            // 0f while the puzzle is open, so Invoke(1.5f) would never fire.
+            StartCoroutine(ClosePanelAfterDelay(1.5f));
         }
         else
         {
@@ -313,6 +315,12 @@ public class LinkedListPuzzleUI : MonoBehaviour
     }
 
     public void ClosePanel() => _onClose?.Invoke();
+
+    private System.Collections.IEnumerator ClosePanelAfterDelay(float seconds)
+    {
+        yield return new WaitForSecondsRealtime(seconds);
+        ClosePanel();
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
