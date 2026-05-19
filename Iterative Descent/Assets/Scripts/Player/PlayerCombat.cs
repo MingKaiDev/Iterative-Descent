@@ -1,49 +1,184 @@
-﻿using UnityEngine;
+using System;
+using System.Collections;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Animator))]
 public class PlayerCombat : MonoBehaviour
 {
+    // ─── Events ─────────────────────────────────────────────────────────────────
+    // Subscribe to these from HUD, audio, VFX scripts.
+    public static event Action<int, int> OnAmmoChanged;  // (currentMag, spareAmmo)
+    public static event Action           OnFired;
+    public static event Action           OnDryFire;       // trigger pulled on empty mag
+    public static event Action           OnReloadStart;
+    public static event Action           OnReloadComplete;
+
+    // ─── Inspector ──────────────────────────────────────────────────────────────
+
+    [Header("Pistol — Ammo")]
+    public int  magazineSize      = 12;
+    public int  startingSpareAmmo = 36;
+
+    [Header("Pistol — Firing")]
+    [Tooltip("Minimum seconds between shots (semi-auto feel).")]
+    public float fireInterval = 0.2f;
+    [Tooltip("Raycast range in world units.")]
+    public float range        = 80f;
+    [Tooltip("Damage per hit.")]
+    public float damage       = 25f;
+    public LayerMask shootableLayers = ~0;
+
+    [Header("Pistol — Reload")]
+    [Tooltip("Seconds the reload animation takes before ammo is refilled.")]
+    public float reloadTime = 1.8f;
+
+    [Header("Effects (optional)")]
+    [Tooltip("Assign the muzzle ParticleSystem on the gun prefab.")]
+    public ParticleSystem muzzleFlash;
+    [Tooltip("Prefab spawned at bullet hit point.")]
+    public GameObject bulletImpactPrefab;
+
+    // ─── Public Read-Only State ─────────────────────────────────────────────────
+    public bool IsAiming     => _isAiming;
+    public bool IsReloading  => _isReloading;
+    public int  CurrentMag   => _currentMag;
+    public int  SpareAmmo    => _spareAmmo;
+
+    // ─── Private ────────────────────────────────────────────────────────────────
     private Animator _animator;
-    private bool _isAiming;
+    private bool     _isAiming;
+    private bool     _isReloading;
+    private int      _currentMag;
+    private int      _spareAmmo;
+    private float    _nextFireTime;
 
     // Animator parameter hashes
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
     private static readonly int FireHash     = Animator.StringToHash("Fire");
+    private static readonly int ReloadHash   = Animator.StringToHash("Reload");
 
-    // Read by PlayerPropScript
-    public bool IsAiming => _isAiming;
+    // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
     void Awake()
     {
-        _animator = GetComponent<Animator>();
+        _animator  = GetComponent<Animator>();
+        _currentMag = magazineSize;
+        _spareAmmo  = startingSpareAmmo;
+    }
+
+    void OnEnable()
+    {
+        // Push initial ammo state to HUD on scene load.
+        BroadcastAmmo();
     }
 
     void Update()
     {
-        HandleAiming();
+        if (_isReloading) return;
+
+        HandleAimToggle();
         HandleFiring();
+        HandleReload();
     }
 
-    // ─── Aiming ─────────────────────────────────────────────────────────────
+    // ─── Aim ────────────────────────────────────────────────────────────────────
 
-    void HandleAiming()
+    void HandleAimToggle()
     {
-        _isAiming = Mouse.current.rightButton.isPressed;
+        if (!Mouse.current.rightButton.wasPressedThisFrame) return;
+
+        _isAiming = !_isAiming;
         _animator.SetBool(IsAimingHash, _isAiming);
     }
 
-    // ─── Firing ─────────────────────────────────────────────────────────────
+    // ─── Fire ───────────────────────────────────────────────────────────────────
 
     void HandleFiring()
     {
-        if (!_isAiming) return;
+        if (!_isAiming)                                   return;
+        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+        if (Time.time < _nextFireTime)                    return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        _nextFireTime = Time.time + fireInterval;
+
+        // Empty magazine
+        if (_currentMag <= 0)
         {
-            _animator.SetTrigger(FireHash);
-
-            // TODO: Add actual firing logic here (raycasts, damage, effects)
+            OnDryFire?.Invoke();
+            // TODO: play empty-click audio
+            return;
         }
+
+        // Fire
+        _currentMag--;
+        _animator.SetTrigger(FireHash);
+        if (muzzleFlash != null) muzzleFlash.Play();   // Unity null-safe (?.  doesn't work with UnityEngine.Object)
+        OnFired?.Invoke();
+        BroadcastAmmo();
+
+        // Raycast from camera centre — correct for 3rd-person crosshair aim
+        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (Physics.Raycast(ray, out RaycastHit hit, range, shootableLayers, QueryTriggerInteraction.Ignore))
+        {
+            // Damage any IDamageable on the hit object or its parents
+            IDamageable target = hit.collider.GetComponentInParent<IDamageable>();
+            target?.TakeDamage(damage, hit.point);
+
+            // Impact decal / particle
+            if (bulletImpactPrefab != null)
+                Instantiate(bulletImpactPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+        }
+    }
+
+    // ─── Reload ─────────────────────────────────────────────────────────────────
+
+    void HandleReload()
+    {
+        if (!Keyboard.current.rKey.wasPressedThisFrame) return;
+        if (_currentMag == magazineSize)                 return;   // already full
+        if (_spareAmmo <= 0)                             return;   // no ammo left
+
+        StartCoroutine(ReloadRoutine());
+    }
+
+    IEnumerator ReloadRoutine()
+    {
+        _isReloading = true;
+
+        // Stay in aim stance — Reload trigger transitions from Pistol Idle/Walk → Pistol_Reload.
+        // Do NOT set IsAiming=false here; that pushes the animator back to base Idle
+        // before the trigger fires, so it gets consumed with no effect.
+        _animator.SetTrigger(ReloadHash);
+
+        OnReloadStart?.Invoke();
+
+        yield return new WaitForSeconds(reloadTime);
+
+        // Fill magazine from spare pool
+        int needed = magazineSize - _currentMag;
+        int toLoad = Mathf.Min(needed, _spareAmmo);
+        _currentMag += toLoad;
+        _spareAmmo  -= toLoad;
+
+        BroadcastAmmo();
+        OnReloadComplete?.Invoke();
+        _isReloading = false;
+    }
+
+    // ─── Helpers ────────────────────────────────────────────────────────────────
+
+    void BroadcastAmmo()
+    {
+        OnAmmoChanged?.Invoke(_currentMag, _spareAmmo);
+    }
+
+    /// <summary>
+    /// Call from item pickup scripts to add ammo to spare pool.
+    /// </summary>
+    public void AddAmmo(int amount)
+    {
+        _spareAmmo += amount;
+        BroadcastAmmo();
     }
 }

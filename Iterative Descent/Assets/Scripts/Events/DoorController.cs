@@ -29,9 +29,12 @@ public class DoorController : MonoBehaviour
     private Vector3 _closedLocalPos;
     private Vector3 _openLocalPos;
     private Coroutine _currentAnim;
+    private BoxCollider _boxCollider;
 
     void Awake()
     {
+        _boxCollider = GetComponent<BoxCollider>();
+
         if (doorMesh == null)
         {
             Debug.LogError("DoorController: doorMesh is not assigned!");
@@ -107,5 +110,9 @@ public class DoorController : MonoBehaviour
         // Snap to final values
         doorMesh.localPosition = toPos;
         doorMesh.localRotation = toRot;
+
+        // Disable the collider once the door is fully open
+        if (isOpen && _boxCollider != null)
+            _boxCollider.enabled = false;
     }
 }

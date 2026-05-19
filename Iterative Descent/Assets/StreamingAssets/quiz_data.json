@@ -1,0 +1,54 @@
+{
+  "questions": [
+    {
+      "question": "What is a linked list?",
+      "answers": [
+        "A linear data structure where each element points to the next",
+        "A type of binary tree",
+        "A sorting algorithm",
+        "A hash table variant"
+      ],
+      "correctAnswerIndex": 0
+    },
+    {
+      "question": "What is the time complexity of binary search?",
+      "answers": [
+        "O(n)",
+        "O(log n)",
+        "O(n²)",
+        "O(1)"
+      ],
+      "correctAnswerIndex": 1
+    },
+    {
+      "question": "Which data structure uses LIFO ordering?",
+      "answers": [
+        "Queue",
+        "Heap",
+        "Stack",
+        "Graph"
+      ],
+      "correctAnswerIndex": 2
+    },
+    {
+      "question": "What does CPU stand for?",
+      "answers": [
+        "Central Processing Unit",
+        "Core Parallel Unit",
+        "Compute Power Unit",
+        "Central Program Utility"
+      ],
+      "correctAnswerIndex": 0
+    },
+    {
+      "question": "Which sorting algorithm has an average time complexity of O(n log n)?",
+      "answers": [
+        "Bubble Sort",
+        "Insertion Sort",
+        "Merge Sort",
+        "Selection Sort"
+      ],
+      "correctAnswerIndex": 2
+    }
+  ]
+}
