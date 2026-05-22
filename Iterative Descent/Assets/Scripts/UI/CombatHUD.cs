@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
@@ -29,6 +30,12 @@ public class CombatHUD : MonoBehaviour
     [Tooltip("GameObject to show only while the player is aiming. Assign a dot/crosshair image.")]
     public GameObject crosshair;
 
+    [Header("Death Screen")]
+    [Tooltip("Full-screen panel shown on player death. " +
+             "Create a Canvas child panel with a YOU DIED text and a Restart button. " +
+             "The button's OnClick should call CombatHUD.RestartScene().")]
+    public GameObject deathOverlay;
+
     // ─── Private ────────────────────────────────────────────────────────────────
     private PlayerCombat _combat;
 
@@ -38,12 +45,18 @@ public class CombatHUD : MonoBehaviour
     {
         PlayerHealth.OnHealthChanged += HandleHealthChanged;
         PlayerCombat.OnAmmoChanged   += HandleAmmoChanged;
+        PlayerHealth.OnPlayerDied    += HandlePlayerDied;
+
+        // Death overlay starts hidden.
+        if (deathOverlay != null)
+            deathOverlay.SetActive(false);
     }
 
     void OnDestroy()
     {
         PlayerHealth.OnHealthChanged -= HandleHealthChanged;
         PlayerCombat.OnAmmoChanged   -= HandleAmmoChanged;
+        PlayerHealth.OnPlayerDied    -= HandlePlayerDied;
     }
 
     void Start()
@@ -81,5 +94,23 @@ public class CombatHUD : MonoBehaviour
     {
         if (ammoText != null)
             ammoText.text = $"[ {mag} | {spare} ]";
+    }
+
+    // ─── Death ──────────────────────────────────────────────────────────────────
+
+    void HandlePlayerDied()
+    {
+        if (deathOverlay != null)
+            deathOverlay.SetActive(true);
+        // Cursor is already unlocked by PlayerMovement.HandlePlayerDied().
+    }
+
+    /// <summary>
+    /// Assign to the Restart button's OnClick event in the Inspector.
+    /// Reloads the current scene from the beginning.
+    /// </summary>
+    public void RestartScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

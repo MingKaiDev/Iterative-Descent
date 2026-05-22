@@ -25,13 +25,21 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Third-Person Camera — Aim (Over-the-Shoulder)")]
     [Tooltip("How far right the camera shifts when aiming. Positive = right shoulder.")]
-    public float aimSideDistance   = 0.55f;
+    public float aimSideDistance   = 0.85f;
     [Tooltip("How close the camera gets when aiming.")]
     public float aimCameraDistance = 1.0f;
     [Tooltip("Slight height raise when aiming for a cleaner OTS look.")]
     public float aimCameraHeight   = 1.55f;
     [Tooltip("How fast the camera lerps between default and aim positions.")]
     public float cameraTransitionSpeed = 10f;
+    [Tooltip("How far forward the camera look-target shifts when aiming. " +
+             "Creates the OTS 'looking past the shoulder' effect. Try 2-3.")]
+    public float aimLookAhead      = 2.5f;
+
+    // ─── Public Read-Only State ─────────────────────────────────────────────────
+
+    /// <summary>True while the player is sprinting. Read by PlayerCombat to block aim and reload.</summary>
+    public bool IsRunning { get; private set; }
 
     // ─── Private ────────────────────────────────────────────────────────────────
 
@@ -43,11 +51,13 @@ public class PlayerMovement : MonoBehaviour
     private float   _rotationVelocity;
     private float   _camYaw;
     private float   _camPitch = 15f;
+    private bool    _isDead;
 
     // Smoothed camera params (lerped each frame)
     private float _currentSide;
     private float _currentDist;
     private float _currentHeight;
+    private float _currentLookAhead;  // smoothed look-ahead for OTS transition
 
     // Animator parameter hashes
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
@@ -68,14 +78,24 @@ public class PlayerMovement : MonoBehaviour
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
 
-        _camYaw        = transform.eulerAngles.y;
-        _currentSide   = sideDistance;
-        _currentDist   = cameraDistance;
-        _currentHeight = cameraHeight;
+        _camYaw           = transform.eulerAngles.y;
+        _currentSide      = sideDistance;
+        _currentDist      = cameraDistance;
+        _currentHeight    = cameraHeight;
+        _currentLookAhead = 0f;
+
+        PlayerHealth.OnPlayerDied += HandlePlayerDied;
+    }
+
+    void OnDestroy()
+    {
+        PlayerHealth.OnPlayerDied -= HandlePlayerDied;
     }
 
     void Update()
     {
+        if (_isDead) return;
+
         HandleCameraRotation();
         HandleMovement();
         ApplyGravity();
@@ -105,8 +125,14 @@ public class PlayerMovement : MonoBehaviour
         Quaternion camRotation = Quaternion.Euler(_camPitch, _camYaw, 0f);
         Vector3    focusPoint  = transform.position + Vector3.up * _currentHeight;
 
+        // Smooth the look-ahead so it eases in/out when toggling aim.
+        _currentLookAhead = Mathf.Lerp(_currentLookAhead,
+                                        isAiming ? aimLookAhead : 0f,
+                                        cameraTransitionSpeed * Time.deltaTime);
+
         cameraTransform.position = focusPoint + camRotation * new Vector3(_currentSide, 0f, -_currentDist);
-        cameraTransform.LookAt(focusPoint);
+        // When aiming, look past the player toward where they're facing for a proper OTS frame.
+        cameraTransform.LookAt(focusPoint + transform.forward * _currentLookAhead);
     }
 
     // ─── Movement ───────────────────────────────────────────────────────────────
@@ -125,6 +151,13 @@ public class PlayerMovement : MonoBehaviour
         bool isMoving    = input.magnitude >= 0.1f;
         bool isRunning   = isMoving && isSprinting;
 
+        // Expose running state so PlayerCombat can gate aim and reload.
+        IsRunning = isRunning;
+
+        // If the player starts sprinting while aimed, cancel the aim stance.
+        if (IsRunning && _combat != null && _combat.IsAiming)
+            _combat.CancelAim();
+
         float currentSpeed = isAiming  ? aimWalkSpeed  :
                              isRunning ? sprintSpeed   :
                                          walkSpeed;
@@ -138,11 +171,9 @@ public class PlayerMovement : MonoBehaviour
         if (isAiming)
         {
             // ── Aim mode: character faces camera yaw, strafes relative to it ──
-            // Snap-rotate character to match camera look direction
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                Quaternion.Euler(0f, _camYaw, 0f),
-                rotationSmoothTime * Time.deltaTime * 100f);
+            // Snap directly to camera yaw -- RE4-style instant tracking so the
+            // player model always faces exactly where the crosshair is pointing.
+            transform.rotation = Quaternion.Euler(0f, _camYaw, 0f);
 
             if (isMoving)
             {
@@ -180,5 +211,21 @@ public class PlayerMovement : MonoBehaviour
 
         _velocity.y += gravity * Time.deltaTime;
         _controller.Move(_velocity * Time.deltaTime);
+    }
+
+    // ─── Death ──────────────────────────────────────────────────────────────────
+
+    void HandlePlayerDied()
+    {
+        _isDead = true;
+        IsRunning = false;
+
+        // Unlock cursor so the player can click the restart button on the death overlay.
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible   = true;
+
+        // TODO: Set animator trigger "Die" once the death animation state is set up
+        // in the Animator Controller. Example: _animator.SetTrigger("Die");
+        _animator.SetTrigger("Die");
     }
 }

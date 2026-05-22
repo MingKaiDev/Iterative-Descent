@@ -32,6 +32,9 @@ public class PlayerCombat : MonoBehaviour
     [Header("Pistol — Reload")]
     [Tooltip("Seconds the reload animation takes before ammo is refilled.")]
     public float reloadTime = 1.8f;
+    [Tooltip("Seconds after firing before a reload is allowed. " +
+             "Set this to match the length of your fire animation clip.")]
+    public float fireAnimationDuration = 0.5f;
 
     [Header("Effects (optional)")]
     [Tooltip("Assign the muzzle ParticleSystem on the gun prefab.")]
@@ -46,12 +49,15 @@ public class PlayerCombat : MonoBehaviour
     public int  SpareAmmo    => _spareAmmo;
 
     // ─── Private ────────────────────────────────────────────────────────────────
-    private Animator _animator;
-    private bool     _isAiming;
-    private bool     _isReloading;
-    private int      _currentMag;
-    private int      _spareAmmo;
-    private float    _nextFireTime;
+    private Animator        _animator;
+    private PlayerMovement  _movement;
+    private bool            _isAiming;
+    private bool            _isReloading;
+    private bool            _isDead;
+    private int             _currentMag;
+    private int             _spareAmmo;
+    private float           _nextFireTime;
+    private float           _lastFireTime = -999f;  // far in the past so first reload is never blocked
 
     // Animator parameter hashes
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
@@ -63,8 +69,20 @@ public class PlayerCombat : MonoBehaviour
     void Awake()
     {
         _animator  = GetComponent<Animator>();
+        _movement  = GetComponent<PlayerMovement>();
         _currentMag = magazineSize;
         _spareAmmo  = startingSpareAmmo;
+
+        // Exclude this GameObject's own layer from the raycast so the player
+        // can never hit their own CharacterController or child colliders.
+        shootableLayers &= ~(1 << gameObject.layer);
+
+        PlayerHealth.OnPlayerDied += HandlePlayerDied;
+    }
+
+    void OnDestroy()
+    {
+        PlayerHealth.OnPlayerDied -= HandlePlayerDied;
     }
 
     void OnEnable()
@@ -75,7 +93,7 @@ public class PlayerCombat : MonoBehaviour
 
     void Update()
     {
-        if (_isReloading) return;
+        if (_isReloading || _isDead) return;
 
         HandleAimToggle();
         HandleFiring();
@@ -86,10 +104,23 @@ public class PlayerCombat : MonoBehaviour
 
     void HandleAimToggle()
     {
+        // Can't enter aim stance while sprinting.
+        if (_movement != null && _movement.IsRunning) return;
+
         if (!Mouse.current.rightButton.wasPressedThisFrame) return;
 
         _isAiming = !_isAiming;
         _animator.SetBool(IsAimingHash, _isAiming);
+    }
+
+    /// <summary>
+    /// Force aim off — called by PlayerMovement when sprinting starts mid-aim.
+    /// </summary>
+    public void CancelAim()
+    {
+        if (!_isAiming) return;
+        _isAiming = false;
+        _animator.SetBool(IsAimingHash, false);
     }
 
     // ─── Fire ───────────────────────────────────────────────────────────────────
@@ -112,12 +143,14 @@ public class PlayerCombat : MonoBehaviour
 
         // Fire
         _currentMag--;
+        _lastFireTime = Time.time;
         _animator.SetTrigger(FireHash);
-        if (muzzleFlash != null) muzzleFlash.Play();   // Unity null-safe (?.  doesn't work with UnityEngine.Object)
+        if (muzzleFlash != null) muzzleFlash.Play();   // Unity null-safe (?. doesn't work with UnityEngine.Object)
         OnFired?.Invoke();
         BroadcastAmmo();
 
-        // Raycast from camera centre — correct for 3rd-person crosshair aim
+        // Raycast from camera centre — correct for 3rd-person crosshair aim.
+        // shootableLayers already excludes the player's own layer (set in Awake).
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out RaycastHit hit, range, shootableLayers, QueryTriggerInteraction.Ignore))
         {
@@ -135,9 +168,15 @@ public class PlayerCombat : MonoBehaviour
 
     void HandleReload()
     {
+        if (!_isAiming)                                 return;   // must be in aim stance to reload
         if (!Keyboard.current.rKey.wasPressedThisFrame) return;
-        if (_currentMag == magazineSize)                 return;   // already full
-        if (_spareAmmo <= 0)                             return;   // no ammo left
+        if (_movement != null && _movement.IsRunning)   return;   // redundant guard (can't aim while running)
+
+        // Block reload until the fire animation has finished playing.
+        if (Time.time < _lastFireTime + fireAnimationDuration) return;
+
+        if (_currentMag == magazineSize) return;   // already full
+        if (_spareAmmo <= 0)             return;   // no ammo left
 
         StartCoroutine(ReloadRoutine());
     }
@@ -164,6 +203,15 @@ public class PlayerCombat : MonoBehaviour
         BroadcastAmmo();
         OnReloadComplete?.Invoke();
         _isReloading = false;
+    }
+
+    // ─── Death ──────────────────────────────────────────────────────────────────
+
+    void HandlePlayerDied()
+    {
+        _isDead   = true;
+        _isAiming = false;
+        _animator.SetBool(IsAimingHash, false);
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────────
