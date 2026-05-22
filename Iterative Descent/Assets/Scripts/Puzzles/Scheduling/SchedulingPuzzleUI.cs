@@ -337,7 +337,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
 
     private (int[] burstTimes, int quantum) GenerateRRParameters()
     {
-        int tier        = DDAController.Instance != null ? DDAController.Instance.CurrentTier : 2;
+        int tier        = PuzzleDDAController.Instance != null ? PuzzleDDAController.Instance.CurrentTier : 2;
         const int maxSlots    = 10;
         const int maxAttempts = 30;
 

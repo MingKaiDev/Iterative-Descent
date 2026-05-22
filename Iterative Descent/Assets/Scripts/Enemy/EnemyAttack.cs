@@ -51,6 +51,7 @@ public class EnemyAttack : MonoBehaviour
 
     // ─── Private state ────────────────────────────────────────────────────────
 
+    private float   _baseMeleeDamage;  // original inspector value — never changes after Awake
     private float   _cooldownTimer;
     private bool    _isAttacking;   // true while an attack swing is in progress
     private Coroutine _attackRoutine;
@@ -64,6 +65,21 @@ public class EnemyAttack : MonoBehaviour
 
         if (fistHitbox != null)
             fistHitbox.enabled = false;
+
+        _baseMeleeDamage = meleeDamage;
+    }
+
+    // ─── DDA API ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Applies a DDA damage multiplier relative to the base inspector value.
+    /// Safe to call multiple times — always multiplies from the original base.
+    /// Called by EnemyChaser.OnActivate() via EnemyDirector.
+    /// </summary>
+    public void ApplyDamageMultiplier(float multiplier)
+    {
+        meleeDamage = _baseMeleeDamage * multiplier;
+        Debug.Log($"[EnemyAttack] Damage set to {meleeDamage:F1} (base {_baseMeleeDamage:F1} x{multiplier:F2})");
     }
 
     // ─── Public API ── called by EnemyChaser every frame in attack state ──────

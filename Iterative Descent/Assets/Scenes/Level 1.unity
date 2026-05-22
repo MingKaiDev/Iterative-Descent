@@ -45512,7 +45512,7 @@ GameObject:
   - component: {fileID: 409088630}
   - component: {fileID: 409088633}
   m_Layer: 5
-  m_Name: Puzzle Panel
+  m_Name: Quiz Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -108463,6 +108463,7 @@ MonoBehaviour:
   shootableLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  ammoCombatSoftCap: 48
   reloadTime: 1.8
   fireAnimationDuration: 0.5
   muzzleFlash: {fileID: 0}
@@ -185250,6 +185251,8 @@ GameObject:
   - component: {fileID: 1665894999}
   - component: {fileID: 1665894998}
   - component: {fileID: 1665895000}
+  - component: {fileID: 1665895003}
+  - component: {fileID: 1665895002}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -185319,6 +185322,8 @@ MonoBehaviour:
   maxLinkedListAttempts: 10
   maxSchedulingTime: 180
   maxSchedulingAttempts: 10
+  combatFastTime: 15
+  combatSlowTime: 90
 --- !u!114 &1665894998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185331,10 +185336,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7269c8a8b26ac58408c82bc378972f0b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DDADisplayHUD
-  visibleByDefault: 1
-  panelWidth: 320
-  panelX: 10
-  panelY: 10
 --- !u!114 &1665894999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185392,6 +185393,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SchedulingEventHandler
   door: {fileID: 7771705212688387609}
+--- !u!114 &1665895002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665894992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e1ac5637f8613d49ba6fa4ee99e1b1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDirector
+  tierProfiles:
+  - {fileID: 11400000, guid: 6f3b1c13bcd923943a2399015f7b08c4, type: 2}
+  - {fileID: 11400000, guid: 295ed8a2d3f656b40be5b04791159eae, type: 2}
+  - {fileID: 11400000, guid: 7f5b97912765b7f47b65ee1ad163ba1e, type: 2}
+  - {fileID: 11400000, guid: 7dba7cc001076d645bbcba97e2a293d0, type: 2}
+  - {fileID: 11400000, guid: 93c4336799cea1543b70808cfe7ada6c, type: 2}
+--- !u!114 &1665895003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665894992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b720d5fc7b88343901ba6dba182d49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatDDAController
+  scoreSmoothing: 0.5
+  accuracyWeight: 0.35
+  healthWeight: 0.3
+  timeWeight: 0.2
+  ammoWeight: 0.15
+  fastCombatTime: 15
+  slowCombatTime: 90
 --- !u!1 &1666100475
 GameObject:
   m_ObjectHideFlags: 0
@@ -410196,7 +410234,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6196603350248133252
 Transform:
   m_ObjectHideFlags: 0

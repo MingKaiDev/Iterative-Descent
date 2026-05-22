@@ -45,6 +45,8 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
             _agent.isStopped = false;
         enabled = true;
         OnActivate();
+        // Notify metrics tracker — resets per-encounter counters on first enemy of each encounter
+        PlayerMetricsTracker.Instance?.NotifyEnemyActivated();
     }
 
     public virtual void Deactivate()
@@ -64,6 +66,8 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
         _agent.enabled = false;         // prevents NavMesh errors after death
         enabled = false;
         OnDie();
+        // Notify metrics tracker — fires OnEncounterEnd when last active enemy dies
+        PlayerMetricsTracker.Instance?.NotifyEnemyKilled();
     }
 
     // ─── IDamageable ──────────────────────────────────────────────────────────

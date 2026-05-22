@@ -368,7 +368,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
 
     private int NodeCountForCurrentTier()
     {
-        int tier = DDAController.Instance != null ? DDAController.Instance.CurrentTier : 2;
+        int tier = PuzzleDDAController.Instance != null ? PuzzleDDAController.Instance.CurrentTier : 2;
         return tier switch
         {
             0 => 3,   // Very Easy

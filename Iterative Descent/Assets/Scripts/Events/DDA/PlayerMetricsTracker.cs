@@ -34,6 +34,12 @@ public class PlayerMetricsTracker : MonoBehaviour
     [SerializeField] private float maxSchedulingTime    = 180f; // 3 min per puzzle
     [SerializeField] private int   maxSchedulingAttempts = 10;  // wrong submissions before solving
 
+    [Header("Normalisation Caps (combat)")]
+    [Tooltip("Enemy encounter duration considered 'fast' — used by CombatDDAController.")]
+    [SerializeField] public float combatFastTime = 15f;
+    [Tooltip("Enemy encounter duration considered 'slow' — used by CombatDDAController.")]
+    [SerializeField] public float combatSlowTime = 90f;
+
     // ── Room State ─────────────────────────────────────────────────────────
     public float TotalSessionTime { get; private set; }
     public string CurrentRoomID { get; private set; }
@@ -121,6 +127,35 @@ public class PlayerMetricsTracker : MonoBehaviour
 
     private float _schedulingStartTime;  // realtimeSinceStartup — immune to timeScale
     private bool  _schedulingInProgress;
+
+    // ── Combat / Encounter State ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Fired when the last active enemy in an encounter dies.
+    /// CombatDDAController subscribes to this to trigger evaluation.
+    /// </summary>
+    public static event System.Action OnEncounterEnd;
+
+    /// <summary>Running count of enemies currently active in the encounter.</summary>
+    private int _activeEnemyCount;
+
+    /// <summary>realtimeSinceStartup when the first enemy of this encounter activated.</summary>
+    private float _encounterStartTime;
+
+    /// <summary>Shots fired by the player during the current encounter (resets each encounter start).</summary>
+    public int ShotsFired { get; private set; }
+
+    /// <summary>Shots that connected with an IDamageable during the current encounter.</summary>
+    public int ShotsLanded { get; private set; }
+
+    /// <summary>Elapsed seconds from first enemy activation to last enemy death in the most recent encounter.</summary>
+    public float LastEncounterDuration { get; private set; }
+
+    /// <summary>ShotsFired snapshot captured at the end of the most recent encounter.</summary>
+    public int LastEncounterShotsFired { get; private set; }
+
+    /// <summary>ShotsLanded snapshot captured at the end of the most recent encounter.</summary>
+    public int LastEncounterShotsLanded { get; private set; }
 
     // ── Unity Lifecycle ────────────────────────────────────────────────────
     private void Awake()
@@ -287,6 +322,70 @@ public class PlayerMetricsTracker : MonoBehaviour
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageLinkedListWrongAttempts:F1}");
     }
 
+    // ── Combat API ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Call when an enemy activates (starts chasing). If this is the first enemy
+    /// of a fresh encounter, resets per-encounter counters and starts the timer.
+    /// Handles multi-enemy encounters — only the transition from 0 to 1 resets counters.
+    /// Called from EnemyBase.Activate().
+    /// </summary>
+    public void NotifyEnemyActivated()
+    {
+        _activeEnemyCount++;
+        if (_activeEnemyCount == 1)
+        {
+            // First enemy of a new encounter — reset per-encounter state
+            ShotsFired = 0;
+            ShotsLanded = 0;
+            _encounterStartTime = Time.realtimeSinceStartup;
+            Debug.Log("[Metrics] Encounter started.");
+        }
+    }
+
+    /// <summary>
+    /// Call when an enemy dies. When the last active enemy is killed, snapshots
+    /// encounter metrics and fires OnEncounterEnd for CombatDDAController.
+    /// Called from EnemyBase.Die().
+    /// </summary>
+    public void NotifyEnemyKilled()
+    {
+        _activeEnemyCount = Mathf.Max(0, _activeEnemyCount - 1);
+        if (_activeEnemyCount > 0) return;
+
+        // Last enemy dead — close out the encounter
+        LastEncounterDuration    = Time.realtimeSinceStartup - _encounterStartTime;
+        LastEncounterShotsFired  = ShotsFired;
+        LastEncounterShotsLanded = ShotsLanded;
+
+        float accuracy = LastEncounterShotsFired > 0
+            ? (float)LastEncounterShotsLanded / LastEncounterShotsFired
+            : 0f;
+
+        Debug.Log($"[Metrics] Encounter ended | Duration: {LastEncounterDuration:F1}s | " +
+                  $"Accuracy: {LastEncounterShotsLanded}/{LastEncounterShotsFired} ({accuracy:P0})");
+
+        OnEncounterEnd?.Invoke();
+    }
+
+    /// <summary>
+    /// Call when the player fires a shot (not a dry fire).
+    /// Called from PlayerCombat.HandleFiring().
+    /// </summary>
+    public void NotifyShotFired()
+    {
+        ShotsFired++;
+    }
+
+    /// <summary>
+    /// Call when the player's shot connects with an IDamageable (enemy).
+    /// Called from PlayerCombat.HandleFiring() after a successful raycast hit.
+    /// </summary>
+    public void NotifyShotLanded()
+    {
+        ShotsLanded++;
+    }
+
     // ── Reset ──────────────────────────────────────────────────────────────
 
     public void ResetMetrics()
@@ -324,6 +423,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageSchedulingWrongAttempts = 0f;
         AverageSchedulingTime          = 0f;
         _schedulingInProgress          = false;
+
+        // Combat
+        ShotsFired               = 0;
+        ShotsLanded              = 0;
+        LastEncounterDuration    = 0f;
+        LastEncounterShotsFired  = 0;
+        LastEncounterShotsLanded = 0;
+        _activeEnemyCount        = 0;
 
         Debug.Log("[Metrics] All metrics reset.");
     }

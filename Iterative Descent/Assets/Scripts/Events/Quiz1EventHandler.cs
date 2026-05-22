@@ -1,15 +1,18 @@
-﻿// PuzzleEventHandler.cs
+﻿// Quiz1EventHandler.cs
+// NOTE: This file should be renamed to Quiz1EventHandler.cs in the Unity Editor
+//       (right-click in Project window -> Rename). Unity will remap the scene reference.
 using UnityEngine;
 
 /// <summary>
-/// Attach this to whatever GameObject opens your quiz panel (e.g. a computer interactable,
-/// a door, or a puzzle trigger).
+/// Event handler for the main hall Quiz 1 prop.
+/// "Quiz1" refers specifically to the MCQ questionnaire tied to the main hall computer prop.
+/// Future quiz props should have their own numbered handler (Quiz2EventHandler, etc.)
+/// to avoid naming conflicts.
 ///
-/// This replaces your original PuzzleEventHandler.
 /// PlayerMetricsTracker already subscribes to OnPuzzleFinished automatically,
 /// so you only need to call NotifyQuizStarted() when the quiz opens.
 /// </summary>
-public class PuzzleEventHandler : MonoBehaviour
+public class Quiz1EventHandler : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameObject puzzleUIPanel;  // drag your Quiz Canvas/Panel here
@@ -32,7 +35,7 @@ public class PuzzleEventHandler : MonoBehaviour
     private void OnQuizClosed(bool passed)
     {
         puzzleUIPanel.SetActive(false);
-        Debug.Log($"[PuzzleEventHandler] Quiz closed. Passed: {passed}");
+        Debug.Log($"[Quiz1EventHandler] Quiz closed. Passed: {passed}");
 
         // Add any game logic here (unlock door, play animation, etc.)
     }

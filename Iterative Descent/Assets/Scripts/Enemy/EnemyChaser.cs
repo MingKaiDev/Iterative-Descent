@@ -76,6 +76,14 @@ public class EnemyChaser : EnemyBase
     {
         _state = State.Chasing;
         // _agent.isStopped is already set to false by EnemyBase.Activate()
+
+        // Apply EnemyDirector DDA multipliers at activation time so the correct
+        // tier is always used, even if the director was not ready at Awake.
+        if (EnemyDirector.Instance != null)
+        {
+            _agent.speed = chaseSpeed * EnemyDirector.Instance.SpeedMultiplier;
+            _attack.ApplyDamageMultiplier(EnemyDirector.Instance.DamageMultiplier);
+        }
     }
 
     protected override void OnDeactivate()

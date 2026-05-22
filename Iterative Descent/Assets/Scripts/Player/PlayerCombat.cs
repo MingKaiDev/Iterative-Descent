@@ -29,6 +29,12 @@ public class PlayerCombat : MonoBehaviour
     public float damage       = 25f;
     public LayerMask shootableLayers = ~0;
 
+    [Header("Pistol — DDA")]
+    [Tooltip("Soft cap used by CombatDDAController to normalise total ammo. " +
+             "Set to the 'comfortable reserve' level determined during playtesting. " +
+             "Defaults to magazineSize + startingSpareAmmo.")]
+    public int ammoCombatSoftCap = 48;
+
     [Header("Pistol — Reload")]
     [Tooltip("Seconds the reload animation takes before ammo is refilled.")]
     public float reloadTime = 1.8f;
@@ -43,10 +49,17 @@ public class PlayerCombat : MonoBehaviour
     public GameObject bulletImpactPrefab;
 
     // ─── Public Read-Only State ─────────────────────────────────────────────────
-    public bool IsAiming     => _isAiming;
-    public bool IsReloading  => _isReloading;
-    public int  CurrentMag   => _currentMag;
-    public int  SpareAmmo    => _spareAmmo;
+    public bool  IsAiming    => _isAiming;
+    public bool  IsReloading => _isReloading;
+    public int   CurrentMag  => _currentMag;
+    public int   SpareAmmo   => _spareAmmo;
+
+    /// <summary>
+    /// Total ammo (magazine + spare) normalised against ammoCombatSoftCap.
+    /// Used by CombatDDAController as the ammo signal (higher = player has more ammo = skilled).
+    /// </summary>
+    public float TotalAmmoNormalised =>
+        Mathf.Clamp01((float)(_currentMag + _spareAmmo) / Mathf.Max(1, ammoCombatSoftCap));
 
     // ─── Private ────────────────────────────────────────────────────────────────
     private Animator        _animator;
@@ -149,14 +162,22 @@ public class PlayerCombat : MonoBehaviour
         OnFired?.Invoke();
         BroadcastAmmo();
 
+        // Track shot fired for CombatDDA accuracy signal
+        PlayerMetricsTracker.Instance?.NotifyShotFired();
+
         // Raycast from camera centre — correct for 3rd-person crosshair aim.
         // shootableLayers already excludes the player's own layer (set in Awake).
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out RaycastHit hit, range, shootableLayers, QueryTriggerInteraction.Ignore))
         {
             // Damage any IDamageable on the hit object or its parents
-            IDamageable target = hit.collider.GetComponentInParent<IDamageable>();
-            target?.TakeDamage(damage, hit.point);
+            IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
+            if (damageable != null)
+            {
+                damageable.TakeDamage(damage, hit.point);
+                // Count as a landed shot only when an enemy is actually hit
+                PlayerMetricsTracker.Instance?.NotifyShotLanded();
+            }
 
             // Impact decal / particle
             if (bulletImpactPrefab != null)
