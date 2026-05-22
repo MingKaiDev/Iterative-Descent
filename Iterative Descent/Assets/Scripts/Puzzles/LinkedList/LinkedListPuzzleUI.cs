@@ -32,7 +32,7 @@ using System.Linq;
 ///   nullTerminalPrefab  Prefab with LLNullTerminal + Image (RaycastTarget ON)
 ///   arrowPrefab         Prefab with LLArrow + Image
 ///   nodeContainer       RectTransform — NO Layout Group; pivot must be (0.5, 0.5)
-///   feedbackText        TMP for result messages
+///   feedbackPopup       PuzzleFeedbackPopup child panel (starts inactive)
 ///   instructionText     TMP for task description
 ///   submitButton        Optional — calls CheckSolution
 ///   closeButton         Calls ClosePanel
@@ -60,9 +60,9 @@ public class LinkedListPuzzleUI : MonoBehaviour
     [SerializeField] private GameObject arrowPrefab;
 
     [Header("References")]
-    [SerializeField] private RectTransform      nodeContainer;  // pivot must be (0.5, 0.5)
-    [SerializeField] private TextMeshProUGUI    feedbackText;
-    [SerializeField] private TextMeshProUGUI    instructionText;
+    [SerializeField] private RectTransform       nodeContainer;  // pivot must be (0.5, 0.5)
+    [SerializeField] private PuzzleFeedbackPopup feedbackPopup;
+    [SerializeField] private TextMeshProUGUI     instructionText;
     [SerializeField] private Button             submitButton;
     [SerializeField] private Button             closeButton;
 
@@ -108,12 +108,6 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _attempts = 0;
 
         PlayerMetricsTracker.Instance?.NotifyLinkedListStarted();
-
-        if (feedbackText)
-        {
-            feedbackText.text  = "";
-            feedbackText.color = Color.white;
-        }
 
         if (instructionText)
             instructionText.text =
@@ -264,7 +258,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
         // Guard: HEAD must point somewhere
         if (_headPointer == null || _headPointer.TargetNode == null)
         {
-            SetFeedback("HEAD must point to a node.", success: false);
+            feedbackPopup?.Show(false, "HEAD must point to a node.");
             return;
         }
 
@@ -277,11 +271,10 @@ public class LinkedListPuzzleUI : MonoBehaviour
         {
             if (visited.Contains(current))
             {
-                SetFeedback(
-                    "Cycle detected — a node's pointer loops back.\n" +
-                    "Check each arrow carefully.",
-                    success: false);
                 _attempts++;
+                feedbackPopup?.Show(false,
+                    "Cycle detected — a node's pointer loops back.\n" +
+                    "Check each arrow carefully.");
                 return;
             }
             visited.Add(current);
@@ -295,32 +288,33 @@ public class LinkedListPuzzleUI : MonoBehaviour
 
         if (correct)
         {
-            SetFeedback("Correct!  List reversed successfully.", success: true);
             OnLinkedListSolved?.Invoke(_attempts);
-            // Use WaitForSecondsRealtime — Invoke respects Time.timeScale which is
-            // 0f while the puzzle is open, so Invoke(1.5f) would never fire.
-            StartCoroutine(ClosePanelAfterDelay(1.5f));
+            // On correct: show success pop-up; puzzle closes when the player presses OK.
+            feedbackPopup?.Show(true,
+                "Correct!  List reversed successfully.",
+                onDismiss: ClosePanel);
         }
         else
         {
             _attempts++;
-            string got      = string.Join(" → ", traversed) + " → NULL";
-            string expected = string.Join(" → ", _solution)  + " → NULL";
-            SetFeedback(
-                $"Not quite. (Attempt {_attempts})\n" +
-                $"Your list:  {got}\n" +
-                $"Target:     {expected}",
-                success: false);
+
+            // Only reveal the correct order after the player has submitted wrong twice.
+            if (_attempts > 2)
+            {
+                string expected = string.Join(" → ", _solution) + " → NULL";
+                feedbackPopup?.Show(false,
+                    $"Wrong answer — keep trying!  (Attempt {_attempts})\n" +
+                    $"Target:  {expected}");
+            }
+            else
+            {
+                feedbackPopup?.Show(false,
+                    $"Wrong answer — try again!  (Attempt {_attempts})");
+            }
         }
     }
 
     public void ClosePanel() => _onClose?.Invoke();
-
-    private System.Collections.IEnumerator ClosePanelAfterDelay(float seconds)
-    {
-        yield return new WaitForSecondsRealtime(seconds);
-        ClosePanel();
-    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -397,13 +391,6 @@ public class LinkedListPuzzleUI : MonoBehaviour
             pool.RemoveAt(idx);
         }
         return result;
-    }
-
-    private void SetFeedback(string msg, bool success)
-    {
-        if (!feedbackText) return;
-        feedbackText.text  = msg;
-        feedbackText.color = success ? Color.green : new Color(1f, 0.40f, 0.40f);
     }
 
     private void ClearAll()
