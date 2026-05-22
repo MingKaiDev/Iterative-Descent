@@ -47,8 +47,8 @@ public class DDAController : MonoBehaviour
 
     // ── Inspector: Linked List Weights ────────────────────────────────────
     [Header("Linked List Signal Weights")]
-    [Range(0f, 1f)][SerializeField] private float llWrongAttemptsWeight = 0.25f;
-    [Range(0f, 1f)][SerializeField] private float llSolveTimeWeight = 0.15f;
+    [Range(0f, 1f)][SerializeField] private float llWrongAttemptsWeight = 0.20f;
+    [Range(0f, 1f)][SerializeField] private float llSolveTimeWeight     = 0.10f;
 
     [Header("Linked List Thresholds")]
     [Tooltip("Wrong attempts considered 'zero struggle'. 0 wrongs → hardest.")]
@@ -60,6 +60,21 @@ public class DDAController : MonoBehaviour
     [Tooltip("Solve time considered slow (seconds). Over this → easier.")]
     [SerializeField] private float llSlowSolveTime = 120f;
 
+    // ── Inspector: Scheduling Weights ─────────────────────────────────────
+    [Header("Scheduling Puzzle Signal Weights")]
+    [Range(0f, 1f)][SerializeField] private float schedWrongAttemptsWeight = 0.20f;
+    [Range(0f, 1f)][SerializeField] private float schedSolveTimeWeight     = 0.10f;
+
+    [Header("Scheduling Thresholds")]
+    [Tooltip("Wrong submissions considered 'zero struggle'. 0 wrongs → hardest.")]
+    [SerializeField] private float schedMaxWrongAttempts = 8f;
+
+    [Tooltip("Solve time considered fast (seconds). Under this → harder.")]
+    [SerializeField] private float schedFastSolveTime = 20f;
+
+    [Tooltip("Solve time considered slow (seconds). Over this → easier.")]
+    [SerializeField] private float schedSlowSolveTime = 120f;
+
     // ── Public State (read by DDADisplayHUD) ───────────────────────────────
     public float CurrentScore { get; private set; } = 0.5f;
     public int CurrentTier { get; private set; } = 2;
@@ -69,13 +84,16 @@ public class DDAController : MonoBehaviour
         { "Very Easy", "Easy", "Normal", "Hard", "Very Hard" };
 
     // Signal debug values exposed for HUD breakdown
-    public float DbgAvgScoreSignal { get; private set; }
-    public float DbgLastTimeSignal { get; private set; }
-    public float DbgPassRateSignal { get; private set; }
-    public float DbgLLWrongSignal { get; private set; }
-    public float DbgLLTimeSignal { get; private set; }
-    public bool HasQuizData { get; private set; }
-    public bool HasLinkedListData { get; private set; }
+    public float DbgAvgScoreSignal   { get; private set; }
+    public float DbgLastTimeSignal   { get; private set; }
+    public float DbgPassRateSignal   { get; private set; }
+    public float DbgLLWrongSignal    { get; private set; }
+    public float DbgLLTimeSignal     { get; private set; }
+    public float DbgSchedWrongSignal { get; private set; }
+    public float DbgSchedTimeSignal  { get; private set; }
+    public bool  HasQuizData         { get; private set; }
+    public bool  HasLinkedListData   { get; private set; }
+    public bool  HasSchedulingData   { get; private set; }
 
     // ── PPO Override Hook ─────────────────────────────────────────────────
     /// <summary>
@@ -96,19 +114,22 @@ public class DDAController : MonoBehaviour
 
     private void OnEnable()
     {
-        PuzzleUI.OnPuzzleFinished += OnQuizFinished;
+        PuzzleUI.OnPuzzleFinished             += OnQuizFinished;
         LinkedListPuzzleUI.OnLinkedListSolved += OnLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved += OnSchedulingSolved;
     }
 
     private void OnDisable()
     {
-        PuzzleUI.OnPuzzleFinished -= OnQuizFinished;
+        PuzzleUI.OnPuzzleFinished             -= OnQuizFinished;
         LinkedListPuzzleUI.OnLinkedListSolved -= OnLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved -= OnSchedulingSolved;
     }
 
-    // Event handlers — both delay one frame so the tracker writes first
-    private void OnQuizFinished(int correct, int total) => StartCoroutine(EvaluateNextFrame());
-    private void OnLinkedListSolved(int wrongAttempts) => StartCoroutine(EvaluateNextFrame());
+    // Event handlers — delay one frame so the tracker writes its state first
+    private void OnQuizFinished(int correct, int total)  => StartCoroutine(EvaluateNextFrame());
+    private void OnLinkedListSolved(int wrongAttempts)   => StartCoroutine(EvaluateNextFrame());
+    private void OnSchedulingSolved(int wrongAttempts)   => StartCoroutine(EvaluateNextFrame());
 
     private System.Collections.IEnumerator EvaluateNextFrame()
     {
@@ -133,11 +154,12 @@ public class DDAController : MonoBehaviour
         PlayerMetricsTracker m = PlayerMetricsTracker.Instance;
         if (m == null) return;
 
-        HasQuizData = m.TotalQuizAttempts > 0;
+        HasQuizData       = m.TotalQuizAttempts   > 0;
         HasLinkedListData = m.TotalLinkedListSolved > 0;
+        HasSchedulingData = m.TotalSchedulingSolved > 0;
 
         // Nothing to evaluate yet
-        if (!HasQuizData && !HasLinkedListData) return;
+        if (!HasQuizData && !HasLinkedListData && !HasSchedulingData) return;
 
         float rawScore = AgentScoreOverride != null
             ? Mathf.Clamp01(AgentScoreOverride(m.GetObservations()))
@@ -191,13 +213,33 @@ public class DDAController : MonoBehaviour
             DbgLLTimeSignal = Mathf.Clamp01(
                 1f - Mathf.InverseLerp(llFastSolveTime, llSlowSolveTime, m.AverageLinkedListTime));
 
-            score += llWrongAttemptsWeight * DbgLLWrongSignal
-                         + llSolveTimeWeight * DbgLLTimeSignal;
+            score       += llWrongAttemptsWeight * DbgLLWrongSignal
+                         + llSolveTimeWeight     * DbgLLTimeSignal;
             totalWeight += llWrongAttemptsWeight + llSolveTimeWeight;
         }
         else
         {
             DbgLLWrongSignal = DbgLLTimeSignal = 0f;
+        }
+
+        // ── Scheduling signals ─────────────────────────────────────────────
+        if (HasSchedulingData)
+        {
+            // Fewer wrong submissions → harder (signal → 1)
+            DbgSchedWrongSignal = Mathf.Clamp01(
+                1f - (m.AverageSchedulingWrongAttempts / schedMaxWrongAttempts));
+
+            // Faster solve → harder (signal → 1)
+            DbgSchedTimeSignal = Mathf.Clamp01(
+                1f - Mathf.InverseLerp(schedFastSolveTime, schedSlowSolveTime, m.AverageSchedulingTime));
+
+            score       += schedWrongAttemptsWeight * DbgSchedWrongSignal
+                         + schedSolveTimeWeight     * DbgSchedTimeSignal;
+            totalWeight += schedWrongAttemptsWeight + schedSolveTimeWeight;
+        }
+        else
+        {
+            DbgSchedWrongSignal = DbgSchedTimeSignal = 0f;
         }
 
         // Normalise by active weight so partial data doesn't artificially pull score down

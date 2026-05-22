@@ -27,8 +27,12 @@ public class PlayerMetricsTracker : MonoBehaviour
     [SerializeField] private int maxQuizAttempts = 5;
 
     [Header("Normalisation Caps (linked list)")]
-    [SerializeField] private float maxLinkedListTime = 180f; // 3 min per puzzle
-    [SerializeField] private int maxLinkedListAttempts = 10;   // wrong attempts before solving
+    [SerializeField] private float maxLinkedListTime    = 180f; // 3 min per puzzle
+    [SerializeField] private int   maxLinkedListAttempts = 10;  // wrong attempts before solving
+
+    [Header("Normalisation Caps (scheduling)")]
+    [SerializeField] private float maxSchedulingTime    = 180f; // 3 min per puzzle
+    [SerializeField] private int   maxSchedulingAttempts = 10;  // wrong submissions before solving
 
     // ── Room State ─────────────────────────────────────────────────────────
     public float TotalSessionTime { get; private set; }
@@ -98,6 +102,26 @@ public class PlayerMetricsTracker : MonoBehaviour
     private float _linkedListStartTime; // realtimeSinceStartup — immune to timeScale
     private bool _linkedListInProgress;
 
+    // ── Scheduling Puzzle State ────────────────────────────────────────────
+
+    /// <summary>Wrong submissions on the most recently solved scheduling puzzle.</summary>
+    public int   LastSchedulingWrongAttempts   { get; private set; }
+
+    /// <summary>Seconds taken to solve the most recently completed scheduling puzzle.</summary>
+    public float LastSchedulingTime            { get; private set; }
+
+    /// <summary>Total scheduling puzzles solved this session.</summary>
+    public int   TotalSchedulingSolved         { get; private set; }
+
+    /// <summary>Running average wrong attempts per scheduling puzzle this session.</summary>
+    public float AverageSchedulingWrongAttempts { get; private set; }
+
+    /// <summary>Running average solve time for scheduling puzzles this session.</summary>
+    public float AverageSchedulingTime         { get; private set; }
+
+    private float _schedulingStartTime;  // realtimeSinceStartup — immune to timeScale
+    private bool  _schedulingInProgress;
+
     // ── Unity Lifecycle ────────────────────────────────────────────────────
     private void Awake()
     {
@@ -108,14 +132,16 @@ public class PlayerMetricsTracker : MonoBehaviour
 
     private void OnEnable()
     {
-        PuzzleUI.OnPuzzleFinished += HandleQuizFinished;
+        PuzzleUI.OnPuzzleFinished             += HandleQuizFinished;
         LinkedListPuzzleUI.OnLinkedListSolved += HandleLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
     }
 
     private void OnDisable()
     {
-        PuzzleUI.OnPuzzleFinished -= HandleQuizFinished;
+        PuzzleUI.OnPuzzleFinished             -= HandleQuizFinished;
         LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
     }
 
     private void Update()
@@ -175,6 +201,44 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Quiz finished | Score: {correct}/{total} ({score:P0}) | " +
                   $"Time: {timeTaken:F1}s | Passed: {passed} | Avg: {AverageQuizScore:P0}");
+    }
+
+    // ── Scheduling Puzzle API ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Call this when the player opens the scheduling puzzle so we can time it.
+    /// Called inside SchedulingPuzzleUI.InitPuzzle() — do NOT call it from the prop too.
+    /// </summary>
+    public void NotifySchedulingStarted()
+    {
+        _schedulingStartTime   = Time.realtimeSinceStartup;
+        _schedulingInProgress  = true;
+        Debug.Log("[Metrics] Scheduling puzzle started.");
+    }
+
+    private void HandleSchedulingSolved(int wrongAttempts)
+    {
+        float timeTaken = _schedulingInProgress
+            ? Time.realtimeSinceStartup - _schedulingStartTime
+            : 0f;
+
+        LastSchedulingWrongAttempts = wrongAttempts;
+        LastSchedulingTime          = timeTaken;
+        _schedulingInProgress       = false;
+        TotalSchedulingSolved++;
+
+        AverageSchedulingWrongAttempts = TotalSchedulingSolved <= 1
+            ? wrongAttempts
+            : (AverageSchedulingWrongAttempts * (TotalSchedulingSolved - 1) + wrongAttempts)
+              / TotalSchedulingSolved;
+
+        AverageSchedulingTime = TotalSchedulingSolved <= 1
+            ? timeTaken
+            : (AverageSchedulingTime * (TotalSchedulingSolved - 1) + timeTaken)
+              / TotalSchedulingSolved;
+
+        Debug.Log($"[Metrics] Scheduling solved | Wrong attempts: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s | Avg attempts: {AverageSchedulingWrongAttempts:F1}");
     }
 
     // ── Linked List API ────────────────────────────────────────────────────
@@ -253,6 +317,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageLinkedListTime = 0f;
         _linkedListInProgress = false;
 
+        // Scheduling
+        LastSchedulingWrongAttempts    = 0;
+        LastSchedulingTime             = 0f;
+        TotalSchedulingSolved          = 0;
+        AverageSchedulingWrongAttempts = 0f;
+        AverageSchedulingTime          = 0f;
+        _schedulingInProgress          = false;
+
         Debug.Log("[Metrics] All metrics reset.");
     }
 
@@ -276,15 +348,21 @@ public class PlayerMetricsTracker : MonoBehaviour
     ///   [8]  Average quiz score this session
     ///   [9]  Total quiz attempts (cap = maxQuizAttempts)
     ///   -- Linked List --
-    ///   [10] Last linked list wrong attempts (cap = maxLinkedListAttempts)
+    ///   [10] Last linked list wrong attempts
     ///   [11] Last linked list time taken
     ///   [12] Total linked list puzzles solved (cap 5)
-    ///   [13] Average wrong attempts per puzzle this session
-    ///   [14] Average time per puzzle this session
+    ///   [13] Average wrong attempts per linked list puzzle
+    ///   [14] Average time per linked list puzzle
+    ///   -- Scheduling --
+    ///   [15] Last scheduling wrong attempts
+    ///   [16] Last scheduling time taken
+    ///   [17] Total scheduling puzzles solved (cap 5)
+    ///   [18] Average wrong attempts per scheduling puzzle
+    ///   [19] Average time per scheduling puzzle
     /// </summary>
     public float[] GetObservations()
     {
-        float avgRoomTime = GetAverageCompletedRoomTime();
+        float avgRoomTime  = GetAverageCompletedRoomTime();
         float prevRoomTime = 0f;
         foreach (var entry in _recentRooms) prevRoomTime = entry.time;
 
@@ -307,12 +385,18 @@ public class PlayerMetricsTracker : MonoBehaviour
             Mathf.Clamp01(LastLinkedListTime             / maxLinkedListTime),
             Mathf.Clamp01(TotalLinkedListSolved          / 5f),
             Mathf.Clamp01(AverageLinkedListWrongAttempts / maxLinkedListAttempts),
-            Mathf.Clamp01(AverageLinkedListTime          / maxLinkedListTime)
+            Mathf.Clamp01(AverageLinkedListTime          / maxLinkedListTime),
+            // Scheduling
+            Mathf.Clamp01(LastSchedulingWrongAttempts    / (float)maxSchedulingAttempts),
+            Mathf.Clamp01(LastSchedulingTime             / maxSchedulingTime),
+            Mathf.Clamp01(TotalSchedulingSolved          / 5f),
+            Mathf.Clamp01(AverageSchedulingWrongAttempts / maxSchedulingAttempts),
+            Mathf.Clamp01(AverageSchedulingTime          / maxSchedulingTime),
         };
     }
 
-    /// <summary>Total observation vector size. Set Space Size to this in DirectorAgent.</summary>
-    public const int ObservationSize = 15;
+    /// <summary>Total observation vector size. Update Space Size in DirectorAgent to 20.</summary>
+    public const int ObservationSize = 20;
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
