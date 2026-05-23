@@ -38,9 +38,16 @@ public class PuzzleDDAController : MonoBehaviour
     [Tooltip("Fallback re-evaluation interval in seconds.")]
     [SerializeField] private float evaluationInterval = 10f;
 
-    [Tooltip("Score smoothing — 0 = instant, 0.9 = very gradual.")]
+    [Tooltip("Score smoothing -- 0 = instant, 0.9 = very gradual.")]
     [Range(0f, 0.95f)]
     [SerializeField] private float scoreSmoothing = 0.5f;
+
+    [Header("BKT Blend")]
+    [Tooltip("How much weight BKT global P(knows) has vs. the heuristic signal " +
+             "when computing CurrentTier. 0 = heuristic only, 1 = BKT only. " +
+             "Only applied when BKT has observed at least one concept.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float bktBlendWeight = 0.5f;
 
     // ── Inspector: Quiz Weights ────────────────────────────────────────────
     [Header("Quiz Signal Weights")]
@@ -83,6 +90,23 @@ public class PuzzleDDAController : MonoBehaviour
     public bool HasQuizData       { get; private set; }
     public bool HasLinkedListData { get; private set; }
     public bool HasSchedulingData { get; private set; }
+
+    // ── Per-Concept BKT Tier Access ───────────────────────────────────────
+    /// <summary>
+    /// Returns the difficulty tier (0-4) for a specific CS concept based on the
+    /// player's BKT knowledge state. Falls back to CurrentTier if BKT has no data
+    /// for that concept (e.g. first encounter, or concept not yet introduced).
+    ///
+    /// Use this to tune individual puzzle parameters:
+    ///   int tier = PuzzleDDAController.Instance.GetTierForConcept(
+    ///       BayesianKnowledgeTracker.LinkedLists);
+    /// </summary>
+    public int GetTierForConcept(string concept)
+    {
+        BayesianKnowledgeTracker bkt = PlayerMetricsTracker.Instance?.BKT;
+        if (bkt == null || !bkt.HasConcept(concept)) return CurrentTier;
+        return bkt.GetTierForConcept(concept);
+    }
 
     // ── PPO Override Hook ─────────────────────────────────────────────────
     public System.Func<float[], float> AgentScoreOverride { get; set; } = null;
@@ -144,15 +168,24 @@ public class PuzzleDDAController : MonoBehaviour
 
         if (!HasQuizData && !HasLinkedListData && !HasSchedulingData) return;
 
-        float rawScore = AgentScoreOverride != null
+        float heuristicScore = AgentScoreOverride != null
             ? Mathf.Clamp01(AgentScoreOverride(m.GetObservations()))
             : ComputeScore(m);
+
+        // Blend heuristic with BKT global P(knows) when BKT has real data.
+        // Both signals are [0,1]: higher = player is performing well = harder tier.
+        float rawScore = heuristicScore;
+        BayesianKnowledgeTracker bkt = m.BKT;
+        if (bkt != null && bkt.HasAnyData())
+            rawScore = Mathf.Lerp(heuristicScore, bkt.GetGlobalPKnows(), bktBlendWeight);
 
         LastRawScore = rawScore;
         CurrentScore = Mathf.Lerp(rawScore, CurrentScore, scoreSmoothing);
         CurrentTier  = ScoreToTier(CurrentScore);
 
-        Debug.Log($"[PuzzleDDA] Raw: {rawScore:F3} | Smoothed: {CurrentScore:F3} | " +
+        Debug.Log($"[PuzzleDDA] Heuristic: {heuristicScore:F3} | " +
+                  $"BKT Global: {(bkt != null ? bkt.GetGlobalPKnows().ToString("F3") : "n/a")} | " +
+                  $"Blended: {rawScore:F3} | Smoothed: {CurrentScore:F3} | " +
                   $"Tier: {CurrentTier} ({TierNames[CurrentTier]}) | " +
                   $"Mode: {(AgentScoreOverride != null ? "PPO Agent" : "Heuristic")}");
     }

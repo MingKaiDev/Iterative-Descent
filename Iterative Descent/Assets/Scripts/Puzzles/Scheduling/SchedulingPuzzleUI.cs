@@ -132,6 +132,11 @@ public class SchedulingPuzzleUI : MonoBehaviour
         _onClose  = onClose;
         _attempts = 0;
 
+        // Ensure the popup is hidden at the start of every session.
+        // Mirrors the same guard in LinkedListPuzzleUI — see PuzzleFeedbackPopup.Awake()
+        // comment for why this is necessary instead of relying on Awake.
+        if (feedbackPopup != null) feedbackPopup.gameObject.SetActive(false);
+
         // Notify metrics — timer starts here.
         // Time.timeScale is already 0 at this point; tracker uses realtimeSinceStartup.
         PlayerMetricsTracker.Instance?.NotifySchedulingStarted();
@@ -337,7 +342,9 @@ public class SchedulingPuzzleUI : MonoBehaviour
 
     private (int[] burstTimes, int quantum) GenerateRRParameters()
     {
-        int tier        = PuzzleDDAController.Instance != null ? PuzzleDDAController.Instance.CurrentTier : 2;
+        int tier = PuzzleDDAController.Instance != null
+            ? PuzzleDDAController.Instance.GetTierForConcept(BayesianKnowledgeTracker.CpuScheduling)
+            : 2;
         const int maxSlots    = 10;
         const int maxAttempts = 30;
 

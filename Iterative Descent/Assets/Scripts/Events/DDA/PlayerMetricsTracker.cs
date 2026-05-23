@@ -16,6 +16,18 @@ public class PlayerMetricsTracker : MonoBehaviour
     // ── Singleton ──────────────────────────────────────────────────────────
     public static PlayerMetricsTracker Instance { get; private set; }
 
+    // ── BKT ────────────────────────────────────────────────────────────────
+    [Header("Bayesian Knowledge Tracker")]
+    [Tooltip("One ConceptProfile asset per CS concept. Create via " +
+             "Assets > Create > ARBITEX > Concept Profile.")]
+    [SerializeField] private ConceptProfile[] _conceptProfiles;
+
+    /// <summary>
+    /// The live BKT model. Persists across scenes because this MonoBehaviour
+    /// is DontDestroyOnLoad. Read per-concept tiers via BKT.GetTierForConcept().
+    /// </summary>
+    public BayesianKnowledgeTracker BKT { get; private set; }
+
     // ── Inspector Config ───────────────────────────────────────────────────
     [Header("Normalisation Caps (seconds)")]
     [SerializeField] private float maxSessionTime = 1800f;  // 30 min
@@ -163,11 +175,13 @@ public class PlayerMetricsTracker : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        BKT = new BayesianKnowledgeTracker(_conceptProfiles);
     }
 
     private void OnEnable()
     {
         PuzzleUI.OnPuzzleFinished             += HandleQuizFinished;
+        PuzzleUI.OnQuestionAnswered           += HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved += HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
     }
@@ -175,6 +189,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     private void OnDisable()
     {
         PuzzleUI.OnPuzzleFinished             -= HandleQuizFinished;
+        PuzzleUI.OnQuestionAnswered           -= HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
     }
@@ -238,6 +253,16 @@ public class PlayerMetricsTracker : MonoBehaviour
                   $"Time: {timeTaken:F1}s | Passed: {passed} | Avg: {AverageQuizScore:P0}");
     }
 
+    /// <summary>
+    /// Called per MCQ question the moment the player answers.
+    /// Routes BKT update for the question's concept.
+    /// Empty concept tags are silently ignored (question has no BKT mapping).
+    /// </summary>
+    private void HandleQuestionAnswered(string concept, bool correct)
+    {
+        BKT?.UpdateAfterAttempt(concept, correct);
+    }
+
     // ── Scheduling Puzzle API ──────────────────────────────────────────────
 
     /// <summary>
@@ -271,6 +296,11 @@ public class PlayerMetricsTracker : MonoBehaviour
             ? timeTaken
             : (AverageSchedulingTime * (TotalSchedulingSolved - 1) + timeTaken)
               / TotalSchedulingSolved;
+
+        // BKT update — replay each wrong submission then the correct solve
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.CpuScheduling, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.CpuScheduling, true);
 
         Debug.Log($"[Metrics] Scheduling solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageSchedulingWrongAttempts:F1}");
@@ -316,6 +346,11 @@ public class PlayerMetricsTracker : MonoBehaviour
             ? timeTaken
             : (AverageLinkedListTime * (TotalLinkedListSolved - 1) + timeTaken)
               / TotalLinkedListSolved;
+
+        // BKT update — replay each wrong submission then the correct solve
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.LinkedLists, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.LinkedLists, true);
 
         Debug.Log($"[Metrics] Linked list solved | Wrong attempts: {wrongAttempts} | " +
                   $"Total submits: {LastLinkedListTotalSubmits} | " +

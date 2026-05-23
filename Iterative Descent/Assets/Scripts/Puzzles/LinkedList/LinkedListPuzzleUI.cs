@@ -107,6 +107,12 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _onClose  = onClose;
         _attempts = 0;
 
+        // Always hide the popup on entry — if the overlay was closed without the
+        // player pressing OK (e.g. via the Close button), feedbackPopup.activeSelf
+        // can be left true. The Blocker inside it would then silently eat the first
+        // Submit click, making the puzzle appear unresponsive.
+        if (feedbackPopup != null) feedbackPopup.gameObject.SetActive(false);
+
         PlayerMetricsTracker.Instance?.NotifyLinkedListStarted();
 
         if (instructionText)
@@ -289,6 +295,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
         if (correct)
         {
             OnLinkedListSolved?.Invoke(_attempts);
+
             // On correct: show success pop-up; puzzle closes when the player presses OK.
             feedbackPopup?.Show(true,
                 "Correct!  List reversed successfully.",
@@ -368,7 +375,9 @@ public class LinkedListPuzzleUI : MonoBehaviour
 
     private int NodeCountForCurrentTier()
     {
-        int tier = PuzzleDDAController.Instance != null ? PuzzleDDAController.Instance.CurrentTier : 2;
+        int tier = PuzzleDDAController.Instance != null
+            ? PuzzleDDAController.Instance.GetTierForConcept(BayesianKnowledgeTracker.LinkedLists)
+            : 2;
         return tier switch
         {
             0 => 3,   // Very Easy

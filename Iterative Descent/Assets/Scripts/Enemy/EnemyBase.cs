@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -31,6 +32,14 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
     protected Transform  _target;          // the player transform
     protected NavMeshAgent _agent;
     protected Animator     _animator;      // found in children (your character rig)
+
+    // ─── Static Events ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Fired once per enemy death, carrying the world position of the corpse.
+    /// ItemSpawner and other systems subscribe to this for drop/reward logic.
+    /// </summary>
+    public static event Action<Vector3> OnAnyEnemyDied;
 
     // ─── IEnemy ───────────────────────────────────────────────────────────────
 
@@ -68,6 +77,8 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
         OnDie();
         // Notify metrics tracker — fires OnEncounterEnd when last active enemy dies
         PlayerMetricsTracker.Instance?.NotifyEnemyKilled();
+        // Broadcast death position for drop/reward systems
+        OnAnyEnemyDied?.Invoke(transform.position);
     }
 
     // ─── IDamageable ──────────────────────────────────────────────────────────

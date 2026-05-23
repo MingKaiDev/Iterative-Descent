@@ -44,7 +44,19 @@ public class PuzzleFeedbackPopup : MonoBehaviour
     private static readonly Color ColourFail    = new(1.00f, 0.35f, 0.35f);
 
     // ── Unity ─────────────────────────────────────────────────────────────────
-    protected virtual void Awake()    => gameObject.SetActive(false);
+    //
+    // NOTE: Do NOT call gameObject.SetActive(false) from Awake().
+    //
+    // If the feedbackPopup starts inactive in the Inspector (activeSelf=false) AND
+    // its parent overlay also starts inactive, Unity defers Awake() until the first
+    // explicit SetActive(true) — which comes from Show(). Calling SetActive(false)
+    // inside that deferred Awake() cancels the very activation Show() is trying to do,
+    // causing the popup to silently stay inactive on the first submit.
+    //
+    // The popup's initial hidden state is instead guaranteed by:
+    //   1. The Inspector — set the GameObject inactive there.
+    //   2. Each puzzle's InitPuzzle() — explicitly hides it on every new session.
+    protected virtual void Awake()    { }
     private void OnEnable()           => okButton?.onClick.AddListener(Dismiss);
     private void OnDisable()          => okButton?.onClick.RemoveListener(Dismiss);
 
@@ -66,13 +78,16 @@ public class PuzzleFeedbackPopup : MonoBehaviour
 
         if (iconText)
         {
-            iconText.text  = success ? "✓" : "✗";
+            iconText.text  = success ? "OK" : "X";
             iconText.color = success ? ColourSuccess : ColourFail;
         }
 
         if (messageText)
             messageText.text = message;
 
+        // Ensure the popup renders on top of everything else in the panel,
+        // including any dynamically-spawned node blocks.
+        transform.SetAsLastSibling();
         gameObject.SetActive(true);
     }
 

@@ -1,5 +1,6 @@
 ﻿// PuzzleProp.cs
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PuzzleProp : MonoBehaviour, IInteractable
 {
@@ -13,9 +14,17 @@ public class PuzzleProp : MonoBehaviour, IInteractable
     [Tooltip("File name inside StreamingAssets, e.g. quiz_data.json")]
     public string jsonFileName = "quiz_data.json";
 
+    [Header("Question Selection")]
+    [Tooltip("How many questions to show per quiz session.")]
+    public int questionsPerSession = 5;
+
     [Header("UI")]
     [Tooltip("Assign the Puzzle Panel GameObject in the Canvas.")]
     public GameObject puzzleOverlay;
+
+    [Header("Outcome Events")]
+    [Tooltip("Fired when the player completes the quiz (clicks Close after all questions). Wire up door unlocks, enemy spawns, etc. here.")]
+    [SerializeField] private UnityEvent onCompleted;
 
     // IInteractable
     public string InteractLabel => "Read Note";
@@ -28,7 +37,8 @@ public class PuzzleProp : MonoBehaviour, IInteractable
 
     // Puzzle Logic
     private bool _puzzleOpen;
-    private QuestionData[] _resolvedQuestions;
+    private QuestionData[] _resolvedQuestions;  // full bank, loaded once
+    private int  _sessionCount = 0;             // increments each time the quiz opens
 
     void Awake()
     {
@@ -62,9 +72,18 @@ public class PuzzleProp : MonoBehaviour, IInteractable
         if (puzzleOverlay != null)
         {
             puzzleOverlay.SetActive(true);
-            // NotifyQuizStarted() is called inside PuzzleUI.Setup() — don't call it
+
+            // Select a session-appropriate subset from the full bank.
+            // Session 0 = first time: predetermined foundational concepts for BKT baseline.
+            // Session 1+ : BKT picks the weakest concept.
+            bool isFirst = _sessionCount == 0;
+            QuestionData[] sessionQuestions = QuestionSelector.SelectQuestions(
+                _resolvedQuestions, isFirst, questionsPerSession);
+            _sessionCount++;
+
+            // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
             // here too or TotalQuizAttempts gets incremented twice per quiz.
-            puzzleOverlay.GetComponent<PuzzleUI>().Setup(_resolvedQuestions, ClosePuzzle);
+            puzzleOverlay.GetComponent<PuzzleUI>().Setup(sessionQuestions, ClosePuzzle);
         }
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -82,6 +101,9 @@ public class PuzzleProp : MonoBehaviour, IInteractable
         Time.timeScale = 1f;
 
         if (completed)
+        {
             Debug.Log($"[PuzzleProp] '{gameObject.name}' puzzle completed!");
+            onCompleted?.Invoke();
+        }
     }
 }

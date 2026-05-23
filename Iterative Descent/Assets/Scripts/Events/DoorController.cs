@@ -20,6 +20,10 @@ public class DoorController : MonoBehaviour
     public float animDuration = 1.0f;
     public AnimationCurve easeCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    [Header("Audio")]
+    [Tooltip("Clip to play when the door is busted open. Assign the AudioSource on this GameObject.")]
+    public AudioClip doorBreakClip;
+
     [Header("State")]
     public bool isLocked = true;
     public bool isOpen = false;
@@ -30,10 +34,12 @@ public class DoorController : MonoBehaviour
     private Vector3 _openLocalPos;
     private Coroutine _currentAnim;
     private BoxCollider _boxCollider;
+    private AudioSource _audioSource;
 
     void Awake()
     {
         _boxCollider = GetComponent<BoxCollider>();
+        _audioSource = GetComponent<AudioSource>();
 
         if (doorMesh == null)
         {
@@ -62,6 +68,9 @@ public class DoorController : MonoBehaviour
     public void Open()
     {
         if (isLocked || isOpen) return;
+
+        if (_audioSource != null && doorBreakClip != null)
+            _audioSource.PlayOneShot(doorBreakClip);
 
         if (_currentAnim != null) StopCoroutine(_currentAnim);
         _currentAnim = StartCoroutine(AnimateDoor(

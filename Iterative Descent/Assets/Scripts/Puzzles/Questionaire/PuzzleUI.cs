@@ -23,7 +23,17 @@ public class PuzzleUI : MonoBehaviour
     public Color wrongColour = new Color(0.7f, 0.1f, 0.1f, 1f);
     public Color textColour = Color.white;
 
-    // ── Static event ─────────────────────────────────────────────
+    // ── Static events ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Fires once per question the moment the player selects an answer.
+    /// Used by BayesianKnowledgeTracker to update P(knows) per concept.
+    /// Parameters: conceptTag (string), wasCorrect (bool).
+    /// Empty conceptTag means the question has no BKT concept assigned -- skip it.
+    /// </summary>
+    public static event Action<string, bool> OnQuestionAnswered;
+
+    /// <summary>Fires once when all questions are done. Parameters: correct count, total count.</summary>
     public static event Action<int, int> OnPuzzleFinished;
 
     // ── Runtime ──────────────────────────────────────────────────
@@ -106,6 +116,11 @@ public class PuzzleUI : MonoBehaviour
         _answered = true;
 
         bool correct = chosen == _questions[_currentIndex].correctAnswerIndex;
+
+        // Notify BKT immediately — before the visual delay
+        string tag = _questions[_currentIndex].conceptTag;
+        if (!string.IsNullOrEmpty(tag))
+            OnQuestionAnswered?.Invoke(tag, correct);
 
         SetButtonImageColour(answerButtons[chosen], correct ? correctColour : wrongColour);
         if (!correct)
