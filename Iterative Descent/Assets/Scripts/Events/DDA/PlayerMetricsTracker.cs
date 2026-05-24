@@ -46,10 +46,14 @@ public class PlayerMetricsTracker : MonoBehaviour
     [SerializeField] private float maxSchedulingTime    = 180f; // 3 min per puzzle
     [SerializeField] private int   maxSchedulingAttempts = 10;  // wrong submissions before solving
 
+    [Header("Normalisation Caps (stack)")]
+    [SerializeField] private float maxStackTime     = 180f; // 3 min per puzzle
+    [SerializeField] private int   maxStackAttempts = 10;   // wrong attempts before solving
+
     [Header("Normalisation Caps (combat)")]
-    [Tooltip("Enemy encounter duration considered 'fast' — used by CombatDDAController.")]
+    [Tooltip("Enemy encounter duration considered 'fast' -- used by CombatDDAController.")]
     [SerializeField] public float combatFastTime = 15f;
-    [Tooltip("Enemy encounter duration considered 'slow' — used by CombatDDAController.")]
+    [Tooltip("Enemy encounter duration considered 'slow' -- used by CombatDDAController.")]
     [SerializeField] public float combatSlowTime = 90f;
 
     // ── Room State ─────────────────────────────────────────────────────────
@@ -140,6 +144,26 @@ public class PlayerMetricsTracker : MonoBehaviour
     private float _schedulingStartTime;  // realtimeSinceStartup — immune to timeScale
     private bool  _schedulingInProgress;
 
+    // ── Stack Puzzle State ────────────────────────────────────────────────────
+
+    /// <summary>Wrong submissions on the most recently solved stack puzzle.</summary>
+    public int   LastStackWrongAttempts    { get; private set; }
+
+    /// <summary>Seconds taken to solve the most recently completed stack puzzle.</summary>
+    public float LastStackTime             { get; private set; }
+
+    /// <summary>Total stack puzzles solved this session.</summary>
+    public int   TotalStackSolved          { get; private set; }
+
+    /// <summary>Running average wrong attempts per stack puzzle this session.</summary>
+    public float AverageStackWrongAttempts { get; private set; }
+
+    /// <summary>Running average solve time for stack puzzles this session.</summary>
+    public float AverageStackTime          { get; private set; }
+
+    private float _stackStartTime;   // realtimeSinceStartup -- immune to timeScale
+    private bool  _stackInProgress;
+
     // ── Combat / Encounter State ───────────────────────────────────────────────
 
     /// <summary>
@@ -184,6 +208,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         PuzzleUI.OnQuestionAnswered           += HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved += HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
+        StackPuzzleUI.OnStackSolved           += HandleStackSolved;
     }
 
     private void OnDisable()
@@ -192,6 +217,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         PuzzleUI.OnQuestionAnswered           -= HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
+        StackPuzzleUI.OnStackSolved           -= HandleStackSolved;
     }
 
     private void Update()
@@ -304,6 +330,49 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Scheduling solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageSchedulingWrongAttempts:F1}");
+    }
+
+    // ── Stack Puzzle API ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Call this when the player opens the stack puzzle so we can time it.
+    /// Called inside StackPuzzleUI.InitPuzzle() -- do NOT call it from the prop too.
+    /// </summary>
+    public void NotifyStackStarted()
+    {
+        _stackStartTime   = Time.realtimeSinceStartup;
+        _stackInProgress  = true;
+        Debug.Log("[Metrics] Stack puzzle started.");
+    }
+
+    private void HandleStackSolved(int wrongAttempts)
+    {
+        float timeTaken = _stackInProgress
+            ? Time.realtimeSinceStartup - _stackStartTime
+            : 0f;
+
+        LastStackWrongAttempts = wrongAttempts;
+        LastStackTime          = timeTaken;
+        _stackInProgress       = false;
+        TotalStackSolved++;
+
+        AverageStackWrongAttempts = TotalStackSolved <= 1
+            ? wrongAttempts
+            : (AverageStackWrongAttempts * (TotalStackSolved - 1) + wrongAttempts)
+              / TotalStackSolved;
+
+        AverageStackTime = TotalStackSolved <= 1
+            ? timeTaken
+            : (AverageStackTime * (TotalStackSolved - 1) + timeTaken)
+              / TotalStackSolved;
+
+        // BKT update -- replay each wrong submission then the correct solve
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.StacksAndQueues, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.StacksAndQueues, true);
+
+        Debug.Log($"[Metrics] Stack puzzle solved | Wrong attempts: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s | Avg attempts: {AverageStackWrongAttempts:F1}");
     }
 
     // ── Linked List API ────────────────────────────────────────────────────
@@ -459,6 +528,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageSchedulingTime          = 0f;
         _schedulingInProgress          = false;
 
+        // Stack
+        LastStackWrongAttempts    = 0;
+        LastStackTime             = 0f;
+        TotalStackSolved          = 0;
+        AverageStackWrongAttempts = 0f;
+        AverageStackTime          = 0f;
+        _stackInProgress          = false;
+
         // Combat
         ShotsFired               = 0;
         ShotsLanded              = 0;
@@ -501,6 +578,12 @@ public class PlayerMetricsTracker : MonoBehaviour
     ///   [17] Total scheduling puzzles solved (cap 5)
     ///   [18] Average wrong attempts per scheduling puzzle
     ///   [19] Average time per scheduling puzzle
+    ///   -- Stack --
+    ///   [20] Last stack wrong attempts
+    ///   [21] Last stack time taken
+    ///   [22] Total stack puzzles solved (cap 5)
+    ///   [23] Average wrong attempts per stack puzzle
+    ///   [24] Average time per stack puzzle
     /// </summary>
     public float[] GetObservations()
     {
@@ -534,11 +617,17 @@ public class PlayerMetricsTracker : MonoBehaviour
             Mathf.Clamp01(TotalSchedulingSolved          / 5f),
             Mathf.Clamp01(AverageSchedulingWrongAttempts / maxSchedulingAttempts),
             Mathf.Clamp01(AverageSchedulingTime          / maxSchedulingTime),
+            // Stack
+            Mathf.Clamp01(LastStackWrongAttempts    / (float)maxStackAttempts),
+            Mathf.Clamp01(LastStackTime             / maxStackTime),
+            Mathf.Clamp01(TotalStackSolved          / 5f),
+            Mathf.Clamp01(AverageStackWrongAttempts / maxStackAttempts),
+            Mathf.Clamp01(AverageStackTime          / maxStackTime),
         };
     }
 
-    /// <summary>Total observation vector size. Update Space Size in DirectorAgent to 20.</summary>
-    public const int ObservationSize = 20;
+    /// <summary>Total observation vector size. Update Space Size in DirectorAgent to 25.</summary>
+    public const int ObservationSize = 25;
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
