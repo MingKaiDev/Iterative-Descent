@@ -3,63 +3,80 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// Thin drag-event relay attached to the small handle widget on each node
-/// (and on the HEAD pointer).  It contains NO logic of its own — it simply
-/// forwards all three drag callbacks to LinkedListPuzzleUI which owns all state.
+/// Click-based relay attached to each node's port widget and to the HEAD pointer's handle.
+/// Replaced the old drag-handler model with click-to-select / click-to-connect.
 ///
-/// Prefab Setup (child of LLNodeBlock or LLHeadPointer):
-///   - Image (circle or arrow icon — something visually grab-able)
-///   - LLNextHandle (this script)
-///   - The Image's RaycastTarget must be ON so Unity routes drag events here.
+/// Interaction rules:
+///   - Click while idle           -> tell LinkedListPuzzleUI to START a connection from this port.
+///   - Click while this port is   -> cancel the pending connection (deselect).
+///     already the pending source
+///   - Landing a connection on a  -> handled by LLNodeBlock.OnPointerClick (node body).
+///     destination node
 ///
-/// The handle is placed on the RIGHT edge of its parent box so the arrow
-/// visually "leaves" the node from the correct side.
+/// Unity event routing note:
+///   LLNextHandle is a child of LLNodeBlock. When the player clicks the port,
+///   Unity routes the event to this script only (deepest handler wins).
+///   LLNodeBlock.OnPointerClick does NOT also fire -- no double-handling needed.
 /// </summary>
 [RequireComponent(typeof(RectTransform), typeof(Image))]
 public class LLNextHandle : MonoBehaviour,
-    IBeginDragHandler, IDragHandler, IEndDragHandler
+    IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
-    // ── Wired at runtime by Init() ─────────────────────────────────────────
-    private LLNodeBlock        _ownerNode; // null when isHead == true
+    // ── Inspector ──────────────────────────────────────────────────────────────
+    [Header("Terminal Port Colors")]
+    [SerializeField] private Color normalColor   = new Color(0.20f, 0.75f, 0.30f, 1f); // green idle
+    [SerializeField] private Color hoverColor    = new Color(0.45f, 1.00f, 0.55f, 1f); // bright hover
+    [SerializeField] private Color selectedColor = new Color(0.95f, 0.75f, 0.10f, 1f); // amber = pending
+
+    // ── Wired at runtime ───────────────────────────────────────────────────────
+    private LLNodeBlock        _ownerNode;
     private bool               _isHead;
     private LinkedListPuzzleUI _puzzle;
+    private Image              _image;
+    private bool               _isSelected;
 
-    // ── Initialisation ─────────────────────────────────────────────────────
+    // ── Unity ──────────────────────────────────────────────────────────────────
+    void Awake() => _image = GetComponent<Image>();
 
-    /// <summary>
-    /// Called by LLNodeBlock.Init or LLHeadPointer.Init immediately after spawn.
-    /// </summary>
-    /// <param name="ownerNode">The node this handle belongs to (null for HEAD).</param>
-    /// <param name="puzzle">The master controller that will receive drag events.</param>
-    /// <param name="isHead">True when this handle belongs to the HEAD pointer box.</param>
+    // ── Initialisation ─────────────────────────────────────────────────────────
+    /// <summary>Called by LLNodeBlock.Init or LLHeadPointer.Init immediately after spawn.</summary>
     public void Init(LLNodeBlock ownerNode, LinkedListPuzzleUI puzzle, bool isHead)
     {
-        _ownerNode = ownerNode;
-        _puzzle    = puzzle;
-        _isHead    = isHead;
+        _ownerNode  = ownerNode;
+        _puzzle     = puzzle;
+        _isHead     = isHead;
+        _isSelected = false;
+        if (_image) _image.color = normalColor;
     }
 
-    // ── IBeginDragHandler / IDragHandler / IEndDragHandler ─────────────────
+    // ── Selection Visual ───────────────────────────────────────────────────────
+    /// <summary>
+    /// Called by LinkedListPuzzleUI to show this port as the currently selected
+    /// (pending) connection source.
+    /// </summary>
+    public void SetSelected(bool selected)
+    {
+        _isSelected = selected;
+        if (_image) _image.color = selected ? selectedColor : normalColor;
+    }
 
-    public void OnBeginDrag(PointerEventData e)
+    // ── Pointer Events ─────────────────────────────────────────────────────────
+    public void OnPointerClick(PointerEventData e)
     {
         if (_isHead)
-            _puzzle.OnHeadHandleDragBegin(e);
+            _puzzle.OnHeadHandleClicked();
         else
-            _puzzle.OnNodeHandleDragBegin(_ownerNode, e);
+            _puzzle.OnNodeHandleClicked(_ownerNode);
     }
 
-    public void OnDrag(PointerEventData e)
+    public void OnPointerEnter(PointerEventData e)
     {
-        // Same for both node and HEAD handles — just moves the floating end.
-        _puzzle.OnHandleDragging(e);
+        if (_image) _image.color = hoverColor;
     }
 
-    public void OnEndDrag(PointerEventData e)
+    public void OnPointerExit(PointerEventData e)
     {
-        if (_isHead)
-            _puzzle.OnHeadHandleDragEnd(e);
-        else
-            _puzzle.OnNodeHandleDragEnd(_ownerNode, e);
+        // Restore correct state color on exit, not just normal.
+        if (_image) _image.color = _isSelected ? selectedColor : normalColor;
     }
 }

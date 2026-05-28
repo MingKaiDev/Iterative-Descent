@@ -108,6 +108,13 @@ public class PuzzleDDAController : MonoBehaviour
         return bkt.GetTierForConcept(concept);
     }
 
+    // ── Events ───────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Fired whenever the puzzle DDA tier changes value (0-4).
+    /// Subscribe in OnEnable, unsubscribe in OnDisable to avoid leaks.
+    /// </summary>
+    public static event System.Action<int> OnPuzzleTierChanged;
+
     // ── PPO Override Hook ─────────────────────────────────────────────────
     public System.Func<float[], float> AgentScoreOverride { get; set; } = null;
 
@@ -181,7 +188,17 @@ public class PuzzleDDAController : MonoBehaviour
 
         LastRawScore = rawScore;
         CurrentScore = Mathf.Lerp(rawScore, CurrentScore, scoreSmoothing);
-        CurrentTier  = ScoreToTier(CurrentScore);
+
+        int newTier = ScoreToTier(CurrentScore);
+        if (newTier != CurrentTier)
+        {
+            CurrentTier = newTier;
+            OnPuzzleTierChanged?.Invoke(newTier);
+        }
+        else
+        {
+            CurrentTier = newTier;
+        }
 
         Debug.Log($"[PuzzleDDA] Heuristic: {heuristicScore:F3} | " +
                   $"BKT Global: {(bkt != null ? bkt.GetGlobalPKnows().ToString("F3") : "n/a")} | " +

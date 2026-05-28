@@ -30,6 +30,12 @@ public class CombatHUD : MonoBehaviour
     [Tooltip("GameObject to show only while the player is aiming. Assign a dot/crosshair image.")]
     public GameObject crosshair;
 
+    [Header("Puzzle Visibility")]
+    [Tooltip("Parent GameObject containing the health bar and ammo display. " +
+             "Hidden automatically whenever a puzzle UI is open. " +
+             "Create an empty Canvas child called 'CombatHUD Panel', reparent health and ammo elements into it, then assign it here.")]
+    public GameObject combatHUDPanel;
+
     [Header("Death Screen")]
     [Tooltip("Full-screen panel shown on player death. " +
              "Create a Canvas child panel with a YOU DIED text and a Restart button. " +
@@ -74,9 +80,15 @@ public class CombatHUD : MonoBehaviour
 
     void Update()
     {
-        // Crosshair tracks aiming state every frame (cheap bool check)
+        // Hide health/ammo panel while any puzzle UI is open.
+        if (combatHUDPanel != null)
+            combatHUDPanel.SetActive(!PlayerInteractor.IsPaused);
+
+        // Crosshair tracks aiming state every frame (cheap bool check).
+        // Also suppressed while a puzzle is open (PlayerCombat already cancels aim,
+        // but guard here too in case the crosshair is shown for a single frame).
         if (crosshair != null && _combat != null)
-            crosshair.SetActive(_combat.IsAiming && !_combat.IsReloading);
+            crosshair.SetActive(_combat.IsAiming && !_combat.IsReloading && !PlayerInteractor.IsPaused);
     }
 
     // ─── Event Handlers ─────────────────────────────────────────────────────────

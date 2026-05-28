@@ -23,6 +23,12 @@ public class PuzzleUI : MonoBehaviour
     public Color wrongColour = new Color(0.7f, 0.1f, 0.1f, 1f);
     public Color textColour = Color.white;
 
+    [Header("Button Text Sizing")]
+    [Tooltip("Maximum font size for answer button labels")]
+    public float buttonFontSizeMax = 18f;
+    [Tooltip("Minimum font size -- auto-shrinks to fit long strings")]
+    public float buttonFontSizeMin = 10f;
+
     // ── Static events ─────────────────────────────────────────────
 
     /// <summary>
@@ -59,9 +65,18 @@ public class PuzzleUI : MonoBehaviour
             cb.colorMultiplier = 1f;
             btn.colors = cb;
 
-            // Ensure text is white
+            // Configure label: colour, auto-size, word wrap
             var label = btn.GetComponentInChildren<TMP_Text>();
-            if (label != null) label.color = textColour;
+            if (label != null)
+            {
+                label.color = textColour;
+                label.enableWordWrapping = true;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = buttonFontSizeMin;
+                label.fontSizeMax = buttonFontSizeMax;
+                label.overflowMode = TMPro.TextOverflowModes.Overflow;
+                label.alignment = TMPro.TextAlignmentOptions.Center;
+            }
         }
     }
 

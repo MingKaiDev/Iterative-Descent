@@ -11,7 +11,7 @@ using UnityEngine;
 ///   1. Create a child GameObject on the room entrance with a BoxCollider
 ///      set to Is Trigger = true.
 ///   2. Attach this script.
-///   3. Assign every pre-placed EnemyChaser in the room to the enemies array.
+///   3. Assign every pre-placed enemy (EnemyChaser, EnemyRusher, etc.) in the room to the enemies array.
 ///   4. Leave playerTarget empty -- it is found automatically via the
 ///      "Player" tag. Assign manually only if you need to override this.
 ///
@@ -27,9 +27,9 @@ public class EncounterTrigger : MonoBehaviour
     // ── Inspector ──────────────────────────────────────────────────────────
 
     [Header("Enemies (pre-placed, dormant in scene)")]
-    [Tooltip("All EnemyChaser instances placed in this room. Order matters -- " +
+    [Tooltip("Any EnemyBase instances placed in this room (EnemyChaser, EnemyRusher, etc). Order matters -- " +
              "enemies are activated front-to-back up to the DDA-scaled count.")]
-    [SerializeField] private EnemyChaser[] enemies;
+    [SerializeField] private EnemyBase[] enemies;
 
     [Header("Player (leave empty to auto-find by tag)")]
     [Tooltip("The player root Transform. Auto-found via 'Player' tag if left empty.")]

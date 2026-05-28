@@ -22,6 +22,11 @@ using System.Collections;
 ///
 /// ─── Animator parameter ───────────────────────────────────────────────────
 ///   Trigger  "Attack"  — must exist in the Animator Controller
+///
+/// ─── Custom animation callback (EnemyRusher and future variants) ─────────
+///   Set OnAttackFired to a delegate to supply your own animator trigger.
+///   When set, the built-in "Attack" trigger is suppressed so only your
+///   delegate fires. EnemyChaser leaves this null -- no behaviour change.
 /// </summary>
 public class EnemyAttack : MonoBehaviour
 {
@@ -48,6 +53,16 @@ public class EnemyAttack : MonoBehaviour
     // ─── Cached hashes ────────────────────────────────────────────────────────
 
     private static readonly int AttackTriggerHash = Animator.StringToHash("Attack");
+
+    // ─── Public callback (optional) ───────────────────────────────────────────
+
+    /// <summary>
+    /// When assigned, called instead of the built-in "Attack" animator trigger.
+    /// Use this to supply a custom animation (e.g. alternating swipes) from a
+    /// subclass or companion script without modifying EnemyAttack internals.
+    /// Leave null to use the default "Attack" trigger (EnemyChaser behaviour).
+    /// </summary>
+    public System.Action OnAttackFired;
 
     // ─── Private state ────────────────────────────────────────────────────────
 
@@ -104,8 +119,12 @@ public class EnemyAttack : MonoBehaviour
         _isAttacking   = true;
         _cooldownTimer = attackCooldown;
 
-        // Fire the animator trigger if available
-        if (animator != null)
+        // Fire the animator trigger. If a custom callback is assigned (e.g.
+        // EnemyRusher supplying alternating swipe triggers), call that instead
+        // so the caller owns the animation without touching this class.
+        if (OnAttackFired != null)
+            OnAttackFired.Invoke();
+        else if (animator != null)
             animator.SetTrigger(AttackTriggerHash);
 
         // Coroutine handles the hitbox window AND resets _isAttacking.

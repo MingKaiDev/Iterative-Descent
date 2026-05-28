@@ -52,6 +52,13 @@ public class CombatDDAController : MonoBehaviour
     public static readonly string[] TierNames =
         { "Very Easy", "Easy", "Normal", "Hard", "Very Hard" };
 
+    // ── Events ───────────────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Fired whenever the combat DDA tier changes value (0-4).
+    /// Subscribe in OnEnable, unsubscribe in OnDisable to avoid leaks.
+    /// </summary>
+    public static event System.Action<int> OnCombatTierChanged;
+
     // ── Cached References ──────────────────────────────────────────────────
     private PlayerHealth _playerHealth;
     private PlayerCombat _playerCombat;
@@ -146,7 +153,17 @@ public class CombatDDAController : MonoBehaviour
         float rawScore = Mathf.Clamp01(score / totalWeight);
         LastRawScore = rawScore;
         CurrentScore = Mathf.Lerp(rawScore, CurrentScore, scoreSmoothing);
-        CurrentTier  = ScoreToTier(CurrentScore);
+
+        int newTier = ScoreToTier(CurrentScore);
+        if (newTier != CurrentTier)
+        {
+            CurrentTier = newTier;
+            OnCombatTierChanged?.Invoke(newTier);
+        }
+        else
+        {
+            CurrentTier = newTier;
+        }
 
         float accuracy_log = m.LastEncounterShotsFired > 0
             ? (float)m.LastEncounterShotsLanded / m.LastEncounterShotsFired

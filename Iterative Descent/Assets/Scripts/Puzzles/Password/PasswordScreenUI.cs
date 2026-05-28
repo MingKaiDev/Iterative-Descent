@@ -27,9 +27,10 @@ public class PasswordScreenUI : MonoBehaviour
     public float typeSpeed = 0.08f;
 
     [Header("Colours")]
-    public Color defaultColour = Color.white;
-    public Color lockedColour = new Color(0.7f, 0.1f, 0.1f, 1f);
-    public Color unlockedColour = new Color(0.1f, 0.6f, 0.1f, 1f);
+    // Phosphor CRT palette -- matches ARBITEX terminal theme
+    public Color defaultColour  = new Color(0.20f, 1.00f, 0.20f, 1f);  // #33FF33 phosphor green
+    public Color lockedColour   = new Color(0.75f, 0.12f, 0.00f, 1f);  // #BF2000 CRT error red
+    public Color unlockedColour = new Color(0.00f, 1.00f, 0.25f, 1f);  // #00FF41 bright phosphor
 
     private Action _onClose;
 

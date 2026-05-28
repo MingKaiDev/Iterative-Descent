@@ -7,6 +7,7 @@ public class PlayerInteractor : MonoBehaviour
 {
     // ── Pause flag — set by PuzzleProp when UI is open ───────────
     private static bool _paused = false;
+    public static bool IsPaused => _paused;
     public static void Pause() => _paused = true;
     public static void Resume() => _paused = false;
 

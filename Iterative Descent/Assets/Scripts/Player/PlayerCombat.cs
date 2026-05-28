@@ -108,6 +108,13 @@ public class PlayerCombat : MonoBehaviour
     {
         if (_isReloading || _isDead) return;
 
+        // Cancel and block all combat input while any puzzle UI is open.
+        if (PlayerInteractor.IsPaused)
+        {
+            CancelAim();
+            return;
+        }
+
         HandleAimToggle();
         HandleFiring();
         HandleReload();
