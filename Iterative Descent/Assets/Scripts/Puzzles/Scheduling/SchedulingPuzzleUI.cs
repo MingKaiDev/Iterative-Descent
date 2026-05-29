@@ -75,6 +75,19 @@ public class SchedulingPuzzleUI : MonoBehaviour
     [SerializeField] private Button          submitButton;
     [SerializeField] private Button          closeButton;
 
+    [Header("HMI Token Sprites")]
+    [SerializeField] private Sprite tokenSpriteLock;
+    [SerializeField] private Sprite tokenSpriteCam;
+    [SerializeField] private Sprite tokenSpriteVent;
+    [SerializeField] private Sprite tokenSpriteAlarm;
+
+    [Header("HMI Slot Sprites")]
+    [SerializeField] private Sprite slotSpriteEmpty;
+    [SerializeField] private Sprite slotSpriteLock;
+    [SerializeField] private Sprite slotSpriteCam;
+    [SerializeField] private Sprite slotSpriteVent;
+    [SerializeField] private Sprite slotSpriteAlarm;
+
     [Header("Drag")]
     [Tooltip("Root RectTransform of the Canvas. Cards are reparented here while dragged.")]
     [SerializeField] private RectTransform dragLayer;
@@ -97,13 +110,22 @@ public class SchedulingPuzzleUI : MonoBehaviour
     private int   _quantum;
     private int[] _burstTimes;
 
+    // ── Process Names — HMI facility system labels ────────────────────────────
+    private static readonly string[] ProcessNames =
+    {
+        "LOCK_SYS",   // index 0
+        "CAM_ARRAY",  // index 1
+        "VENT_CTRL",  // index 2
+        "ALARM_NET",  // index 3
+    };
+
     // ── Process Colours — stable, one per process index (0–3) ─────────────────
     private static readonly Color[] ProcessColors =
     {
-        new(0.40f, 0.65f, 1.00f), // blue   — P1
-        new(0.45f, 0.85f, 0.50f), // green  — P2
-        new(1.00f, 0.80f, 0.30f), // yellow — P3
-        new(1.00f, 0.45f, 0.45f), // red    — P4
+        new(0.94f, 0.62f, 0.15f), // amber  — LOCK_SYS
+        new(0.11f, 0.62f, 0.46f), // teal   — CAM_ARRAY
+        new(0.50f, 0.46f, 0.87f), // purple — VENT_CTRL
+        new(0.85f, 0.35f, 0.19f), // coral  — ALARM_NET
     };
 
     // ── Unity ─────────────────────────────────────────────────────────────────
@@ -132,6 +154,13 @@ public class SchedulingPuzzleUI : MonoBehaviour
         _onClose  = onClose;
         _attempts = 0;
 
+        // HMI: override submit button label each session to survive any Unity UI resets
+        if (submitButton)
+        {
+            var lbl = submitButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            if (lbl) lbl.text = "[ INJECT OVERRIDE ]";
+        }
+
         // Ensure the popup is hidden at the start of every session.
         // Mirrors the same guard in LinkedListPuzzleUI — see PuzzleFeedbackPopup.Awake()
         // comment for why this is necessary instead of relying on Awake.
@@ -158,15 +187,15 @@ public class SchedulingPuzzleUI : MonoBehaviour
         // ── Instruction text ────────────────────────────────────────────────
         if (instructionText)
         {
-            var procList = string.Join("    ", Enumerable.Range(0, _burstTimes.Length)
+            var procList = string.Join("   ", Enumerable.Range(0, _burstTimes.Length)
                 .Select(i =>
-                    $"<color=#{ColorUtility.ToHtmlStringRGB(ProcessColors[i])}>■</color> " +
-                    $"<b>P{i + 1}</b> BT={_burstTimes[i]}"));
+                    $"<color=#{ColorUtility.ToHtmlStringRGB(ProcessColors[i])}>" +
+                    $"[{ProcessNames[i]}]</color> BT={_burstTimes[i]}"));
 
             instructionText.text =
-                $"<b>Round Robin Scheduling</b>  |  Time Quantum: <b>Q = {_quantum}</b>  |  All arrive at T = 0\n" +
+                $"ARBITEX PROCESS TABLE -- Q={_quantum} -- ALL ARRIVE T=0\n" +
                 $"{procList}\n" +
-                "Drag the correct process token into each time slot.";
+                "Drag process tokens into the correct time slots.";
         }
 
         // ── Compute dynamic slot width ──────────────────────────────────────
@@ -183,6 +212,9 @@ public class SchedulingPuzzleUI : MonoBehaviour
         int[] shuffledSolution = _solution.ToArray();
         ShuffleArray(shuffledSolution);
 
+        // Token sprite lookup — indexed by process (0=LOCK,1=CAM,2=VENT,3=ALARM)
+        Sprite[] tokenSprites = { tokenSpriteLock, tokenSpriteCam, tokenSpriteVent, tokenSpriteAlarm };
+
         for (int i = 0; i < slotCount; i++)
         {
             int pIdx = shuffledSolution[i];
@@ -190,13 +222,21 @@ public class SchedulingPuzzleUI : MonoBehaviour
             var card = go.GetComponent<SchedulingProcessCard>();
             card.Init(
                 processIndex: pIdx,
-                name:         $"P{pIdx + 1}",
+                name:         ProcessNames[pIdx],
                 burstTime:    _burstTimes[pIdx],
                 arrivalTime:  0,
                 color:        ProcessColors[pIdx],
                 master:       this,
                 poolParent:   cardPool,
                 sizeOverride: tokenSize);
+
+            // HMI: swap root Image sprite to the process-specific token sprite
+            if (tokenSprites[pIdx] != null)
+            {
+                var img = go.GetComponent<Image>();
+                if (img) { img.sprite = tokenSprites[pIdx]; img.type = Image.Type.Sliced; img.color = Color.white; }
+            }
+
             _cards.Add(card);
         }
 
@@ -211,7 +251,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
 
             var go   = Instantiate(slotPrefab, slotRow);
             var slot = go.GetComponent<SchedulingSlot>();
-            slot.Init(i, $"T={time}", this);
+            slot.Init(i, $"T={time}", this, slotSpriteEmpty);
 
             // Override the prefab's fixed width to fit all slots in the row
             var rt  = go.GetComponent<RectTransform>();
@@ -250,11 +290,23 @@ public class SchedulingPuzzleUI : MonoBehaviour
         if (slot.IsOccupied)
         {
             SchedulingProcessCard displaced = slot.HeldCard;
-            slot.RemoveCard();
+            slot.RemoveCard(); // resets slot to empty HMI sprite via RemoveCard -> ApplyHmiSprite
             displaced.ReturnToPool();
         }
         slot.PlaceCard(card);
+        // HMI: apply the filled process sprite for this slot
+        slot.ApplyHmiSprite(GetSlotSprite(card.ProcessIndex));
     }
+
+    /// <summary>Returns the HMI filled-slot sprite matching the given process index.</summary>
+    private Sprite GetSlotSprite(int processIndex) => processIndex switch
+    {
+        0 => slotSpriteLock,
+        1 => slotSpriteCam,
+        2 => slotSpriteVent,
+        3 => slotSpriteAlarm,
+        _ => slotSpriteEmpty,
+    };
 
     // ── Solution Validation ───────────────────────────────────────────────────
 
@@ -263,7 +315,8 @@ public class SchedulingPuzzleUI : MonoBehaviour
         // Guard: all slots must be filled before submitting
         if (_slots.Any(s => !s.IsOccupied))
         {
-            feedbackPopup?.Show(false, "Fill <b>all</b> time slots before submitting.");
+            feedbackPopup?.SetWarningSprite(SchedulingFeedbackPopup.WarningState.Amber);
+            feedbackPopup?.Show(false, "SUBMISSION REJECTED -- FILL ALL TIME SLOTS");
             return;
         }
 
@@ -281,26 +334,30 @@ public class SchedulingPuzzleUI : MonoBehaviour
         if (correct)
         {
             OnSchedulingSolved?.Invoke(_attempts);
-            // On correct: show success pop-up; closing the puzzle happens when the player presses OK.
-            feedbackPopup?.Show(true, $"Correct!\n{BuildGanttString()}", onDismiss: ClosePanel);
+            feedbackPopup?.SetWarningSprite(SchedulingFeedbackPopup.WarningState.Ok);
+            feedbackPopup?.Show(true, "OVERRIDE ACCEPTED -- LOCK_SYS DISABLED", onDismiss: ClosePanel);
         }
         else
         {
             _attempts++;
 
-            // Only reveal the correct answer after the player has submitted wrong twice.
-            // Before that threshold: encourage them to keep trying without spoiling the answer.
             if (_attempts > 2)
             {
-                string exp = string.Join(" → ", _solution.Select(i => $"P{i + 1}"));
+                // Lockout: reveal correct sequence
+                string exp = string.Join(" -> ", _solution.Select(i => ProcessNames[i]));
+                feedbackPopup?.SetWarningSprite(SchedulingFeedbackPopup.WarningState.Red);
                 feedbackPopup?.Show(false,
-                    $"Wrong answer — keep trying!  (Attempt {_attempts})\n" +
-                    $"Correct RR:  {exp}");
+                    $"LOCKOUT INITIATED -- DISPLAYING AUTHORISED SEQUENCE\n{exp}");
+            }
+            else if (_attempts == 2)
+            {
+                feedbackPopup?.SetWarningSprite(SchedulingFeedbackPopup.WarningState.Amber);
+                feedbackPopup?.Show(false, "OVERRIDE REJECTED -- FINAL ATTEMPT AUTHORISED");
             }
             else
             {
-                feedbackPopup?.Show(false,
-                    $"Wrong answer — try again!  (Attempt {_attempts})");
+                feedbackPopup?.SetWarningSprite(SchedulingFeedbackPopup.WarningState.Amber);
+                feedbackPopup?.Show(false, "OVERRIDE REJECTED -- RECHECK SEQUENCE");
             }
         }
     }
@@ -412,8 +469,8 @@ public class SchedulingPuzzleUI : MonoBehaviour
         {
             int p        = _solution[i];
             int duration = Mathf.Min(remaining[p], _quantum);
-            if (i > 0) sb.Append(" → "); // →
-            sb.Append($"P{p + 1}[{time}–{time + duration}]"); // –
+            if (i > 0) sb.Append(" -> ");
+            sb.Append($"{ProcessNames[p]}[{time}-{time + duration}]");
             remaining[p] -= duration;
             time          += duration;
         }

@@ -26,7 +26,7 @@ public class StackPuzzleProp : MonoBehaviour, IInteractable
     public GameObject stackOverlay;
 
     // IInteractable
-    public string InteractLabel => "Access Terminal";
+    public string InteractLabel => "Access PDU Panel";
 
     private bool _puzzleOpen;
 

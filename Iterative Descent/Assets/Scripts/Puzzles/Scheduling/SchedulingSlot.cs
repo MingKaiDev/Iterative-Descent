@@ -29,14 +29,23 @@ public class SchedulingSlot : MonoBehaviour, IDropHandler
 
     // ── Private ───────────────────────────────────────────────────────────────
     private SchedulingPuzzleUI _master;
+    private Sprite             _hmiEmptySprite; // cached from Init() for auto-reset on RemoveCard
 
     // ── Initialisation ────────────────────────────────────────────────────────
 
     /// <summary>Called by SchedulingPuzzleUI.GeneratePuzzle().</summary>
-    public void Init(int index, string label, SchedulingPuzzleUI master)
+    /// <param name="hmiEmptySprite">
+    ///   Optional HMI slot sprite shown when empty. Stored and re-applied automatically
+    ///   in RemoveCard() so the slot resets its sprite whenever a card is dragged out.
+    /// </param>
+    public void Init(int index, string label, SchedulingPuzzleUI master, Sprite hmiEmptySprite = null)
     {
-        SlotIndex = index;
-        _master   = master;
+        SlotIndex       = index;
+        _master         = master;
+        _hmiEmptySprite = hmiEmptySprite;
+
+        if (_hmiEmptySprite != null)
+            ApplyHmiSprite(_hmiEmptySprite);
 
         // Auto-find the label TMP if it wasn't wired in the prefab Inspector.
         // GetComponentInChildren is safe here because Init() runs before any card
@@ -93,6 +102,25 @@ public class SchedulingSlot : MonoBehaviour, IDropHandler
             HeldCard             = null;
         }
         SetVisuals(occupied: false, color: Color.white);
+        ApplyHmiSprite(_hmiEmptySprite); // reset to empty HMI sprite (no-op if null)
+    }
+
+    // ── HMI Sprite ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Swaps the root Image sprite to the supplied HMI sprite.
+    /// Called by SchedulingPuzzleUI after PlaceCard (filled variant) and by
+    /// RemoveCard (empty variant) so the slot colour matches the process.
+    /// </summary>
+    public void ApplyHmiSprite(Sprite s)
+    {
+        if (s == null) return;
+        var img = GetComponent<Image>();
+        if (img == null) return;
+        img.sprite          = s;
+        img.type            = Image.Type.Sliced;
+        img.color           = Color.white;
+        img.preserveAspect  = false;
     }
 
     // ── Visuals ───────────────────────────────────────────────────────────────
