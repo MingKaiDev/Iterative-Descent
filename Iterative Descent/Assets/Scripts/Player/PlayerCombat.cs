@@ -177,7 +177,6 @@ public class PlayerCombat : MonoBehaviour
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out RaycastHit hit, range, shootableLayers, QueryTriggerInteraction.Ignore))
         {
-            // Damage any IDamageable on the hit object or its parents
             IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
             if (damageable != null)
             {

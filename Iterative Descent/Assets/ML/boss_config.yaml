@@ -1,0 +1,62 @@
+behaviors:
+  BossAgent:
+    trainer_type: ppo
+
+    hyperparameters:
+      # Batch size: number of experiences per gradient update.
+      # 512 is a reasonable starting point for a discrete action boss with 18 obs.
+      batch_size: 512
+
+      # Buffer: how many steps to collect before any update.
+      # 4096 = ~8 batches worth of data per update cycle.
+      buffer_size: 4096
+
+      # Learning rate: start conservative. Too high = unstable Q divergence.
+      learning_rate: 3.0e-4
+
+      # Entropy bonus -- keeps the policy from collapsing to a single attack too early.
+      # Lower this over time if the boss stops exploring after good convergence.
+      beta: 0.005
+
+      # PPO clip range. 0.2 is the standard default.
+      epsilon: 0.2
+
+      # GAE lambda -- controls bias/variance tradeoff in advantage estimation.
+      lambd: 0.95
+
+      # Gradient steps per buffer. More epochs = more learning per rollout but risks overfitting.
+      num_epoch: 3
+
+      # Decay learning rate linearly to zero over max_steps.
+      learning_rate_schedule: linear
+
+    network_settings:
+      # Normalize observations -- important because observation scales are mixed
+      # (normalized HP is 0-1, angular velocity is -1..1, cooldown flags are binary).
+      normalize: true
+
+      # 2 layers of 256 hidden units. Increase to 3 x 512 if policy plateaus after 1M steps.
+      hidden_units: 256
+      num_layers: 2
+
+    reward_signals:
+      extrinsic:
+        # Standard discount factor. 0.99 = boss values long-term kills over short-term pokes.
+        gamma: 0.99
+        strength: 1.0
+
+    # Steps between TensorBoard summaries. Lower for more granular loss curves.
+    summary_freq: 10000
+
+    # Total environment steps before training stops.
+    # 2M is enough to see whether the policy is learning a strategy.
+    # Extend to 5M if results are noisy but trending upward.
+    max_steps: 2000000
+
+    # Steps per rollout buffer before update. 128 steps at decision period 5
+    # = ~25 actual decisions per rollout segment.
+    time_horizon: 128
+
+    # Keep checkpoints every 200k steps so you can roll back if policy collapses.
+    keep_checkpoints: 5
+    checkpoint_interval: 200000

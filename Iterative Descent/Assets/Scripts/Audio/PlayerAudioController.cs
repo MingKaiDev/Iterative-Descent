@@ -1,9 +1,12 @@
 using UnityEngine;
 
 /// <summary>
-/// Handles all player weapon audio by listening to PlayerCombat's static events.
-/// Attach this to the same GameObject as PlayerCombat (the Player prefab).
-/// Uses PlayOneShot for the pistol shot so rapid fire never cuts off mid-sound.
+/// Handles all player audio: weapon SFX and footsteps.
+/// Attach to the same GameObject as PlayerMovement and PlayerCombat.
+///
+/// Footstep sounds are triggered by Animation Events on the walk/run clips:
+///   Walk animation -> calls PlayWalkStep()
+///   Run animation  -> calls PlayRunStep()
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class PlayerAudioController : MonoBehaviour
@@ -20,6 +23,16 @@ public class PlayerAudioController : MonoBehaviour
     [Range(0f, 1f)]
     public float reloadVolume = 0.8f;
 
+    [Header("Footstep SFX")]
+    [Tooltip("Drag Player Walk footstep clip here.")]
+    public AudioClip walkStepClip;
+
+    [Tooltip("Drag Player Run footstep clip here.")]
+    public AudioClip runStepClip;
+
+    [Range(0f, 1f)]
+    public float footstepVolume = 0.6f;
+
     // ─── Private ────────────────────────────────────────────────────────────────
     private AudioSource _audioSource;
 
@@ -28,23 +41,20 @@ public class PlayerAudioController : MonoBehaviour
     void Awake()
     {
         _audioSource = GetComponent<AudioSource>();
-
-        // Configure: spatial 2D is fine for first-person-feel sounds on the player.
-        // Set to 0 so the volume is consistent regardless of camera distance.
         _audioSource.spatialBlend = 0f;
         _audioSource.playOnAwake  = false;
     }
 
     void OnEnable()
     {
-        PlayerCombat.OnFired         += HandleFired;
-        PlayerCombat.OnReloadStart   += HandleReloadStart;
+        PlayerCombat.OnFired       += HandleFired;
+        PlayerCombat.OnReloadStart += HandleReloadStart;
     }
 
     void OnDisable()
     {
-        PlayerCombat.OnFired         -= HandleFired;
-        PlayerCombat.OnReloadStart   -= HandleReloadStart;
+        PlayerCombat.OnFired       -= HandleFired;
+        PlayerCombat.OnReloadStart -= HandleReloadStart;
     }
 
     // ─── Handlers ───────────────────────────────────────────────────────────────
@@ -70,5 +80,21 @@ public class PlayerAudioController : MonoBehaviour
         // Stop any previous reload sound (shouldn't overlap) then play.
         _audioSource.Stop();
         _audioSource.PlayOneShot(pistolReloadClip, reloadVolume);
+    }
+
+    // ─── Footstep Handlers (called by Animation Events) ─────────────────────────
+
+    /// <summary>Called by an Animation Event on the walk animation clip at each footfall.</summary>
+    public void PlayWalkStep()
+    {
+        if (walkStepClip == null) return;
+        _audioSource.PlayOneShot(walkStepClip, footstepVolume);
+    }
+
+    /// <summary>Called by an Animation Event on the run animation clip at each footfall.</summary>
+    public void PlayRunStep()
+    {
+        if (runStepClip == null) return;
+        _audioSource.PlayOneShot(runStepClip, footstepVolume);
     }
 }

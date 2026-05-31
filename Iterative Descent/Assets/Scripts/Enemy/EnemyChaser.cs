@@ -43,8 +43,9 @@ public class EnemyChaser : EnemyBase
     private enum State { Idle, Chasing, Attacking, Dead }
     private State _state = State.Idle;
 
-    private EnemyAttack _attack;
-    private float       _pathTimer;
+    private EnemyAttack      _attack;
+    private EnemyChaserAudio _audio;
+    private float            _pathTimer;
 
     // Cache animator hashes once — slightly faster than string lookups each frame
     private int _speedHash;
@@ -57,6 +58,7 @@ public class EnemyChaser : EnemyBase
         base.Awake(); // sets up _agent, _animator, _currentHealth
 
         _attack = GetComponent<EnemyAttack>();
+        _audio  = GetComponent<EnemyChaserAudio>(); // null-safe; optional component
 
         _agent.speed            = chaseSpeed;
         // Stop slightly before the attack threshold so the agent doesn't
@@ -97,6 +99,8 @@ public class EnemyChaser : EnemyBase
         _state = State.Dead;
         SetAnimBool(_deadHash, true);
         SetAnimFloat(_speedHash, 0f);
+
+        _audio?.PlayDeath();
 
         // TODO: ragdoll, death VFX, score reward, notify GameManager
         Destroy(gameObject, 3f);
