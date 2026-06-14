@@ -2,21 +2,36 @@
   "questions": [
     {
       "question": "What is the time complexity of accessing an element by index in an array?",
-      "answers": ["O(1)", "O(n)", "O(log n)", "O(n^2)"],
+      "answers": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 0,
       "conceptTag": "arrays_and_lists",
       "difficulty": 1
     },
     {
       "question": "What is the time complexity of searching for an element in an unsorted array of n elements?",
-      "answers": ["O(1)", "O(log n)", "O(n log n)", "O(n)"],
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n log n)",
+        "O(n)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "arrays_and_lists",
       "difficulty": 1
     },
     {
       "question": "What is the time complexity of inserting an element at the beginning of an unsorted array?",
-      "answers": ["O(1)", "O(log n)", "O(n)", "O(n^2)"],
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "arrays_and_lists",
       "difficulty": 2
@@ -47,7 +62,12 @@
     },
     {
       "question": "What is the time complexity of inserting a new node at the head of a singly linked list?",
-      "answers": ["O(n)", "O(log n)", "O(n^2)", "O(1)"],
+      "answers": [
+        "O(n)",
+        "O(log n)",
+        "O(n^2)",
+        "O(1)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "linked_lists",
       "difficulty": 1
@@ -66,56 +86,96 @@
     },
     {
       "question": "What is the time complexity of finding the k-th element in a singly linked list?",
-      "answers": ["O(1)", "O(n)", "O(log n)", "O(k log n)"],
+      "answers": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(k log n)"
+      ],
       "correctAnswerIndex": 1,
       "conceptTag": "linked_lists",
       "difficulty": 2
     },
     {
       "question": "Given a direct pointer to a node in a doubly linked list, what is the time complexity of deleting that node?",
-      "answers": ["O(n)", "O(log n)", "O(n^2)", "O(1)"],
+      "answers": [
+        "O(n)",
+        "O(log n)",
+        "O(n^2)",
+        "O(1)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "linked_lists",
       "difficulty": 3
     },
     {
       "question": "What is the time complexity of reversing a singly linked list in-place?",
-      "answers": ["O(1)", "O(log n)", "O(n)", "O(n^2)"],
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "linked_lists",
       "difficulty": 3
     },
     {
       "question": "What is the time complexity of binary search on a sorted array of n elements?",
-      "answers": ["O(n)", "O(n^2)", "O(log n)", "O(1)"],
+      "answers": [
+        "O(n)",
+        "O(n^2)",
+        "O(log n)",
+        "O(1)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "complexity_big_o",
       "difficulty": 1
     },
     {
       "question": "An algorithm with two nested loops each iterating over n elements has what time complexity?",
-      "answers": ["O(n)", "O(2n)", "O(n log n)", "O(n^2)"],
+      "answers": [
+        "O(n)",
+        "O(2n)",
+        "O(n log n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
     {
       "question": "What is the worst-case time complexity of bubble sort?",
-      "answers": ["O(n log n)", "O(n^2)", "O(n)", "O(log n)"],
+      "answers": [
+        "O(n log n)",
+        "O(n^2)",
+        "O(n)",
+        "O(log n)"
+      ],
       "correctAnswerIndex": 1,
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
     {
       "question": "Which of these time complexities is the most efficient for large values of n?",
-      "answers": ["O(n^2)", "O(n log n)", "O(n)", "O(log n)"],
+      "answers": [
+        "O(n^2)",
+        "O(n log n)",
+        "O(n)",
+        "O(log n)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
     {
       "question": "A recursive function calls itself once per element and does O(1) work each call. What is its time complexity?",
-      "answers": ["O(1)", "O(log n)", "O(n)", "O(n^2)"],
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "complexity_big_o",
       "difficulty": 3
@@ -182,7 +242,12 @@
     },
     {
       "question": "Which data structure follows Last In First Out (LIFO) ordering?",
-      "answers": ["Queue", "Heap", "Stack", "Linked List"],
+      "answers": [
+        "Queue",
+        "Heap",
+        "Stack",
+        "Linked List"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "stacks_and_queues",
       "difficulty": 1
@@ -201,14 +266,24 @@
     },
     {
       "question": "Which data structure would you use to implement an undo feature in a text editor?",
-      "answers": ["Queue", "Stack", "Hash Table", "Graph"],
+      "answers": [
+        "Queue",
+        "Stack",
+        "Hash Table",
+        "Graph"
+      ],
       "correctAnswerIndex": 1,
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
     },
     {
       "question": "Which data structure is most appropriate for implementing Breadth First Search (BFS)?",
-      "answers": ["Stack", "Priority Queue", "Queue", "Linked List"],
+      "answers": [
+        "Stack",
+        "Priority Queue",
+        "Queue",
+        "Linked List"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
@@ -263,7 +338,12 @@
     },
     {
       "question": "Which of the following is shared between all threads in the same process?",
-      "answers": ["Stack", "Program counter", "Register set", "Heap memory"],
+      "answers": [
+        "Stack",
+        "Program counter",
+        "Register set",
+        "Heap memory"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "processes_threads",
       "difficulty": 3
@@ -282,7 +362,12 @@
     },
     {
       "question": "What is the average-case time complexity of a lookup in a hash table?",
-      "answers": ["O(log n)", "O(n)", "O(1)", "O(n^2)"],
+      "answers": [
+        "O(log n)",
+        "O(n)",
+        "O(1)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "hash_tables",
       "difficulty": 1
@@ -349,7 +434,12 @@
     },
     {
       "question": "What is the time complexity of searching in a balanced Binary Search Tree?",
-      "answers": ["O(1)", "O(log n)", "O(n)", "O(n^2)"],
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 1,
       "conceptTag": "trees_bst",
       "difficulty": 2
@@ -368,28 +458,48 @@
     },
     {
       "question": "Which tree traversal visits nodes in sorted ascending order when applied to a BST?",
-      "answers": ["Pre-order", "Post-order", "Level-order", "In-order"],
+      "answers": [
+        "Pre-order",
+        "Post-order",
+        "Level-order",
+        "In-order"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "trees_bst",
       "difficulty": 2
     },
     {
       "question": "What is the worst-case time complexity of insertion into an unbalanced BST?",
-      "answers": ["O(log n)", "O(1)", "O(n)", "O(n^2)"],
+      "answers": [
+        "O(log n)",
+        "O(1)",
+        "O(n)",
+        "O(n^2)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "trees_bst",
       "difficulty": 3
     },
     {
       "question": "What is the best-case time complexity of insertion sort?",
-      "answers": ["O(n^2)", "O(n log n)", "O(log n)", "O(n)"],
+      "answers": [
+        "O(n^2)",
+        "O(n log n)",
+        "O(log n)",
+        "O(n)"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
     {
       "question": "Which sorting algorithm always performs O(n^2) comparisons regardless of input order?",
-      "answers": ["Insertion sort", "Merge sort", "Selection sort", "Quicksort"],
+      "answers": [
+        "Insertion sort",
+        "Merge sort",
+        "Selection sort",
+        "Quicksort"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "basic_sorts",
       "difficulty": 2
@@ -408,16 +518,86 @@
     },
     {
       "question": "What is the worst-case time complexity of quicksort?",
-      "answers": ["O(n log n)", "O(n)", "O(n^2)", "O(log n)"],
+      "answers": [
+        "O(n log n)",
+        "O(n)",
+        "O(n^2)",
+        "O(log n)"
+      ],
       "correctAnswerIndex": 2,
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
     {
       "question": "Which sorting algorithm is most efficient for sorting a nearly-sorted array?",
-      "answers": ["Selection sort", "Merge sort", "Quicksort", "Insertion sort"],
+      "answers": [
+        "Selection sort",
+        "Merge sort",
+        "Quicksort",
+        "Insertion sort"
+      ],
       "correctAnswerIndex": 3,
       "conceptTag": "basic_sorts",
+      "difficulty": 3
+    },
+    {
+      "question": "Which data structure does BFS use to track nodes to visit?",
+      "answers": [
+        "Queue",
+        "Stack",
+        "Heap",
+        "Linked list"
+      ],
+      "correctAnswerIndex": 0,
+      "conceptTag": "bfs_dfs",
+      "difficulty": 1
+    },
+    {
+      "question": "Which data structure does DFS use when implemented iteratively?",
+      "answers": [
+        "Stack",
+        "Queue",
+        "Array",
+        "Hash table"
+      ],
+      "correctAnswerIndex": 0,
+      "conceptTag": "bfs_dfs",
+      "difficulty": 1
+    },
+    {
+      "question": "BFS on an unweighted graph is guaranteed to find which of the following?",
+      "answers": [
+        "The shortest path between two nodes",
+        "The deepest node in the graph",
+        "All cycles in the graph",
+        "The minimum spanning tree"
+      ],
+      "correctAnswerIndex": 0,
+      "conceptTag": "bfs_dfs",
+      "difficulty": 2
+    },
+    {
+      "question": "Given a tree where the root has two children A and B, A has children C and D, and B has child E. What is the BFS traversal order starting from root?",
+      "answers": [
+        "Root, A, B, C, D, E",
+        "Root, A, C, D, B, E",
+        "Root, B, E, A, C, D",
+        "Root, A, B, E, C, D"
+      ],
+      "correctAnswerIndex": 0,
+      "conceptTag": "bfs_dfs",
+      "difficulty": 2
+    },
+    {
+      "question": "For the same tree (root -> A, B; A -> C, D; B -> E), what is a valid DFS pre-order traversal?",
+      "answers": [
+        "Root, A, C, D, B, E",
+        "Root, A, B, C, D, E",
+        "C, D, A, E, B, Root",
+        "Root, B, E, A, C, D"
+      ],
+      "correctAnswerIndex": 0,
+      "conceptTag": "bfs_dfs",
       "difficulty": 3
     }
   ]

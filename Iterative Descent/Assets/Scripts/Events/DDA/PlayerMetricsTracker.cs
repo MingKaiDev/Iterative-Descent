@@ -209,6 +209,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved += HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved           += HandleStackSolved;
+        DrainPuzzleUI.OnDrainSolved           += HandleDrainSolved;
     }
 
     private void OnDisable()
@@ -218,6 +219,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved           -= HandleStackSolved;
+        DrainPuzzleUI.OnDrainSolved           -= HandleDrainSolved;
     }
 
     private void Update()
@@ -373,6 +375,59 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Stack puzzle solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageStackWrongAttempts:F1}");
+    }
+
+    // ── Drain Puzzle API ───────────────────────────────────────────────────
+
+    /// <summary>Last drain puzzle wrong attempts this session.</summary>
+    public int   LastDrainWrongAttempts  { get; private set; }
+    /// <summary>Last drain puzzle solve time in seconds.</summary>
+    public float LastDrainTime           { get; private set; }
+    /// <summary>Total drain puzzles solved this session.</summary>
+    public int   TotalDrainSolved        { get; private set; }
+    /// <summary>Running average wrong attempts per drain puzzle.</summary>
+    public float AverageDrainWrongAttempts { get; private set; }
+    /// <summary>Running average solve time per drain puzzle.</summary>
+    public float AverageDrainTime        { get; private set; }
+
+    private float _drainStartTime;
+    private bool  _drainInProgress;
+
+    /// <summary>Call from DrainPuzzleUI.InitPuzzle() -- do NOT call from the prop too.</summary>
+    public void NotifyDrainStarted()
+    {
+        _drainStartTime   = Time.realtimeSinceStartup;
+        _drainInProgress  = true;
+        Debug.Log("[Metrics] Drain puzzle started.");
+    }
+
+    private void HandleDrainSolved(int wrongAttempts)
+    {
+        float timeTaken = _drainInProgress
+            ? Time.realtimeSinceStartup - _drainStartTime
+            : 0f;
+
+        LastDrainWrongAttempts = wrongAttempts;
+        LastDrainTime          = timeTaken;
+        _drainInProgress       = false;
+        TotalDrainSolved++;
+
+        AverageDrainWrongAttempts = TotalDrainSolved <= 1
+            ? wrongAttempts
+            : (AverageDrainWrongAttempts * (TotalDrainSolved - 1) + wrongAttempts)
+              / TotalDrainSolved;
+
+        AverageDrainTime = TotalDrainSolved <= 1
+            ? timeTaken
+            : (AverageDrainTime * (TotalDrainSolved - 1) + timeTaken)
+              / TotalDrainSolved;
+
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.BfsDfs, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.BfsDfs, true);
+
+        Debug.Log($"[Metrics] Drain puzzle solved | Wrong attempts: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s | Avg attempts: {AverageDrainWrongAttempts:F1}");
     }
 
     // ── Linked List API ────────────────────────────────────────────────────
@@ -535,6 +590,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageStackWrongAttempts = 0f;
         AverageStackTime          = 0f;
         _stackInProgress          = false;
+
+        // Drain
+        LastDrainWrongAttempts    = 0;
+        LastDrainTime             = 0f;
+        TotalDrainSolved          = 0;
+        AverageDrainWrongAttempts = 0f;
+        AverageDrainTime          = 0f;
+        _drainInProgress          = false;
 
         // Combat
         ShotsFired               = 0;
