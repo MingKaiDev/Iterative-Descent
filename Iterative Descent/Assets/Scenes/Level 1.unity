@@ -159912,6 +159912,8 @@ GameObject:
   - component: {fileID: 1039256812}
   - component: {fileID: 1039256816}
   - component: {fileID: 1039256815}
+  - component: {fileID: 1039256818}
+  - component: {fileID: 1039256817}
   m_Layer: 0
   m_Name: DROID_Boss
   m_TagString: Untagged
@@ -160033,6 +160035,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
   maxHealth: 500
   phaseThreshold: 0.5
+--- !u!114 &1039256817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039256810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06d1ec491046213469eff46f56ac364e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlashAttack
+  cooldown: 3
+  attackTimeoutDuration: 3
+  damage: 25
+  hitRange: 2.5
+  hitHalfAngle: 70
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
+--- !u!114 &1039256818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039256810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9303493dc7836474f8c9e9f512bb9643, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossAttackRegistry
+  attackDecisionInterval: 2
 --- !u!1 &1039532905
 GameObject:
   m_ObjectHideFlags: 0

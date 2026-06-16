@@ -48,6 +48,7 @@ public class BossStateMachine : MonoBehaviour
     // ─── Animator Parameter Hashes ──────────────────────────────────────────────
     private static readonly int SpeedHash    = Animator.StringToHash("speed");
     private static readonly int IsPhase2Hash = Animator.StringToHash("isPhase2");
+    private static readonly int IsDeadHash   = Animator.StringToHash("isDead");
 
     // ─── Component References ────────────────────────────────────────────────────
     private NavMeshAgent _agent;
@@ -149,6 +150,7 @@ public class BossStateMachine : MonoBehaviour
 
             case BossState.Dead:
                 _agent.ResetPath();
+                _animator.SetBool(IsDeadHash, true);
                 // Safe to fully disable on death -- we never re-enable after this.
                 _agent.enabled = false;
                 break;
