@@ -52,7 +52,7 @@ public class DoorController : MonoBehaviour
         _closedLocalPos = doorMesh.localPosition;
 
         // Derive open state
-        _openLocalRot = _closedLocalRot * Quaternion.Euler(0f, openAngle, 0f);
+        _openLocalRot = _closedLocalRot * Quaternion.Euler(1f, 1f, openAngle);
         _openLocalPos = _closedLocalPos + openPositionOffset;
     }
 
