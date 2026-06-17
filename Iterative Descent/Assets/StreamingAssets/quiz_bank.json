@@ -599,6 +599,66 @@
       "correctAnswerIndex": 0,
       "conceptTag": "bfs_dfs",
       "difficulty": 3
-    }
+    },
+{
+  "question": "Which port does HTTP use by default?",
+  "answers": [
+    "443",
+    "22",
+    "80",
+    "21"
+  ],
+  "correctAnswerIndex": 2,
+  "conceptTag": "networking_ports",
+  "difficulty": 1
+},
+{
+  "question": "A web server accepts encrypted HTTPS connections. Which port does it listen on by default?",
+  "answers": [
+    "80",
+    "443",
+    "8080",
+    "22"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "networking_ports",
+  "difficulty": 1
+},
+{
+  "question": "You need to securely log in to a remote Linux server from the command line. Which port must be open on the server?",
+  "answers": [
+    "23",
+    "80",
+    "21",
+    "22"
+  ],
+  "correctAnswerIndex": 3,
+  "conceptTag": "networking_ports",
+  "difficulty": 2
+},
+{
+  "question": "An old network device uses Telnet. Why is Telnet considered insecure compared to SSH?",
+  "answers": [
+    "Telnet uses a higher port number which is easier to block",
+    "Telnet transmits data in plaintext with no encryption",
+    "Telnet requires a password but SSH does not",
+    "Telnet is slower because it uses port 23 instead of 22"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "networking_ports",
+  "difficulty": 2
+},
+{
+  "question": "A mail server sends outgoing email to other servers. Which protocol and port does it use for this?",
+  "answers": [
+    "POP3 on port 110",
+    "IMAP on port 143",
+    "SMTP on port 25",
+    "FTP on port 21"
+  ],
+  "correctAnswerIndex": 2,
+  "conceptTag": "networking_ports",
+  "difficulty": 3
+}
   ]
 }

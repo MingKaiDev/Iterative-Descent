@@ -85,6 +85,9 @@ public class BayesianKnowledgeTracker
     public const string VersionControl         = "version_control";
     public const string CliDebugging           = "cli_debugging";
 
+    // Category 7 -- Networking (added Story 15)
+    public const string NetworkingPorts        = "networking_ports";
+
     // ── Default BKT Parameters ────────────────────────────────────────────────
     // Applied when a concept is encountered that has no ConceptProfile asset.
 

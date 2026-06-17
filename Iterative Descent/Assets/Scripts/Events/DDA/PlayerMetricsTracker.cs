@@ -210,6 +210,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved           += HandleStackSolved;
         DrainPuzzleUI.OnDrainSolved           += HandleDrainSolved;
+        MatchingPuzzleUI.OnMatchingSolved     += HandleMatchingSolved;
     }
 
     private void OnDisable()
@@ -220,6 +221,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved           -= HandleStackSolved;
         DrainPuzzleUI.OnDrainSolved           -= HandleDrainSolved;
+        MatchingPuzzleUI.OnMatchingSolved     -= HandleMatchingSolved;
     }
 
     private void Update()
@@ -479,6 +481,56 @@ public class PlayerMetricsTracker : MonoBehaviour
         Debug.Log($"[Metrics] Linked list solved | Wrong attempts: {wrongAttempts} | " +
                   $"Total submits: {LastLinkedListTotalSubmits} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageLinkedListWrongAttempts:F1}");
+    }
+
+    // ── Matching Puzzle API ───────────────────────────────────────────────────
+
+    /// <summary>Total matching puzzles solved this session.</summary>
+    public int   TotalMatchingSolved           { get; private set; }
+    /// <summary>Wrong submissions on the last matching puzzle.</summary>
+    public int   LastMatchingWrongSubmissions   { get; private set; }
+    /// <summary>Solve time for the last matching puzzle (seconds).</summary>
+    public float LastMatchingTime              { get; private set; }
+    /// <summary>Running average wrong submissions per matching puzzle.</summary>
+    public float AverageMatchingWrongSubmissions { get; private set; }
+
+    private float _matchingStartTime;
+    private bool  _matchingInProgress;
+
+    /// <summary>
+    /// Called from MatchingPuzzleUI.InitPuzzle() -- do NOT call from the prop too.
+    /// Time.timeScale == 0 while the puzzle is open, so we use realtimeSinceStartup.
+    /// </summary>
+    public void NotifyMatchingStarted()
+    {
+        _matchingStartTime   = Time.realtimeSinceStartup;
+        _matchingInProgress  = true;
+        Debug.Log("[Metrics] Matching puzzle started.");
+    }
+
+    private void HandleMatchingSolved(int wrongSubmissions)
+    {
+        float timeTaken = _matchingInProgress
+            ? Time.realtimeSinceStartup - _matchingStartTime
+            : 0f;
+
+        LastMatchingWrongSubmissions = wrongSubmissions;
+        LastMatchingTime             = timeTaken;
+        _matchingInProgress          = false;
+        TotalMatchingSolved++;
+
+        AverageMatchingWrongSubmissions = TotalMatchingSolved <= 1
+            ? wrongSubmissions
+            : (AverageMatchingWrongSubmissions * (TotalMatchingSolved - 1) + wrongSubmissions)
+              / TotalMatchingSolved;
+
+        // BKT update -- replay each wrong submission then the correct solve
+        for (int i = 0; i < wrongSubmissions; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkingPorts, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkingPorts, true);
+
+        Debug.Log($"[Metrics] Matching puzzle solved | Wrong submissions: {wrongSubmissions} | " +
+                  $"Time: {timeTaken:F1}s | Avg submissions: {AverageMatchingWrongSubmissions:F1}");
     }
 
     // ── Combat API ────────────────────────────────────────────────────────────

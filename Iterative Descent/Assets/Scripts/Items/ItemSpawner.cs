@@ -179,6 +179,18 @@ public class ItemSpawner : MonoBehaviour
         return drop;
     }
 
+    // ─── Public Guaranteed Spawn ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Unconditionally spawns one ammo box AND one health kit at the given position.
+    /// Use for puzzle reward terminals where the drop is not chance-based.
+    /// </summary>
+    public void GuaranteedSpawn(Vector3 position)
+    {
+        SpawnItem(ammoBoxPrefab,   position);
+        SpawnItem(healthKitPrefab, position + Vector3.right * 0.5f);
+    }
+
     // ─── Modifier Helpers ─────────────────────────────────────────────────────
 
     /// <summary>
