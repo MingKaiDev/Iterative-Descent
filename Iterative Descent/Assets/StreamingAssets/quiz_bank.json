@@ -57,7 +57,7 @@
         "Finding the last element"
       ],
       "correctAnswerIndex": 2,
-      "conceptTag": "arrays_and_lists",
+      "conceptTag": "linked_lists",
       "difficulty": 3
     },
     {
@@ -195,10 +195,10 @@
     {
       "question": "What does throughput measure in the context of CPU scheduling?",
       "answers": [
-        "The percentage of time the CPU is not idle",
-        "The number of processes completed per unit of time",
-        "The time from process creation to first execution",
-        "The total time a process spends waiting in the ready queue"
+        "CPU utilisation (% of time not idle)",
+        "Processes completed per unit of time",
+        "Time from process creation to first execution",
+        "Time spent waiting in the ready queue"
       ],
       "correctAnswerIndex": 1,
       "conceptTag": "cpu_scheduling",
@@ -207,10 +207,10 @@
     {
       "question": "What is the difference between preemptive and non-preemptive scheduling?",
       "answers": [
-        "Preemptive scheduling only works on multi-core CPUs",
-        "Non-preemptive scheduling can forcibly stop a running process; preemptive cannot",
-        "Preemptive scheduling can interrupt a running process; non-preemptive cannot",
-        "They are identical in behaviour but differ in implementation"
+        "Preemptive only works on multi-core CPUs",
+        "Only non-preemptive can interrupt a running process",
+        "Only preemptive can interrupt a running process",
+        "They behave identically but differ in implementation"
       ],
       "correctAnswerIndex": 2,
       "conceptTag": "cpu_scheduling",
@@ -231,9 +231,9 @@
     {
       "question": "What is the main disadvantage of First Come First Served (FCFS) scheduling?",
       "answers": [
-        "It requires knowing the burst time of each process in advance",
+        "Requires knowing burst time of each process in advance",
         "It can cause starvation of long processes",
-        "Short processes stuck behind a long process leads to high average wait time",
+        "Long processes block shorter ones, raising average wait time",
         "It does not support multiple CPU cores"
       ],
       "correctAnswerIndex": 2,
@@ -256,7 +256,7 @@
       "question": "What is a stack overflow in the context of a call stack?",
       "answers": [
         "Writing past the end of an array on the heap",
-        "Running out of stack space due to too many nested or recursive function calls",
+        "Exhausting the call stack from too many nested or recursive calls",
         "A queue becoming larger than its allocated buffer",
         "An integer exceeding its maximum value"
       ],
@@ -277,14 +277,14 @@
       "difficulty": 2
     },
     {
-      "question": "Which data structure is most appropriate for implementing Breadth First Search (BFS)?",
+      "question": "A printer receives jobs from multiple users. Which data structure ensures jobs are printed in the order they were submitted?",
       "answers": [
         "Stack",
-        "Priority Queue",
         "Queue",
-        "Linked List"
+        "Hash Table",
+        "Binary Tree"
       ],
-      "correctAnswerIndex": 2,
+      "correctAnswerIndex": 1,
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
     },
@@ -298,13 +298,25 @@
       ],
       "correctAnswerIndex": 2,
       "conceptTag": "stacks_and_queues",
-      "difficulty": 4
+      "difficulty": 3
+    },
+    {
+      "question": "What is a process in an operating system?",
+      "answers": [
+        "A sequence of instructions stored on disk",
+        "A program in execution with its own memory space",
+        "A shared memory region between two programs",
+        "A function call within a running program"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "processes_threads",
+      "difficulty": 1
     },
     {
       "question": "What is the key difference between a process and a thread?",
       "answers": [
-        "Threads have their own memory space; processes share memory",
-        "Processes have their own memory space; threads share the process memory",
+        "Threads have separate memory; processes share memory",
+        "Processes have separate memory; threads share it",
         "Threads can only run on a single CPU core",
         "Processes are faster to create than threads"
       ],
@@ -317,7 +329,7 @@
       "answers": [
         "Switching between different programming languages",
         "Reloading the OS kernel",
-        "Saving and restoring CPU state when switching between processes or threads",
+        "Saving and restoring CPU state between processes or threads",
         "Transferring data between RAM and disk"
       ],
       "correctAnswerIndex": 2,
@@ -353,7 +365,7 @@
       "answers": [
         "A performance benchmark comparing two algorithms",
         "A bug where two threads compete to finish first",
-        "When program output depends on the non-deterministic ordering of concurrent operations",
+        "Output that varies based on the ordering of concurrent operations",
         "A deadlock between two processes waiting on each other"
       ],
       "correctAnswerIndex": 2,
@@ -424,7 +436,7 @@
       "question": "What property must every node in a BST satisfy?",
       "answers": [
         "Its value is greater than all other nodes in the tree",
-        "All left descendants are less than the node and all right descendants are greater",
+        "Left descendants are smaller, right descendants are greater",
         "The left and right subtrees must have equal height",
         "Each node must have exactly two children"
       ],
@@ -481,6 +493,18 @@
       "difficulty": 3
     },
     {
+      "question": "What does bubble sort do during each pass through the array?",
+      "answers": [
+        "Divides the array in half and sorts each half",
+        "Finds the minimum element and moves it to the front",
+        "Swaps adjacent elements that are out of order",
+        "Selects a pivot and partitions elements around it"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "basic_sorts",
+      "difficulty": 1
+    },
+    {
       "question": "What is the best-case time complexity of insertion sort?",
       "answers": [
         "O(n^2)",
@@ -509,8 +533,8 @@
       "answers": [
         "Repeatedly swap adjacent out-of-order elements",
         "Pick a pivot and partition the array around it",
-        "Recursively divide the array in half then merge the sorted halves",
-        "Find the minimum element and place it at the front each pass"
+        "Divide into halves, then merge the sorted halves",
+        "Find the minimum and move it to the front each pass"
       ],
       "correctAnswerIndex": 2,
       "conceptTag": "basic_sorts",
@@ -658,6 +682,66 @@
   ],
   "correctAnswerIndex": 2,
   "conceptTag": "networking_ports",
+  "difficulty": 3
+},
+{
+  "question": "How many usable host addresses does a /29 subnet provide?",
+  "answers": [
+    "8",
+    "6",
+    "14",
+    "4"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "computer_networks",
+  "difficulty": 1
+},
+{
+  "question": "A subnet uses the mask 255.255.255.192. What is the equivalent CIDR prefix?",
+  "answers": [
+    "/25",
+    "/26",
+    "/27",
+    "/28"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "computer_networks",
+  "difficulty": 1
+},
+{
+  "question": "A department needs exactly 60 usable IP addresses. What is the smallest CIDR subnet that satisfies this?",
+  "answers": [
+    "/25",
+    "/26",
+    "/27",
+    "/28"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "computer_networks",
+  "difficulty": 2
+},
+{
+  "question": "You need subnets that each support 30 hosts from the network 192.168.10.0/24. Which prefix should you use?",
+  "answers": [
+    "/26",
+    "/27",
+    "/28",
+    "/29"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "computer_networks",
+  "difficulty": 2
+},
+{
+  "question": "A VLSM allocation on 10.0.0.0/24 needs a subnet for 100 hosts. Which prefix is the most efficient choice?",
+  "answers": [
+    "/24",
+    "/25",
+    "/26",
+    "/27"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "computer_networks",
   "difficulty": 3
 }
   ]

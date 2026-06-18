@@ -87,6 +87,7 @@ public class BayesianKnowledgeTracker
 
     // Category 7 -- Networking (added Story 15)
     public const string NetworkingPorts        = "networking_ports";
+    public const string ComputerNetworks       = "computer_networks";
 
     // ── Default BKT Parameters ────────────────────────────────────────────────
     // Applied when a concept is encountered that has no ConceptProfile asset.

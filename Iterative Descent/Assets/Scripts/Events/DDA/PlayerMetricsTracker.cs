@@ -211,6 +211,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         StackPuzzleUI.OnStackSolved           += HandleStackSolved;
         DrainPuzzleUI.OnDrainSolved           += HandleDrainSolved;
         MatchingPuzzleUI.OnMatchingSolved     += HandleMatchingSolved;
+        SubnetPuzzleUI.OnSubnetSolved         += HandleSubnetSolved;
     }
 
     private void OnDisable()
@@ -222,6 +223,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         StackPuzzleUI.OnStackSolved           -= HandleStackSolved;
         DrainPuzzleUI.OnDrainSolved           -= HandleDrainSolved;
         MatchingPuzzleUI.OnMatchingSolved     -= HandleMatchingSolved;
+        SubnetPuzzleUI.OnSubnetSolved         -= HandleSubnetSolved;
     }
 
     private void Update()
@@ -531,6 +533,52 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Matching puzzle solved | Wrong submissions: {wrongSubmissions} | " +
                   $"Time: {timeTaken:F1}s | Avg submissions: {AverageMatchingWrongSubmissions:F1}");
+    }
+
+    // ── Subnet Puzzle API ─────────────────────────────────────────────────────
+
+    public int   TotalSubnetSolved             { get; private set; }
+    public int   LastSubnetWrongSubmissions    { get; private set; }
+    public float LastSubnetTime               { get; private set; }
+    public float AverageSubnetWrongSubmissions { get; private set; }
+
+    private float _subnetStartTime;
+    private bool  _subnetInProgress;
+
+    /// <summary>
+    /// Called from SubnetPuzzleUI.InitPuzzle() -- do NOT call from the prop too.
+    /// Time.timeScale == 0 while the puzzle is open, so we use realtimeSinceStartup.
+    /// </summary>
+    public void NotifySubnetStarted()
+    {
+        _subnetStartTime   = Time.realtimeSinceStartup;
+        _subnetInProgress  = true;
+        Debug.Log("[Metrics] Subnet puzzle started.");
+    }
+
+    private void HandleSubnetSolved(int wrongSubmissions)
+    {
+        float timeTaken = _subnetInProgress
+            ? Time.realtimeSinceStartup - _subnetStartTime
+            : 0f;
+
+        LastSubnetWrongSubmissions = wrongSubmissions;
+        LastSubnetTime             = timeTaken;
+        _subnetInProgress          = false;
+        TotalSubnetSolved++;
+
+        AverageSubnetWrongSubmissions = TotalSubnetSolved <= 1
+            ? wrongSubmissions
+            : (AverageSubnetWrongSubmissions * (TotalSubnetSolved - 1) + wrongSubmissions)
+              / TotalSubnetSolved;
+
+        // BKT update -- replay each wrong submission then the correct solve
+        for (int i = 0; i < wrongSubmissions; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ComputerNetworks, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ComputerNetworks, true);
+
+        Debug.Log($"[Metrics] Subnet puzzle solved | Wrong submissions: {wrongSubmissions} | " +
+                  $"Time: {timeTaken:F1}s | Avg submissions: {AverageSubnetWrongSubmissions:F1}");
     }
 
     // ── Combat API ────────────────────────────────────────────────────────────
