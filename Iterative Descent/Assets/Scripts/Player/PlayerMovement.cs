@@ -46,6 +46,7 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController _controller;
     private Animator            _animator;
     private PlayerCombat        _combat;
+    private ShotgunController   _shotgun;
 
     private Vector3 _velocity;
     private float   _rotationVelocity;
@@ -71,6 +72,7 @@ public class PlayerMovement : MonoBehaviour
         _controller = GetComponent<CharacterController>();
         _animator   = GetComponent<Animator>();
         _combat     = GetComponent<PlayerCombat>();
+        _shotgun    = GetComponent<ShotgunController>();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
@@ -103,9 +105,21 @@ public class PlayerMovement : MonoBehaviour
 
     // ─── Camera ─────────────────────────────────────────────────────────────────
 
+    // Returns true if any equipped weapon is currently in aim stance.
+    bool IsAnyWeaponAiming() =>
+        (_combat  != null && _combat.enabled  && _combat.IsAiming) ||
+        (_shotgun != null && _shotgun.enabled && _shotgun.IsAiming);
+
+    // Cancels aim on whichever weapon is currently active.
+    void CancelActiveAim()
+    {
+        _combat?.CancelAim();
+        _shotgun?.CancelAim();
+    }
+
     void HandleCameraRotation()
     {
-        bool isAiming = _combat != null && _combat.IsAiming;
+        bool isAiming = IsAnyWeaponAiming();
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
         _camYaw   += mouseDelta.x * cameraSensitivity * Time.deltaTime * 10f;
@@ -139,7 +153,7 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleMovement()
     {
-        bool isAiming = _combat != null && _combat.IsAiming;
+        bool isAiming = IsAnyWeaponAiming();
 
         Vector2 input = Vector2.zero;
         if (Keyboard.current.wKey.isPressed) input.y += 1f;
@@ -155,8 +169,8 @@ public class PlayerMovement : MonoBehaviour
         IsRunning = isRunning;
 
         // If the player starts sprinting while aimed, cancel the aim stance.
-        if (IsRunning && _combat != null && _combat.IsAiming)
-            _combat.CancelAim();
+        if (IsRunning && IsAnyWeaponAiming())
+            CancelActiveAim();
 
         float currentSpeed = isAiming  ? aimWalkSpeed  :
                              isRunning ? sprintSpeed   :

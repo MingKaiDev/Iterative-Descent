@@ -17,11 +17,13 @@ public class PlayerPropScript : MonoBehaviour
     [Header("Transition")]
     public float gunTransitionSpeed = 10f;
 
-    private PlayerCombat _combat;
+    private PlayerCombat      _combat;
+    private ShotgunController _shotgun;
 
     void Start()
     {
-        _combat = GetComponent<PlayerCombat>();
+        _combat  = GetComponent<PlayerCombat>();
+        _shotgun = GetComponent<ShotgunController>();
 
         // Find and parent the gun to the right hand bone
         Transform rightHand = GetComponentsInChildren<Transform>()
@@ -57,10 +59,13 @@ public class PlayerPropScript : MonoBehaviour
 
     void HandleGunTransform()
     {
-        if (gun == null || _combat == null) return;
+        if (gun == null) return;
 
-        Vector3 targetPos = _combat.IsAiming ? aimLocalPosition : idleLocalPosition;
-        Vector3 targetRot = _combat.IsAiming ? aimLocalRotation : idleLocalRotation;
+        bool isAiming = (_combat  != null && _combat.enabled  && _combat.IsAiming)
+                     || (_shotgun != null && _shotgun.enabled && _shotgun.IsAiming);
+
+        Vector3 targetPos = isAiming ? aimLocalPosition : idleLocalPosition;
+        Vector3 targetRot = isAiming ? aimLocalRotation : idleLocalRotation;
 
         gun.transform.localPosition = Vector3.Lerp(
             gun.transform.localPosition,

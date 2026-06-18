@@ -49,9 +49,10 @@ public class CombatHUD : MonoBehaviour
 
     void Awake()
     {
-        PlayerHealth.OnHealthChanged += HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged   += HandleAmmoChanged;
-        PlayerHealth.OnPlayerDied    += HandlePlayerDied;
+        PlayerHealth.OnHealthChanged    += HandleHealthChanged;
+        PlayerCombat.OnAmmoChanged      += HandleAmmoChanged;
+        ShotgunController.OnAmmoChanged += HandleAmmoChanged;   // same handler; only one weapon fires at a time
+        PlayerHealth.OnPlayerDied       += HandlePlayerDied;
 
         // Death overlay starts hidden.
         if (deathOverlay != null)
@@ -60,9 +61,10 @@ public class CombatHUD : MonoBehaviour
 
     void OnDestroy()
     {
-        PlayerHealth.OnHealthChanged -= HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged   -= HandleAmmoChanged;
-        PlayerHealth.OnPlayerDied    -= HandlePlayerDied;
+        PlayerHealth.OnHealthChanged    -= HandleHealthChanged;
+        PlayerCombat.OnAmmoChanged      -= HandleAmmoChanged;
+        ShotgunController.OnAmmoChanged -= HandleAmmoChanged;
+        PlayerHealth.OnPlayerDied       -= HandlePlayerDied;
     }
 
     void Start()
