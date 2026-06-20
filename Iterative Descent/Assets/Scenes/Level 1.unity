@@ -88239,27 +88239,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalScale.x
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalScale.y
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalScale.z
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 35.79
+      value: 2.89
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.13
+      value: 0.107
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -47.77
+      value: 1.72
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -156876,21 +156876,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: faeff9f1fcde6584b9d3b630639f3783, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  walkSpeed: 6
-  sprintSpeed: 15
-  aimWalkSpeed: 1.8
+  walkSpeed: 1
+  sprintSpeed: 2
+  aimWalkSpeed: 0.3
   gravity: -20
   rotationSmoothTime: 0.1
   cameraTransform: {fileID: 330585546}
-  cameraDistance: 7
+  cameraDistance: 1.75
   sideDistance: 0
-  cameraHeight: 7
+  cameraHeight: 1.75
   cameraSensitivity: 3
   cameraMinY: -20
   cameraMaxY: 60
-  aimSideDistance: 0.85
-  aimCameraDistance: 3.57
-  aimCameraHeight: 6.53
+  aimSideDistance: 0.2
+  aimCameraDistance: 0.9
+  aimCameraHeight: 1.6325
   cameraTransitionSpeed: 10
   aimLookAhead: 2.5
 --- !u!95 &979139182
@@ -156953,7 +156953,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerScript
   gun: {fileID: 0}
-  idleLocalPosition: {x: -0.15, y: 0.37, z: 0.09}
+  idleLocalPosition: {x: -0.04, y: 0.09, z: 0.02}
   idleLocalRotation: {x: 13.9, y: -113.3, z: 68.32}
   aimLocalPosition: {x: 0.04, y: 0.33, z: -0.11}
   aimLocalRotation: {x: -0.97, y: -163.5, z: 107.1}
@@ -183167,15 +183167,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: c3ed21aafe04e0f4698100e2d6243d27, type: 3}
       propertyPath: m_LocalScale.x
-      value: 600
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c3ed21aafe04e0f4698100e2d6243d27, type: 3}
       propertyPath: m_LocalScale.y
-      value: 600
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c3ed21aafe04e0f4698100e2d6243d27, type: 3}
       propertyPath: m_LocalScale.z
-      value: 600
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c3ed21aafe04e0f4698100e2d6243d27, type: 3}
       propertyPath: m_LocalPosition.x
@@ -337014,7 +337014,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1229207612}
@@ -371333,8 +371333,8 @@ Transform:
   m_GameObject: {fileID: 919132148099384740}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 40, y: 0, z: -19.27}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalPosition: {x: 8, y: 0, z: -4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3166655307225777222}
@@ -371676,7 +371676,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1943641645}
