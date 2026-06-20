@@ -8,3 +8,7 @@ Industrial Terminal - https://sketchfab.com/3d-models/industrial-terminal-846bb4
 shotgun, 12 gage winchester pump shotgun, single shot by JoseIgnacioTriay -- https://freesound.org/s/515223/ -- License: Attribution NonCommercial 4.0Pump Shotgun Loaded 1 by DrinkingWindGames -- https://freesound.org/s/789652/ -- License: Attribution 4.0
 Load Shotgun 1 by DrinkingWindGames -- https://freesound.org/s/789642/ -- License: Attribution 4.0
 Shotgun Trigger Pull by DrinkingWindGames -- https://freesound.org/s/789658/ -- License: Attribution 4.0
+
+Textures
+https://polyhaven.com/a/granite_tile
+https://polyhaven.com/a/painted_plaster_wall
