@@ -43,15 +43,16 @@ public class CombatHUD : MonoBehaviour
     public GameObject deathOverlay;
 
     // ─── Private ────────────────────────────────────────────────────────────────
-    private PlayerCombat _combat;
+    private PlayerCombat      _combat;
+    private ShotgunController _shotgun;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
     void Awake()
     {
         PlayerHealth.OnHealthChanged    += HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged      += HandleAmmoChanged;
-        ShotgunController.OnAmmoChanged += HandleAmmoChanged;   // same handler; only one weapon fires at a time
+        PlayerCombat.OnAmmoChanged      += HandlePistolAmmoChanged;
+        ShotgunController.OnAmmoChanged += HandleShotgunAmmoChanged;
         PlayerHealth.OnPlayerDied       += HandlePlayerDied;
 
         // Death overlay starts hidden.
@@ -62,14 +63,15 @@ public class CombatHUD : MonoBehaviour
     void OnDestroy()
     {
         PlayerHealth.OnHealthChanged    -= HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged      -= HandleAmmoChanged;
-        ShotgunController.OnAmmoChanged -= HandleAmmoChanged;
+        PlayerCombat.OnAmmoChanged      -= HandlePistolAmmoChanged;
+        ShotgunController.OnAmmoChanged -= HandleShotgunAmmoChanged;
         PlayerHealth.OnPlayerDied       -= HandlePlayerDied;
     }
 
     void Start()
     {
-        _combat = FindObjectOfType<PlayerCombat>();
+        _combat  = FindObjectOfType<PlayerCombat>();
+        _shotgun = FindObjectOfType<ShotgunController>();
 
         // Hide crosshair until we aim
         if (crosshair != null)
@@ -77,7 +79,7 @@ public class CombatHUD : MonoBehaviour
 
         // Seed ammo display in case events fire before this Start()
         if (_combat != null)
-            HandleAmmoChanged(_combat.CurrentMag, _combat.SpareAmmo);
+            HandlePistolAmmoChanged(_combat.CurrentMag, _combat.SpareAmmo);
     }
 
     void Update()
@@ -104,10 +106,18 @@ public class CombatHUD : MonoBehaviour
             healthValueText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
     }
 
-    void HandleAmmoChanged(int mag, int spare)
+    void HandlePistolAmmoChanged(int mag, int spare)
     {
-        if (ammoText != null)
-            ammoText.text = $"[ {mag} | {spare} ]";
+        // Ignore if pistol is not the active weapon.
+        if (_combat != null && !_combat.enabled) return;
+        if (ammoText != null) ammoText.text = $"[ {mag} | {spare} ]";
+    }
+
+    void HandleShotgunAmmoChanged(int mag, int spare)
+    {
+        // Ignore if shotgun is not the active weapon.
+        if (_shotgun != null && !_shotgun.enabled) return;
+        if (ammoText != null) ammoText.text = $"[ {mag} | {spare} ]";
     }
 
     // ─── Death ──────────────────────────────────────────────────────────────────

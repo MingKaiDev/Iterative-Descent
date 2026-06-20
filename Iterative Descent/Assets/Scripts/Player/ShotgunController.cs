@@ -26,8 +26,9 @@ public class ShotgunController : MonoBehaviour
     public static event Action<int, int> OnAmmoChanged;   // (shellsInMag, spareShells)
     public static event Action           OnFired;
     public static event Action           OnDryFire;
-    public static event Action           OnReloadStart;
-    public static event Action           OnReloadComplete;
+    public static event Action           OnReloadStart;    // fires once per shell inserted
+    public static event Action           OnReloadComplete; // fires when reload ends (ran out of spare)
+    public static event Action           OnMagFull;        // fires when magazine reaches max capacity
 
     // ─── Inspector ───────────────────────────────────────────────────────────────
 
@@ -48,8 +49,8 @@ public class ShotgunController : MonoBehaviour
     public float fireInterval    = 0.75f;
 
     [Header("Shotgun - Reload")]
-    [Tooltip("Seconds the reload animation takes before ammo is refilled.")]
-    public float reloadTime           = 2.2f;
+    [Tooltip("Seconds between each shell insert. Reload loops one shell at a time.")]
+    public float reloadTime           = 0.65f;
     [Tooltip("Seconds after firing before a reload is allowed. Match to fire animation clip.")]
     public float fireAnimationDuration = 0.7f;
 
@@ -80,13 +81,14 @@ public class ShotgunController : MonoBehaviour
 
     private Animator       _animator;
     private PlayerMovement _movement;
-    private bool  _isAiming;
-    private bool  _isReloading;
-    private bool  _isDead;
-    private int   _currentMag;
-    private int   _spareShells;
-    private float _nextFireTime;
-    private float _lastFireTime = -999f;
+    private bool      _isAiming;
+    private bool      _isReloading;
+    private bool      _isDead;
+    private int       _currentMag;
+    private int       _spareShells;
+    private float     _nextFireTime;
+    private float     _lastFireTime = -999f;
+    private Coroutine _reloadCoroutine;
 
     // Reuse same animator parameter hashes as pistol.
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
@@ -205,6 +207,16 @@ public class ShotgunController : MonoBehaviour
         if (!Mouse.current.leftButton.wasPressedThisFrame) return;
         if (Time.time < _nextFireTime)                     return;
 
+        // Pump shotguns allow interrupting a reload to fire once a shell is loaded.
+        if (_isReloading)
+        {
+            if (_currentMag <= 0) return;   // nothing loaded yet, keep reloading
+            if (_reloadCoroutine != null) StopCoroutine(_reloadCoroutine);
+            _isReloading     = false;
+            _reloadCoroutine = null;
+            // fall through to fire
+        }
+
         _nextFireTime = Time.time + fireInterval;
 
         if (_currentMag <= 0)
@@ -289,6 +301,7 @@ public class ShotgunController : MonoBehaviour
 
     void HandleReload()
     {
+        if (_isReloading)                               return;
         if (!_isAiming)                                 return;
         if (!Keyboard.current.rKey.wasPressedThisFrame) return;
         if (_movement != null && _movement.IsRunning)   return;
@@ -296,25 +309,33 @@ public class ShotgunController : MonoBehaviour
         if (_currentMag == magazineSize) return;
         if (_spareShells <= 0)           return;
 
-        StartCoroutine(ReloadRoutine());
+        _reloadCoroutine = StartCoroutine(ReloadRoutine());
     }
 
     IEnumerator ReloadRoutine()
     {
         _isReloading = true;
         _animator.SetTrigger(ReloadHash);
-        OnReloadStart?.Invoke();
 
-        yield return new WaitForSeconds(reloadTime);
+        // Insert one shell at a time until mag is full or spare pool is empty.
+        while (_currentMag < magazineSize && _spareShells > 0)
+        {
+            OnReloadStart?.Invoke();                        // plays shell-insert sound each time
+            yield return new WaitForSeconds(reloadTime);   // reloadTime = seconds per shell
 
-        int needed = magazineSize - _currentMag;
-        int toLoad = Mathf.Min(needed, _spareShells);
-        _currentMag  += toLoad;
-        _spareShells -= toLoad;
+            _currentMag++;
+            _spareShells--;
+            BroadcastAmmo();
+        }
 
-        BroadcastAmmo();
-        OnReloadComplete?.Invoke();
-        _isReloading = false;
+        // Fire the appropriate completion event.
+        if (_currentMag >= magazineSize)
+            OnMagFull?.Invoke();        // mag topped up -- plays "locked and loaded" sound
+        else
+            OnReloadComplete?.Invoke(); // ran out of spare shells -- no special sound
+
+        _isReloading     = false;
+        _reloadCoroutine = null;
     }
 
     // ─── Death ───────────────────────────────────────────────────────────────────

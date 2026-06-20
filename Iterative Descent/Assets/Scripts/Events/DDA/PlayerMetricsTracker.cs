@@ -204,26 +204,28 @@ public class PlayerMetricsTracker : MonoBehaviour
 
     private void OnEnable()
     {
-        PuzzleUI.OnPuzzleFinished             += HandleQuizFinished;
-        PuzzleUI.OnQuestionAnswered           += HandleQuestionAnswered;
-        LinkedListPuzzleUI.OnLinkedListSolved += HandleLinkedListSolved;
-        SchedulingPuzzleUI.OnSchedulingSolved += HandleSchedulingSolved;
-        StackPuzzleUI.OnStackSolved           += HandleStackSolved;
-        DrainPuzzleUI.OnDrainSolved           += HandleDrainSolved;
-        MatchingPuzzleUI.OnMatchingSolved     += HandleMatchingSolved;
-        SubnetPuzzleUI.OnSubnetSolved         += HandleSubnetSolved;
+        PuzzleUI.OnPuzzleFinished               += HandleQuizFinished;
+        PuzzleUI.OnQuestionAnswered             += HandleQuestionAnswered;
+        LinkedListPuzzleUI.OnLinkedListSolved   += HandleLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved   += HandleSchedulingSolved;
+        StackPuzzleUI.OnStackSolved             += HandleStackSolved;
+        DrainPuzzleUI.OnDrainSolved             += HandleDrainSolved;
+        MatchingPuzzleUI.OnMatchingSolved       += HandleMatchingSolved;
+        SubnetPuzzleUI.OnSubnetSolved           += HandleSubnetSolved;
+        PacketFilterPuzzleUI.OnPacketFilterSolved += HandlePacketFilterSolved;
     }
 
     private void OnDisable()
     {
-        PuzzleUI.OnPuzzleFinished             -= HandleQuizFinished;
-        PuzzleUI.OnQuestionAnswered           -= HandleQuestionAnswered;
-        LinkedListPuzzleUI.OnLinkedListSolved -= HandleLinkedListSolved;
-        SchedulingPuzzleUI.OnSchedulingSolved -= HandleSchedulingSolved;
-        StackPuzzleUI.OnStackSolved           -= HandleStackSolved;
-        DrainPuzzleUI.OnDrainSolved           -= HandleDrainSolved;
-        MatchingPuzzleUI.OnMatchingSolved     -= HandleMatchingSolved;
-        SubnetPuzzleUI.OnSubnetSolved         -= HandleSubnetSolved;
+        PuzzleUI.OnPuzzleFinished               -= HandleQuizFinished;
+        PuzzleUI.OnQuestionAnswered             -= HandleQuestionAnswered;
+        LinkedListPuzzleUI.OnLinkedListSolved   -= HandleLinkedListSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved   -= HandleSchedulingSolved;
+        StackPuzzleUI.OnStackSolved             -= HandleStackSolved;
+        DrainPuzzleUI.OnDrainSolved             -= HandleDrainSolved;
+        MatchingPuzzleUI.OnMatchingSolved       -= HandleMatchingSolved;
+        SubnetPuzzleUI.OnSubnetSolved           -= HandleSubnetSolved;
+        PacketFilterPuzzleUI.OnPacketFilterSolved -= HandlePacketFilterSolved;
     }
 
     private void Update()
@@ -581,6 +583,69 @@ public class PlayerMetricsTracker : MonoBehaviour
                   $"Time: {timeTaken:F1}s | Avg submissions: {AverageSubnetWrongSubmissions:F1}");
     }
 
+    // ── Packet Filter Puzzle API ──────────────────────────────────────────────
+
+    /// <summary>Total Packet Filter puzzles solved this session.</summary>
+    public int   TotalPacketFilterSolved             { get; private set; }
+    /// <summary>Wrong commit attempts on the last Packet Filter puzzle.</summary>
+    public int   LastPacketFilterWrongSubmissions    { get; private set; }
+    /// <summary>Solve time for the last Packet Filter puzzle (seconds).</summary>
+    public float LastPacketFilterTime               { get; private set; }
+    /// <summary>Running average wrong submissions per Packet Filter puzzle.</summary>
+    public float AveragePacketFilterWrongSubmissions { get; private set; }
+
+    private float _packetFilterStartTime;
+    private bool  _packetFilterInProgress;
+
+    [Header("Normalisation Caps (packet filter)")]
+    [SerializeField] private float maxPacketFilterTime     = 300f; // 5 min
+    [SerializeField] private int   maxPacketFilterAttempts = 10;
+
+    /// <summary>
+    /// Called from PacketFilterPuzzleUI.InitPuzzle() -- do NOT call from the prop too.
+    /// Time.timeScale == 0 while the puzzle is open, so we use realtimeSinceStartup.
+    /// </summary>
+    public void NotifyPacketFilterStarted()
+    {
+        _packetFilterStartTime   = Time.realtimeSinceStartup;
+        _packetFilterInProgress  = true;
+        Debug.Log("[Metrics] Packet Filter puzzle started.");
+    }
+
+    /// <summary>
+    /// Called from PacketFilterPuzzleUI on solve (via NotifyPacketFilterSolved).
+    /// Also available as a direct call from PacketFilterPuzzleUI.
+    /// </summary>
+    public void NotifyPacketFilterSolved(int wrongSubmissions)
+    {
+        HandlePacketFilterSolved(wrongSubmissions);
+    }
+
+    private void HandlePacketFilterSolved(int wrongSubmissions)
+    {
+        float timeTaken = _packetFilterInProgress
+            ? Time.realtimeSinceStartup - _packetFilterStartTime
+            : 0f;
+
+        LastPacketFilterWrongSubmissions = wrongSubmissions;
+        LastPacketFilterTime             = timeTaken;
+        _packetFilterInProgress          = false;
+        TotalPacketFilterSolved++;
+
+        AveragePacketFilterWrongSubmissions = TotalPacketFilterSolved <= 1
+            ? wrongSubmissions
+            : (AveragePacketFilterWrongSubmissions * (TotalPacketFilterSolved - 1) + wrongSubmissions)
+              / TotalPacketFilterSolved;
+
+        // BKT update -- replay each wrong commit then the correct solve
+        for (int i = 0; i < wrongSubmissions; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkSecurity, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkSecurity, true);
+
+        Debug.Log($"[Metrics] Packet Filter solved | Wrong commits: {wrongSubmissions} | " +
+                  $"Time: {timeTaken:F1}s | Avg submissions: {AveragePacketFilterWrongSubmissions:F1}");
+    }
+
     // ── Combat API ────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -698,6 +763,13 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageDrainWrongAttempts = 0f;
         AverageDrainTime          = 0f;
         _drainInProgress          = false;
+
+        // Packet filter
+        LastPacketFilterWrongSubmissions    = 0;
+        LastPacketFilterTime               = 0f;
+        TotalPacketFilterSolved            = 0;
+        AveragePacketFilterWrongSubmissions = 0f;
+        _packetFilterInProgress            = false;
 
         // Combat
         ShotsFired               = 0;

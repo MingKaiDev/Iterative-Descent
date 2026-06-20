@@ -23,11 +23,14 @@ public class PlayerCombat : MonoBehaviour
     [Header("Pistol — Firing")]
     [Tooltip("Minimum seconds between shots (semi-auto feel).")]
     public float fireInterval = 0.2f;
-    [Tooltip("Raycast range in world units.")]
-    public float range        = 80f;
-    [Tooltip("Damage per hit.")]
+    [Tooltip("Damage per bullet.")]
     public float damage       = 25f;
-    public LayerMask shootableLayers = ~0;
+    [Tooltip("Bullet projectile prefab. Assign the ShotgunPellet prefab -- reused for the pistol.")]
+    public GameObject bulletPrefab;
+    [Tooltip("Speed of the bullet in m/s. Pistol bullets are faster than shotgun pellets.")]
+    public float bulletSpeed  = 60f;
+    [Tooltip("Optional: transform at the gun muzzle. Leave unassigned to spawn from camera.")]
+    public Transform muzzlePoint;
 
     [Header("Pistol — DDA")]
     [Tooltip("Soft cap used by CombatDDAController to normalise total ammo. " +
@@ -81,14 +84,10 @@ public class PlayerCombat : MonoBehaviour
 
     void Awake()
     {
-        _animator  = GetComponent<Animator>();
-        _movement  = GetComponent<PlayerMovement>();
+        _animator   = GetComponent<Animator>();
+        _movement   = GetComponent<PlayerMovement>();
         _currentMag = magazineSize;
         _spareAmmo  = startingSpareAmmo;
-
-        // Exclude this GameObject's own layer from the raycast so the player
-        // can never hit their own CharacterController or child colliders.
-        shootableLayers &= ~(1 << gameObject.layer);
 
         PlayerHealth.OnPlayerDied += HandlePlayerDied;
     }
@@ -169,26 +168,49 @@ public class PlayerCombat : MonoBehaviour
         OnFired?.Invoke();
         BroadcastAmmo();
 
-        // Track shot fired for CombatDDA accuracy signal
+        // Track shot fired for CombatDDA accuracy signal.
         PlayerMetricsTracker.Instance?.NotifyShotFired();
 
-        // Raycast from camera centre — correct for 3rd-person crosshair aim.
-        // shootableLayers already excludes the player's own layer (set in Awake).
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (Physics.Raycast(ray, out RaycastHit hit, range, shootableLayers, QueryTriggerInteraction.Ignore))
-        {
-            IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
-            if (damageable != null)
-            {
-                damageable.TakeDamage(damage, hit.point);
-                // Count as a landed shot only when an enemy is actually hit
-                PlayerMetricsTracker.Instance?.NotifyShotLanded();
-            }
+        // Fire a single bullet projectile from the camera centre (correct for 3rd-person crosshair).
+        FireBullet();
+    }
 
-            // Impact decal / particle
-            if (bulletImpactPrefab != null)
-                Instantiate(bulletImpactPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+    void FireBullet()
+    {
+        if (bulletPrefab == null)
+        {
+            Debug.LogWarning("[PlayerCombat] bulletPrefab is not assigned.");
+            return;
         }
+
+        Transform cam      = Camera.main.transform;
+        Vector3   spawnPos = muzzlePoint != null ? muzzlePoint.position
+                                                 : cam.position + cam.forward * 0.5f;
+        Vector3   dir      = cam.forward;
+
+        GameObject bulletObj = Instantiate(bulletPrefab, spawnPos, Quaternion.LookRotation(dir));
+        ShotgunPellet bullet = bulletObj.GetComponent<ShotgunPellet>();
+
+        if (bullet == null)
+        {
+            Debug.LogWarning("[PlayerCombat] bulletPrefab is missing a ShotgunPellet component.");
+            Destroy(bulletObj);
+            return;
+        }
+
+        bullet.damage          = damage;
+        bullet.impactPrefab    = bulletImpactPrefab;
+        bullet.notifyDDAOnHit  = true;   // single bullet -- count each hit for accuracy DDA
+
+        // Ignore all player colliders so the bullet doesn't self-hit on spawn.
+        Collider bulletCol = bulletObj.GetComponent<Collider>();
+        if (bulletCol != null)
+        {
+            foreach (Collider pc in GetComponentsInChildren<Collider>())
+                Physics.IgnoreCollision(bulletCol, pc, true);
+        }
+
+        bullet.Launch(dir, bulletSpeed);
     }
 
     // ─── Reload ─────────────────────────────────────────────────────────────────

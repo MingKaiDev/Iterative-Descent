@@ -743,6 +743,66 @@
   "correctAnswerIndex": 1,
   "conceptTag": "computer_networks",
   "difficulty": 3
+},
+{
+  "question": "An attacker spoofs a legitimate client IP in their packets. Which firewall rule strategy can still block the attack?",
+  "answers": [
+    "DENY src:<attacker_ip>",
+    "DENY payload:<malicious_keyword> dst_port:<port>",
+    "ALLOW src:<legitimate_ip>",
+    "DENY proto:TCP"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "network_security",
+  "difficulty": 2
+},
+{
+  "question": "A firewall uses first-match-wins evaluation. You add 'ALLOW dst_port:4444' before 'DENY dst_port:4444'. What happens to malicious traffic on port 4444?",
+  "answers": [
+    "Both rules apply and the DENY wins",
+    "The ALLOW fires first -- malicious traffic passes through",
+    "The DENY fires first -- malicious traffic is blocked",
+    "The rules cancel each other out"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "network_security",
+  "difficulty": 2
+},
+{
+  "question": "A C2 beacon uses DNS tunnelling over UDP port 53. A legitimate DNS resolver also uses UDP port 53. Which rule blocks ONLY the C2 traffic?",
+  "answers": [
+    "DENY proto:UDP dst_port:53",
+    "DENY proto:UDP dst_port:53 src:10.0.1.x payload:BEACON_CMD",
+    "ALLOW proto:UDP dst_port:53",
+    "DENY src:10.0.1.x"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "network_security",
+  "difficulty": 3
+},
+{
+  "question": "What does 'collateral damage' mean in the context of firewall rules?",
+  "answers": [
+    "Rules that accidentally allow malicious traffic through",
+    "Rules that block legitimate services sharing a port with the attacker",
+    "Rules that exceed the firewall's processing capacity",
+    "Outbound packets that bypass the rule set entirely"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "network_security",
+  "difficulty": 1
+},
+{
+  "question": "In a multi-channel C2 scenario, all C2 source IPs are spoofed from the 10.0.1.0/24 range but so are legitimate clients. What additional fields should a DENY rule use to avoid false positives?",
+  "answers": [
+    "src IP only",
+    "dst_port and payload keyword together",
+    "proto only",
+    "dst IP only"
+  ],
+  "correctAnswerIndex": 1,
+  "conceptTag": "network_security",
+  "difficulty": 3
 }
   ]
 }

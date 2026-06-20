@@ -89,6 +89,9 @@ public class BayesianKnowledgeTracker
     public const string NetworkingPorts        = "networking_ports";
     public const string ComputerNetworks       = "computer_networks";
 
+    // Category 4 -- Cybersecurity additions (added Story 17)
+    public const string NetworkSecurity        = "network_security";
+
     // ── Default BKT Parameters ────────────────────────────────────────────────
     // Applied when a concept is encountered that has no ConceptProfile asset.
 

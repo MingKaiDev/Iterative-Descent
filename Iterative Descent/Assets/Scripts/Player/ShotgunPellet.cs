@@ -14,10 +14,16 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class ShotgunPellet : MonoBehaviour
 {
-    // ─── Set by ShotgunController at spawn ──────────────────────────────────────
+    // ─── Set by spawner at runtime ───────────────────────────────────────────────
 
-    [HideInInspector] public float      damage        = 15f;
+    [HideInInspector] public float      damage           = 15f;
     [HideInInspector] public GameObject impactPrefab;
+    /// <summary>
+    /// Set to true for single-bullet weapons (pistol) so that the DDA accuracy
+    /// signal (NotifyShotLanded) fires on hit. Leave false for shotgun pellets --
+    /// multiple pellets per shot would inflate the accuracy counter.
+    /// </summary>
+    [HideInInspector] public bool notifyDDAOnHit = false;
 
     // ─── Inspector ───────────────────────────────────────────────────────────────
 
@@ -61,7 +67,11 @@ public class ShotgunPellet : MonoBehaviour
         // Apply damage if we hit something damageable.
         IDamageable damageable = collision.collider.GetComponentInParent<IDamageable>();
         if (damageable != null)
+        {
             damageable.TakeDamage(damage, collision.contacts[0].point);
+            if (notifyDDAOnHit)
+                PlayerMetricsTracker.Instance?.NotifyShotLanded();
+        }
 
         // Spawn impact decal / particle at hit surface.
         if (impactPrefab != null)
