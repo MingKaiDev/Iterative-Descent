@@ -297,14 +297,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     {
         _pendingLive = new List<PacketData>(_scenario.LivePackets);
         SetPhase(Phase.LiveClassification);
-
-        // TEST: spawn all at once like Phase 1 to verify layout
-        foreach (var pkt in _scenario.LivePackets)
-        {
-            SpawnCard(pkt);
-            _pendingLive.Remove(pkt);
-        }
         UpdateRemainingText();
+        StartCoroutine(SpawnLivePackets());
     }
 
     // =========================================================================
@@ -333,16 +327,6 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     {
         if (packetCardParent == null || packetCardPrefab == null) return;
 
-        // DEBUG -- remove after layout is confirmed
-        var dbgT = (Transform)packetCardParent;
-        while (dbgT != null)
-        {
-            var dbgRt = dbgT as RectTransform;
-            if (dbgRt != null) Debug.Log($"[PF Chain] {dbgT.name} rect={dbgRt.rect.size} anchorMin={dbgRt.anchorMin} anchorMax={dbgRt.anchorMax}");
-            dbgT = dbgT.parent;
-            if (dbgT != null && dbgT.GetComponent<Canvas>() != null) break;
-        }
-
         var card = Instantiate(packetCardPrefab, packetCardParent, false);
 
         SetTMP(card, "Src",     pkt.SrcIp);
@@ -369,7 +353,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         var scroll = packetCardParent.GetComponentInParent<ScrollRect>();
-        if (scroll != null) scroll.verticalNormalizedPosition = 1f;
+        if (scroll != null) scroll.verticalNormalizedPosition = 0f;
     }
 
     private IEnumerator RunExpiry(Image bar, float duration, PacketData pkt,
