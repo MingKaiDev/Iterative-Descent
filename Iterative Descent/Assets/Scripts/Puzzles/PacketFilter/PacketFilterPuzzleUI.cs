@@ -169,6 +169,19 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     [SerializeField] private PacketFilterFeedbackPopup feedbackPopup;
 
     // =========================================================================
+    // Inspector: Timing
+    // =========================================================================
+
+    [Header("Timing")]
+    [Tooltip("Seconds between each packet spawning in Phase 2. Per tier: T2=2s T3=1.5s T4=1s")]
+    [SerializeField] private float packetIntervalTier2 = 2f;
+    [SerializeField] private float packetIntervalTier3 = 1.5f;
+    [SerializeField] private float packetIntervalTier4 = 1f;
+
+    [Tooltip("Seconds before an unclassified packet auto-allows in Phase 2. Tier 4 only. 0 = no expiry.")]
+    [SerializeField] private float packetExpiryTier4 = 4f;
+
+    // =========================================================================
     // Runtime
     // =========================================================================
 
@@ -335,8 +348,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         SetTMP(card, "Port",    pkt.DstPort == 0 ? "--" : pkt.DstPort.ToString());
         SetTMP(card, "Payload", "[TLS ENCRYPTED]");
 
-        var allowBtn = card.transform.Find("AllowButton")?.GetComponent<Button>();
-        var denyBtn  = card.transform.Find("DenyButton") ?.GetComponent<Button>();
+        var allowBtn = FindDeep(card.transform, "AllowButton")?.GetComponent<Button>();
+        var denyBtn  = FindDeep(card.transform, "DenyButton") ?.GetComponent<Button>();
 
         if (allowBtn != null)
             allowBtn.onClick.AddListener(() => Classify(pkt, card, allow: true,  allowBtn, denyBtn));
@@ -346,7 +359,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         // Tier 4: animated expiry bar
         if (_tier >= 4 && _scenario.PacketExpiry > 0)
         {
-            var expiryBar = card.transform.Find("ExpiryBar")?.GetComponent<Image>();
+            var expiryBar = FindDeep(card.transform, "ExpiryBar")?.GetComponent<Image>();
             if (expiryBar != null)
                 StartCoroutine(RunExpiry(expiryBar, _scenario.PacketExpiry, pkt, card, allowBtn, denyBtn));
         }
@@ -437,8 +450,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         var tmp = go.transform.Find("LogText")?.GetComponent<TextMeshProUGUI>();
         if (tmp != null) { tmp.text = text; tmp.color = col; }
 
-        // Cap log at 8 visible lines
-        while (sessionLogParent.childCount > 8)
+        // Cap log at 8 visible lines (if not while -- Destroy is deferred, childCount doesn't update immediately)
+        if (sessionLogParent.childCount > 8)
             Destroy(sessionLogParent.GetChild(0).gameObject);
     }
 
@@ -728,8 +741,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         Shuffle(live);
         s.LivePackets = live;
 
-        s.PacketInterval = tier >= 4 ? 1f : tier >= 3 ? 1.5f : 2f;
-        s.PacketExpiry   = tier >= 4 ? 4f : 0f;
+        s.PacketInterval = tier >= 4 ? packetIntervalTier4 : tier >= 3 ? packetIntervalTier3 : packetIntervalTier2;
+        s.PacketExpiry   = tier >= 4 ? packetExpiryTier4 : 0f;
         s.HasDecoyRules  = tier >= 4;
 
         return s;
@@ -776,10 +789,22 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private static void SetTMP(GameObject go, string childName, string text)
     {
-        var child = go.transform.Find(childName);
+        var child = FindDeep(go.transform, childName);
         if (child == null) return;
         var tmp = child.GetComponent<TextMeshProUGUI>();
         if (tmp != null) tmp.text = text;
+    }
+
+    /// <summary>Recursive Transform.Find -- Unity's built-in Find only checks direct children.</summary>
+    private static Transform FindDeep(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name) return child;
+            var found = FindDeep(child, name);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private static void Shuffle<T>(List<T> list)
