@@ -38,20 +38,28 @@ public class EvaluationResult
 /// <summary>
 /// Parses and evaluates player-written firewall rules.
 ///
-/// Syntax (all fields after the action are optional key:value pairs):
-///   [ALLOW|DENY] [proto:TCP|UDP|ICMP] [src:IP] [dst:IP] [dst_port:N] [payload:KEYWORD]
+/// Simplified positional syntax -- no tag names needed:
+///   [ALLOW|DENY] [TCP|UDP|ICMP] [port] [src_ip] [KEYWORD]
 ///
-/// Evaluation: rules are evaluated top-down, first match wins.
-/// Wildcard: use "x" as an octet wildcard, e.g. "10.0.x.x" matches any 10.0.*.* address.
+/// Each token after the action is auto-detected by shape:
+///   TCP / UDP / ICMP  ->  protocol filter
+///   integer (1-65535) ->  destination port filter
+///   contains a dot    ->  source IP filter (supports x wildcard, e.g. 10.0.x.x)
+///   anything else     ->  payload keyword filter (substring match)
+///
+/// All tokens except the action are optional and order does not matter.
 ///
 /// Examples:
-///   DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD
-///   DENY proto:UDP dst_port:53 payload:ARBITEX_CMD
-///   DENY proto:TCP dst_port:8080
-///   ALLOW proto:TCP dst_port:4444 src:10.0.2.x
+///   DENY TCP 4444 ARBITEX_CMD
+///   DENY UDP 53 ARBITEX_CMD
+///   DENY TCP 8080 ARBITEX_CMD
+///   ALLOW TCP 4444 10.0.2.x
 /// </summary>
 public static class FirewallRuleParser
 {
+    private static readonly HashSet<string> Protocols =
+        new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "TCP", "UDP", "ICMP" };
+
     // ── Parse ──────────────────────────────────────────────────────────────────
 
     public static RuleParseResult Parse(string input)
@@ -70,50 +78,38 @@ public static class FirewallRuleParser
         string actionStr = tokens[0].ToUpperInvariant();
         if      (actionStr == "ALLOW") rule.Action = RuleAction.Allow;
         else if (actionStr == "DENY")  rule.Action = RuleAction.Deny;
-        else return Fail($"First token must be ALLOW or DENY -- got '{tokens[0]}'.");
+        else return Fail($"First word must be ALLOW or DENY -- got '{tokens[0]}'.");
 
-        // Remaining tokens: key:value
+        // Remaining tokens: auto-detect by shape
         for (int i = 1; i < tokens.Length; i++)
         {
-            int colon = tokens[i].IndexOf(':');
-            if (colon < 0)
-                return Fail($"Expected key:value format -- got '{tokens[i]}'. Valid keys: proto, src, dst, dst_port, payload.");
+            string tok = tokens[i];
 
-            string key = tokens[i].Substring(0, colon).ToLowerInvariant();
-            string val = tokens[i].Substring(colon + 1);
-
-            if (string.IsNullOrEmpty(val))
-                return Fail($"Value missing after '{key}:'.");
-
-            switch (key)
+            if (Protocols.Contains(tok))
             {
-                case "proto":
-                    string proto = val.ToUpperInvariant();
-                    if (proto != "TCP" && proto != "UDP" && proto != "ICMP")
-                        return Fail($"Unknown protocol '{val}'. Use TCP, UDP, or ICMP.");
-                    rule.Proto = proto;
-                    break;
-
-                case "src":
-                    rule.SrcIp = val;
-                    break;
-
-                case "dst":
-                    rule.DstIp = val;
-                    break;
-
-                case "dst_port":
-                    if (!int.TryParse(val, out int port) || port < 1 || port > 65535)
-                        return Fail($"Invalid port '{val}'. Must be 1-65535.");
-                    rule.DstPort = port;
-                    break;
-
-                case "payload":
-                    rule.PayloadKeyword = val;
-                    break;
-
-                default:
-                    return Fail($"Unknown field '{key}'. Valid fields: proto, src, dst, dst_port, payload.");
+                if (rule.Proto != null)
+                    return Fail($"Protocol specified twice ('{rule.Proto}' and '{tok}').");
+                rule.Proto = tok.ToUpperInvariant();
+            }
+            else if (int.TryParse(tok, out int port))
+            {
+                if (port < 1 || port > 65535)
+                    return Fail($"Port {port} is out of range (1-65535).");
+                if (rule.DstPort.HasValue)
+                    return Fail($"Port specified twice ({rule.DstPort} and {port}).");
+                rule.DstPort = port;
+            }
+            else if (tok.Contains('.'))
+            {
+                if (rule.SrcIp != null)
+                    return Fail($"IP specified twice ('{rule.SrcIp}' and '{tok}').");
+                rule.SrcIp = tok;
+            }
+            else
+            {
+                if (rule.PayloadKeyword != null)
+                    return Fail($"Keyword specified twice ('{rule.PayloadKeyword}' and '{tok}').");
+                rule.PayloadKeyword = tok;
             }
         }
 

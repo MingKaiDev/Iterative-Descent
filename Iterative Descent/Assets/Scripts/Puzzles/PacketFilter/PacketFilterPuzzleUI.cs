@@ -202,6 +202,11 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     // Tracks proto:port combos where the player false-positived -- voids pre-blocks on that port
     private readonly HashSet<string>         _fpPortCombos       = new HashSet<string>();
 
+    // Phase 2 classification gating (Option A -- all cards must be classified before advancing)
+    private int  _totalCards;
+    private int  _classifiedCards;
+    private bool _allPacketsSpawned;
+
     // Phase 3
     private readonly List<FirewallRule> _rules    = new List<FirewallRule>();
     private int                         _wrongSubmits;
@@ -246,6 +251,10 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         _channelDeniedCount.Clear();
         _channelTotalCount.Clear();
         _phase2PreBlocked.Clear();
+        _fpPortCombos.Clear();
+        _totalCards       = 0;
+        _classifiedCards  = 0;
+        _allPacketsSpawned = false;
         _phase = Phase.LogAnalysis;
 
         // DDA tier -- hard floor at 2 (lord puzzle never runs below Tier 2)
@@ -327,7 +336,10 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private void OnInitiateScan()
     {
-        _pendingLive = new List<PacketData>(_scenario.LivePackets);
+        _pendingLive      = new List<PacketData>(_scenario.LivePackets);
+        _totalCards       = _scenario.LivePackets.Count;
+        _classifiedCards  = 0;
+        _allPacketsSpawned = false;
         SetPhase(Phase.LiveClassification);
         UpdateRemainingText();
         StartCoroutine(SpawnLivePackets());
@@ -350,9 +362,9 @@ public class PacketFilterPuzzleUI : MonoBehaviour
             yield return new WaitForSecondsRealtime(_scenario.PacketInterval);
         }
 
-        // Brief pause so the last card's buttons are reachable before advancing
-        yield return new WaitForSecondsRealtime(1.5f);
-        AdvanceToRuleCommit();
+        // All packets spawned -- advance only once every card is classified
+        _allPacketsSpawned = true;
+        CheckAllClassified();
     }
 
     private void SpawnCard(PacketData pkt)
@@ -404,10 +416,19 @@ public class PacketFilterPuzzleUI : MonoBehaviour
             Classify(pkt, card, allow: true, allow, deny);
     }
 
+    private void CheckAllClassified()
+    {
+        if (_allPacketsSpawned && _classifiedCards >= _totalCards)
+            AdvanceToRuleCommit();
+    }
+
     private void Classify(PacketData pkt, GameObject card, bool allow, Button allowBtn, Button denyBtn)
     {
         if (allowBtn != null) allowBtn.interactable = false;
         if (denyBtn  != null) denyBtn .interactable = false;
+
+        _classifiedCards++;
+        CheckAllClassified();
 
         string portStr = pkt.DstPort == 0 ? "ICMP" : $":{pkt.DstPort}";
 
@@ -431,6 +452,14 @@ public class PacketFilterPuzzleUI : MonoBehaviour
                 _falsePositives = Mathf.Min(_falsePositives + 1, MaxFP);
                 AddSessionLog($"[DENIED] {pkt.SrcIp} {portStr} -- WARNING: false positive x{_falsePositives}", ColAmber);
                 TintCard(card, new Color(1f, 0.75f, 0.2f, 0.15f));
+                // Void any pre-block for channels that share this port -- blanket deny doesn't earn credit
+                _fpPortCombos.Add($"{pkt.Proto}:{pkt.DstPort}");
+
+                if (_falsePositives >= MaxFP)
+                {
+                    AddSessionLog("CRITICAL: TOO MANY FALSE POSITIVES -- RESETTING SCAN", ColRed);
+                    StartCoroutine(ResetToPhase1());
+                }
             }
             else
             {
@@ -488,13 +517,17 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private void AdvanceToRuleCommit()
     {
-        // Option B: any channel where ALL live C2 packets were correctly denied is pre-blocked
+        // Option B: channel pre-blocks only if ALL its C2 packets were correctly denied
+        // AND no false positive occurred on the same proto:port (blanket deny doesn't count)
         _phase2PreBlocked.Clear();
         foreach (var channel in _scenario.C2Channels)
         {
             int denied = _channelDeniedCount.TryGetValue(channel, out int d) ? d : 0;
             int total  = _channelTotalCount .TryGetValue(channel, out int t) ? t : 0;
-            if (total > 0 && denied >= total)
+            if (total <= 0 || denied < total) continue;
+
+            string portCombo = _scenario.ChannelHints.TryGetValue(channel, out string h) ? h : "";
+            if (!_fpPortCombos.Contains(portCombo))
                 _phase2PreBlocked.Add(channel);
         }
 
@@ -513,6 +546,31 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
         RefreshRuleList();
         RefreshChannelStatus();
+    }
+
+    private IEnumerator ResetToPhase1()
+    {
+        // Brief pause so the player sees the final false positive tint and log message
+        yield return new WaitForSecondsRealtime(2f);
+
+        // Reset all Phase 2 state
+        _falsePositives   = 0;
+        _classifiedCards  = 0;
+        _totalCards       = 0;
+        _allPacketsSpawned = false;
+        _pendingLive.Clear();
+        _channelDeniedCount.Clear();
+        _fpPortCombos.Clear();
+
+        // Destroy spawned cards and session log entries
+        if (packetCardParent != null)
+            foreach (Transform t in packetCardParent) Destroy(t.gameObject);
+        if (sessionLogParent != null)
+            foreach (Transform t in sessionLogParent) Destroy(t.gameObject);
+
+        UpdateFPBar();
+        SetPhase(Phase.LogAnalysis);
+        PopulateLogTable();
     }
 
     private void OnAddRule()

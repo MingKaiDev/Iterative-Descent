@@ -46528,7 +46528,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -100905,9 +100905,9 @@ MonoBehaviour:
   commitButton: {fileID: 1924675194}
   closeButton: {fileID: 1842575852}
   feedbackPopup: {fileID: 1750986590}
-  packetIntervalTier2: 3
-  packetIntervalTier3: 2.5
-  packetIntervalTier4: 2
+  packetIntervalTier2: 2
+  packetIntervalTier3: 1.7
+  packetIntervalTier4: 1.5
   packetExpiryTier4: 4
 --- !u!1 &781077035
 GameObject:
@@ -130793,7 +130793,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -187307,7 +187307,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -195322,7 +195322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -203686,7 +203686,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -215142,7 +215142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
@@ -259644,7 +259644,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
+  chaseSpeed: 2
   attackRange: 1
   pathUpdateRate: 0.2
   speedParamName: Speed
