@@ -20,7 +20,7 @@ using UnityEngine;
 /// NOTE: NotifyPacketFilterStarted() is called inside PacketFilterPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
-public class PacketFilterProp : MonoBehaviour, IInteractable
+public class PacketFilterProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("PacketFilterPanel GameObject in the Canvas (inactive by default).")]
@@ -58,14 +58,19 @@ public class PacketFilterProp : MonoBehaviour, IInteractable
             packetFilterOverlay.GetComponent<PacketFilterPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (packetFilterOverlay != null)

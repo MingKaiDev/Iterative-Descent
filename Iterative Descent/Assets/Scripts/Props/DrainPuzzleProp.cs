@@ -19,7 +19,7 @@ using UnityEngine;
 /// NOTE: NotifyDrainStarted() is called inside DrainPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
-public class DrainPuzzleProp : MonoBehaviour, IInteractable
+public class DrainPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("Drain Panel GameObject in the Canvas (inactive by default).")]
@@ -57,14 +57,19 @@ public class DrainPuzzleProp : MonoBehaviour, IInteractable
             drainOverlay.GetComponent<DrainPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (drainOverlay != null)

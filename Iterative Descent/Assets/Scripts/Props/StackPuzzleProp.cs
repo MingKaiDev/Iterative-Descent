@@ -19,7 +19,7 @@ using UnityEngine;
 /// NOTE: NotifyStackStarted() is called inside StackPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
-public class StackPuzzleProp : MonoBehaviour, IInteractable
+public class StackPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("Stack Panel GameObject in the Canvas (inactive by default).")]
@@ -57,14 +57,19 @@ public class StackPuzzleProp : MonoBehaviour, IInteractable
             stackOverlay.GetComponent<StackPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (stackOverlay != null)

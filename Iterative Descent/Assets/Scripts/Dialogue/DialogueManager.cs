@@ -43,6 +43,11 @@ public class DialogueManager : MonoBehaviour
     [Tooltip("Characters revealed per second during typewriter animation.")]
     [SerializeField] private float _charsPerSecond = 35f;
 
+    [Header("Voice Acting")]
+    [Tooltip("AudioSource used for voice clips. Assign a dedicated AudioSource on the GameManager. " +
+             "If left null, voice clips will not play.")]
+    [SerializeField] private AudioSource _voiceSource;
+
     // ─── State ───────────────────────────────────────────────────────────────────
 
     private Queue<DialogueSequence> _queue = new();
@@ -165,9 +170,26 @@ public class DialogueManager : MonoBehaviour
             EndDialogue();
     }
 
+    void PlayVoiceClip(AudioClip clip)
+    {
+        if (_voiceSource == null || clip == null) return;
+        _voiceSource.Stop();
+        _voiceSource.clip = clip;
+        _voiceSource.Play();
+    }
+
+    void StopVoiceClip()
+    {
+        if (_voiceSource != null && _voiceSource.isPlaying)
+            _voiceSource.Stop();
+    }
+
     IEnumerator PlayEntry(DialogueEntry entry)
     {
         _typewriterDone = false;
+
+        // Start voice clip independently; typewriter runs at its own pace.
+        PlayVoiceClip(entry.voiceClip);
 
         // Kick off typewriter reveal.
         yield return StartCoroutine(TypewriterRoutine(entry));
@@ -192,7 +214,11 @@ public class DialogueManager : MonoBehaviour
             while (timer < duration)
             {
                 // Space again after typewriter is done skips the wait.
-                if (Keyboard.current.spaceKey.wasPressedThisFrame) break;
+                if (Keyboard.current.spaceKey.wasPressedThisFrame)
+                {
+                    StopVoiceClip();
+                    break;
+                }
                 timer += Time.unscaledDeltaTime; // unscaledDeltaTime: safe when timeScale=0
                 yield return null;
             }
@@ -210,9 +236,10 @@ public class DialogueManager : MonoBehaviour
 
         while (revealed < totalChars)
         {
-            // Space during typewriter: snap to full text immediately.
+            // Space during typewriter: snap to full text immediately and stop voice.
             if (Keyboard.current.spaceKey.wasPressedThisFrame)
             {
+                StopVoiceClip();
                 _subtitleUI.RevealFull();
                 yield break;
             }
@@ -272,6 +299,7 @@ public class DialogueManager : MonoBehaviour
             StopCoroutine(_playRoutine);
             _playRoutine = null;
         }
+        StopVoiceClip();
         ResumeInteractorIfNeeded();
         _waitingForChoice = false;
     }

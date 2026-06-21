@@ -4,7 +4,7 @@
 /// Attach alongside InteractableBase + InteractableRegistrar on the computer screen object.
 /// Mirrors PuzzleProp pattern exactly.
 /// </summary>
-public class ComputerScreenProp : MonoBehaviour, IInteractable
+public class ComputerScreenProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("Assign the PC Password Panel GameObject in the Canvas.")]
@@ -44,6 +44,7 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
             passwordOverlay.GetComponent<PasswordScreenUI>().Setup(CloseScreen);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 0f;
@@ -64,9 +65,13 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable
         }
     }
 
+    // ICloseable
+    public void Close() => CloseScreen();
+
     public void CloseScreen()
     {
         _screenOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (passwordOverlay != null) passwordOverlay.SetActive(false);

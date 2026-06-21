@@ -19,7 +19,7 @@ using UnityEngine;
 /// NOTE: NotifySchedulingStarted() is called inside SchedulingPuzzleUI.InitPuzzle()
 /// — do NOT call it here too (would double-count attempts in PlayerMetricsTracker).
 /// </summary>
-public class SchedulingPuzzleProp : MonoBehaviour, IInteractable
+public class SchedulingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("Scheduling Panel GameObject in the Canvas (inactive by default).")]
@@ -58,14 +58,19 @@ public class SchedulingPuzzleProp : MonoBehaviour, IInteractable
             schedulingOverlay.GetComponent<SchedulingPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (schedulingOverlay != null)

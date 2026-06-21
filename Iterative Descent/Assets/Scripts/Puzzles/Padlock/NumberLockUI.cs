@@ -63,9 +63,7 @@ public class NumberLockUI : MonoBehaviour
         if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)
             Submit();
 
-        // Close
-        if (kb.escapeKey.wasPressedThisFrame)
-            OnRequestClose?.Invoke();
+        // ESC is handled centrally by PlayerInteractor -> PadlockProp.Close() -> CloseUI()
     }
 
     // -----------------------------------------------------------------------

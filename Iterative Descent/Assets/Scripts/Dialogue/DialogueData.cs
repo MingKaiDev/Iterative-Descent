@@ -40,7 +40,9 @@ public class DialogueEntry
     [Tooltip("Player response options. Leave empty for auto-advancing narration.")]
     public DialogueChoice[] choices;
 
-    // TODO Sprint N+1: public AudioClip voiceClip;
+    [Tooltip("Optional voice acting clip for this line. Plays from DialogueManager's AudioSource when the line starts. " +
+             "Leave null for silent lines.")]
+    public AudioClip voiceClip;
 
     /// <summary>
     /// Returns displayDuration, or a value calculated from text length when displayDuration is 0.

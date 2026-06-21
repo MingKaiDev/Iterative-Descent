@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 [RequireComponent(typeof(InteractableBase))]
 [RequireComponent(typeof(InteractableRegistrar))]
-public class PadlockProp : MonoBehaviour, IInteractable
+public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("Lock UI")]
     [Tooltip("The root panel GameObject that contains the NumberLockUI component.")]
@@ -46,10 +46,14 @@ public class PadlockProp : MonoBehaviour, IInteractable
         string code = string.IsNullOrEmpty(correctCode) ? null : correctCode;
         numberLockUI.Open(code);
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
+
+    // ICloseable
+    public void Close() => CloseUI();
 
     // ------------------------------------------------------------------
 
@@ -78,6 +82,7 @@ public class PadlockProp : MonoBehaviour, IInteractable
 
         numberLockPanel.SetActive(false);
         numberLockUI.Close();
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         Cursor.lockState = CursorLockMode.Locked;

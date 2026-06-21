@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: 
-    text: Where am I?
-    displayDuration: 0
+    text: Ugh my head
+    displayDuration: 2.65
     choices: []
+    voiceClip: {fileID: 8300000, guid: 68652a2fee3ca454a99c42cd04bdc4f7, type: 3}
   - speakerName: 
-    text: Seems like the folder is glowing
-    displayDuration: 0
+    text: Where am I?
+    displayDuration: 1.5
     choices: []
+    voiceClip: {fileID: 8300000, guid: be751ba6dad1e96468813bc023d18dcb, type: 3}

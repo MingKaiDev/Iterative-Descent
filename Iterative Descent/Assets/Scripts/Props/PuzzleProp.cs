@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class PuzzleProp : MonoBehaviour, IInteractable
+public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("Puzzle Content")]
     [Tooltip("Fallback questions used when Load From JSON is disabled.")]
@@ -85,14 +85,19 @@ public class PuzzleProp : MonoBehaviour, IInteractable
             // here too or TotalQuizAttempts gets incremented twice per quiz.
             puzzleOverlay.GetComponent<PuzzleUI>().Setup(sessionQuestions, ClosePuzzle);
         }
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 0f;
     }
 
+    // ICloseable -- called by PlayerInteractor when ESC is pressed while paused.
+    public void Close() => ClosePuzzle(false);
+
     public void ClosePuzzle(bool completed)
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume(); // re-enables interactor
 
         if (puzzleOverlay != null) puzzleOverlay.SetActive(false);

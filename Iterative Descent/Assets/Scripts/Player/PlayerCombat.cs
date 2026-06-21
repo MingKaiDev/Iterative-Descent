@@ -167,6 +167,7 @@ public class PlayerCombat : MonoBehaviour
 
     void HandleFiring()
     {
+        if (!_isAiming)                                    return;
         if (!Mouse.current.leftButton.wasPressedThisFrame) return;
         if (Time.time < _nextFireTime)                     return;
 

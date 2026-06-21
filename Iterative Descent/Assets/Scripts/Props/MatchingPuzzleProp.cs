@@ -19,7 +19,7 @@ using UnityEngine;
 /// NOTE: NotifyMatchingStarted() is called inside MatchingPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
-public class MatchingPuzzleProp : MonoBehaviour, IInteractable
+public class MatchingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("MatchingPanel GameObject in the Canvas (inactive by default).")]
@@ -57,14 +57,19 @@ public class MatchingPuzzleProp : MonoBehaviour, IInteractable
             matchingOverlay.GetComponent<MatchingPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (matchingOverlay != null)

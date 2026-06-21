@@ -5,7 +5,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class ExamPaperProp : MonoBehaviour, IInteractable
+public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("Puzzle Content")]
     [Tooltip("Fallback questions used when Load From JSON is disabled.")]
@@ -82,14 +82,19 @@ public class ExamPaperProp : MonoBehaviour, IInteractable
             examPaperOverlay.GetComponent<ExamPaperPuzzleUI>().Setup(sessionQuestions, ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable -- ESC exits without credit
+    public void Close() => ClosePuzzle(false);
+
     public void ClosePuzzle(bool completed)
     {
         _open = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (examPaperOverlay != null) examPaperOverlay.SetActive(false);

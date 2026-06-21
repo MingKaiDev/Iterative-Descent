@@ -11,6 +11,19 @@ public class PlayerInteractor : MonoBehaviour
     public static void Pause() => _paused = true;
     public static void Resume() => _paused = false;
 
+    // ── Active closeable — the currently-open puzzle overlay ─────
+    // Registered by each puzzle prop when it opens; cleared on close.
+    // PlayerInteractor routes ESC to it while paused so the overlay
+    // can dismiss itself without every UI needing its own ESC check.
+    private static ICloseable _activeCloseable;
+    public static void RegisterCloseable(ICloseable c)   => _activeCloseable = c;
+    public static void DeregisterCloseable()             => _activeCloseable = null;
+
+    // Set to true the frame ESC was consumed by a puzzle close.
+    // PauseMenuUI reads this to avoid immediately re-opening.
+    private static bool _escConsumedThisFrame;
+    public  static bool EscConsumedThisFrame => _escConsumedThisFrame;
+
     // ── Static registry ──────────────────────────────────────────
     private static readonly List<InteractableBase> _all = new();
     public static void Register(InteractableBase obj) => _all.Add(obj);
@@ -20,9 +33,24 @@ public class PlayerInteractor : MonoBehaviour
     private readonly List<InteractableBase> _inRange = new();
     private int _selectedIndex = 0;
 
+    void LateUpdate()
+    {
+        // Reset the consumed flag each frame so PauseMenuUI gets a clean read.
+        _escConsumedThisFrame = false;
+    }
+
     void Update()
     {
-        if (_paused) return; // ← skip everything while puzzle is open
+        // While paused, only handle ESC to close the active overlay.
+        if (_paused)
+        {
+            if (_activeCloseable != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                _activeCloseable.Close();
+                _escConsumedThisFrame = true;
+            }
+            return;
+        }
 
         RefreshInRange();
         HandleSelection();

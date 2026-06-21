@@ -20,7 +20,7 @@ using UnityEngine;
 /// NOTE: NotifySubnetStarted() is called inside SubnetPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
-public class SubnetPuzzleProp : MonoBehaviour, IInteractable
+public class SubnetPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
     [Header("UI")]
     [Tooltip("SubnetPanel GameObject in the Canvas (inactive by default).")]
@@ -58,14 +58,19 @@ public class SubnetPuzzleProp : MonoBehaviour, IInteractable
             subnetOverlay.GetComponent<SubnetPuzzleUI>().InitPuzzle(ClosePuzzle);
         }
 
+        PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible   = true;
         Time.timeScale   = 0f;
     }
 
+    // ICloseable
+    public void Close() => ClosePuzzle();
+
     public void ClosePuzzle()
     {
         _puzzleOpen = false;
+        PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
         if (subnetOverlay != null)
