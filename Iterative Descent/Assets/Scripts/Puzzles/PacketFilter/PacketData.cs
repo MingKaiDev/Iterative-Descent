@@ -49,6 +49,7 @@ public class PacketFilterScenario
     public List<PacketData>        LivePackets  = new List<PacketData>();   // Phase 2 stream
     public List<string>            C2Channels   = new List<string>();       // channel IDs to block
     public List<CollateralService> Services     = new List<CollateralService>(); // at-risk services
+    public Dictionary<string, string> ChannelHints = new Dictionary<string, string>(); // C2-01 -> "TCP:4444" hint for Phase 3 UI
     public float                   PacketInterval;  // Phase 2 spawn rate (seconds)
     public float                   PacketExpiry;    // 0 = no expiry; >0 = Tier 4 auto-allow
     public bool                    HasDecoyRules;   // Tier 4 pre-filled trap rules

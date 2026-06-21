@@ -195,6 +195,13 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     private List<PacketData> _pendingLive = new List<PacketData>();
     private const int        MaxFP = 3;
 
+    // Phase 2 -> Phase 3 pre-blocking (Option B)
+    private readonly Dictionary<string, int> _channelDeniedCount = new Dictionary<string, int>();
+    private readonly Dictionary<string, int> _channelTotalCount  = new Dictionary<string, int>();
+    private readonly HashSet<string>         _phase2PreBlocked   = new HashSet<string>();
+    // Tracks proto:port combos where the player false-positived -- voids pre-blocks on that port
+    private readonly HashSet<string>         _fpPortCombos       = new HashSet<string>();
+
     // Phase 3
     private readonly List<FirewallRule> _rules    = new List<FirewallRule>();
     private int                         _wrongSubmits;
@@ -236,6 +243,9 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         _falsePositives = 0;
         _wrongSubmits   = 0;
         _rules.Clear();
+        _channelDeniedCount.Clear();
+        _channelTotalCount.Clear();
+        _phase2PreBlocked.Clear();
         _phase = Phase.LogAnalysis;
 
         // DDA tier -- hard floor at 2 (lord puzzle never runs below Tier 2)
@@ -245,6 +255,15 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         _tier = Mathf.Max(2, ddaTier);
 
         _scenario = BuildScenario(_tier);
+
+        // Count C2 packets per channel in the live stream for Option B tracking
+        foreach (var pkt in _scenario.LivePackets)
+            if (pkt.IsMalicious && pkt.C2Channel != null)
+            {
+                if (!_channelTotalCount.ContainsKey(pkt.C2Channel))
+                    _channelTotalCount[pkt.C2Channel] = 0;
+                _channelTotalCount[pkt.C2Channel]++;
+            }
 
         PlayerMetricsTracker.Instance?.NotifyPacketFilterStarted();
 
@@ -417,6 +436,14 @@ public class PacketFilterPuzzleUI : MonoBehaviour
             {
                 AddSessionLog($"[DENIED] {pkt.SrcIp} {portStr} -- C2 blocked", ColGreen);
                 TintCard(card, new Color(0.2f, 0.82f, 0.4f, 0.15f));
+
+                // Option B: track correct C2 denials for Phase 3 pre-blocking
+                if (pkt.C2Channel != null)
+                {
+                    if (!_channelDeniedCount.ContainsKey(pkt.C2Channel))
+                        _channelDeniedCount[pkt.C2Channel] = 0;
+                    _channelDeniedCount[pkt.C2Channel]++;
+                }
             }
             UpdateFPBar();
         }
@@ -461,6 +488,16 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private void AdvanceToRuleCommit()
     {
+        // Option B: any channel where ALL live C2 packets were correctly denied is pre-blocked
+        _phase2PreBlocked.Clear();
+        foreach (var channel in _scenario.C2Channels)
+        {
+            int denied = _channelDeniedCount.TryGetValue(channel, out int d) ? d : 0;
+            int total  = _channelTotalCount .TryGetValue(channel, out int t) ? t : 0;
+            if (total > 0 && denied >= total)
+                _phase2PreBlocked.Add(channel);
+        }
+
         _rules.Clear();
         SetPhase(Phase.RuleCommit);
 
@@ -515,7 +552,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         var allPackets = AllPackets();
         var eval       = FirewallRuleParser.EvaluateAll(_rules, allPackets);
 
-        bool allBlocked   = _scenario.C2Channels.TrueForAll(c => eval.BlockedC2Channels.Contains(c));
+        bool allBlocked   = _scenario.C2Channels.TrueForAll(c => _phase2PreBlocked.Contains(c) || eval.BlockedC2Channels.Contains(c));
         bool noCollateral = eval.CollateralServices.Count == 0;
 
         if (allBlocked && noCollateral)
@@ -618,15 +655,22 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
         foreach (var channel in _scenario.C2Channels)
         {
-            bool blocked = eval.BlockedC2Channels.Contains(channel);
-            var  row     = Instantiate(channelRowPrefab, channelListParent);
+            bool preBlocked = _phase2PreBlocked.Contains(channel);
+            bool ruleBlocked = eval.BlockedC2Channels.Contains(channel);
+            bool blocked = preBlocked || ruleBlocked;
 
-            SetTMP(row, "ChannelLabel", channel);
-            SetTMP(row, "StatusText",   blocked ? "BLOCKED" : "OPEN");
+            var row = Instantiate(channelRowPrefab, channelListParent);
+
+            // Show channel ID + port hint so player knows what rule to write
+            string hint = _scenario.ChannelHints.TryGetValue(channel, out string h) ? $"  {h}" : "";
+            SetTMP(row, "ChannelLabel", channel + hint);
+
+            string statusLabel = preBlocked ? "BLOCKED*" : blocked ? "BLOCKED" : "OPEN";
+            SetTMP(row, "StatusText", statusLabel);
 
             Color c    = blocked ? ColGreen : ColRed;
-            var   dot  = row.transform.Find("Dot")       ?.GetComponent<Image>();
-            var   stat = row.transform.Find("StatusText")?.GetComponent<TextMeshProUGUI>();
+            var   dot  = FindDeep(row.transform, "Dot")        ?.GetComponent<Image>();
+            var   stat = FindDeep(row.transform, "StatusText") ?.GetComponent<TextMeshProUGUI>();
             if (dot  != null) dot.color  = c;
             if (stat != null) stat.color = c;
         }
@@ -744,6 +788,13 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         s.PacketInterval = tier >= 4 ? packetIntervalTier4 : tier >= 3 ? packetIntervalTier3 : packetIntervalTier2;
         s.PacketExpiry   = tier >= 4 ? packetExpiryTier4 : 0f;
         s.HasDecoyRules  = tier >= 4;
+
+        // Hints shown in Phase 3 channel status panel so player knows what rule to write
+        s.ChannelHints["C2-01"] = "TCP:4444";
+        s.ChannelHints["C2-02"] = "TCP:4444";
+        s.ChannelHints["C2-03"] = "TCP:8080";
+        if (tier >= 3) s.ChannelHints["C2-04"] = "UDP:53";
+        if (tier >= 4) s.ChannelHints["C2-05"] = "TCP:443";
 
         return s;
     }

@@ -100905,8 +100905,8 @@ MonoBehaviour:
   commitButton: {fileID: 1924675194}
   closeButton: {fileID: 1842575852}
   feedbackPopup: {fileID: 1750986590}
-  packetIntervalTier2: 4
-  packetIntervalTier3: 3
+  packetIntervalTier2: 3
+  packetIntervalTier3: 2.5
   packetIntervalTier4: 2
   packetExpiryTier4: 4
 --- !u!1 &781077035
