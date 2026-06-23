@@ -49,450 +49,6 @@
       "difficulty": 2
     },
     {
-      "question": "Which of the following operations is faster in a linked list than in an array?",
-      "answers": [
-        "Random access by index",
-        "Binary search",
-        "Insertion at a known position given a pointer",
-        "Finding the last element"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "linked_lists",
-      "difficulty": 3
-    },
-    {
-      "question": "What is the time complexity of inserting a new node at the head of a singly linked list?",
-      "answers": [
-        "O(n)",
-        "O(log n)",
-        "O(n^2)",
-        "O(1)"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "linked_lists",
-      "difficulty": 1
-    },
-    {
-      "question": "What extra field does a doubly linked list node have compared to a singly linked list node?",
-      "answers": [
-        "A pointer to the tail of the list",
-        "A reference count",
-        "A pointer to the previous node",
-        "A size field"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "linked_lists",
-      "difficulty": 1
-    },
-    {
-      "question": "What is the time complexity of finding the k-th element in a singly linked list?",
-      "answers": [
-        "O(1)",
-        "O(n)",
-        "O(log n)",
-        "O(k log n)"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "linked_lists",
-      "difficulty": 2
-    },
-    {
-      "question": "Given a direct pointer to a node in a doubly linked list, what is the time complexity of deleting that node?",
-      "answers": [
-        "O(n)",
-        "O(log n)",
-        "O(n^2)",
-        "O(1)"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "linked_lists",
-      "difficulty": 3
-    },
-    {
-      "question": "What is the time complexity of reversing a singly linked list in-place?",
-      "answers": [
-        "O(1)",
-        "O(log n)",
-        "O(n)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "linked_lists",
-      "difficulty": 3
-    },
-    {
-      "question": "What is the time complexity of binary search on a sorted array of n elements?",
-      "answers": [
-        "O(n)",
-        "O(n^2)",
-        "O(log n)",
-        "O(1)"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "complexity_big_o",
-      "difficulty": 1
-    },
-    {
-      "question": "An algorithm with two nested loops each iterating over n elements has what time complexity?",
-      "answers": [
-        "O(n)",
-        "O(2n)",
-        "O(n log n)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "complexity_big_o",
-      "difficulty": 2
-    },
-    {
-      "question": "What is the worst-case time complexity of bubble sort?",
-      "answers": [
-        "O(n log n)",
-        "O(n^2)",
-        "O(n)",
-        "O(log n)"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "complexity_big_o",
-      "difficulty": 2
-    },
-    {
-      "question": "Which of these time complexities is the most efficient for large values of n?",
-      "answers": [
-        "O(n^2)",
-        "O(n log n)",
-        "O(n)",
-        "O(log n)"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "complexity_big_o",
-      "difficulty": 2
-    },
-    {
-      "question": "A recursive function calls itself once per element and does O(1) work each call. What is its time complexity?",
-      "answers": [
-        "O(1)",
-        "O(log n)",
-        "O(n)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "complexity_big_o",
-      "difficulty": 3
-    },
-    {
-      "question": "In Round Robin CPU scheduling, what determines how long each process runs before being preempted?",
-      "answers": [
-        "Process priority",
-        "The time quantum",
-        "The number of threads in the process",
-        "Available memory"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "cpu_scheduling",
-      "difficulty": 1
-    },
-    {
-      "question": "What does throughput measure in the context of CPU scheduling?",
-      "answers": [
-        "CPU utilisation (% of time not idle)",
-        "Processes completed per unit of time",
-        "Time from process creation to first execution",
-        "Time spent waiting in the ready queue"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "cpu_scheduling",
-      "difficulty": 2
-    },
-    {
-      "question": "What is the difference between preemptive and non-preemptive scheduling?",
-      "answers": [
-        "Preemptive only works on multi-core CPUs",
-        "Only non-preemptive can interrupt a running process",
-        "Only preemptive can interrupt a running process",
-        "They behave identically but differ in implementation"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "cpu_scheduling",
-      "difficulty": 2
-    },
-    {
-      "question": "Which CPU scheduling algorithm can cause starvation for low-priority processes?",
-      "answers": [
-        "First Come First Served",
-        "Round Robin",
-        "Priority Scheduling",
-        "Shortest Job First with equal priorities"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "cpu_scheduling",
-      "difficulty": 2
-    },
-    {
-      "question": "What is the main disadvantage of First Come First Served (FCFS) scheduling?",
-      "answers": [
-        "Requires knowing burst time of each process in advance",
-        "It can cause starvation of long processes",
-        "Long processes block shorter ones, raising average wait time",
-        "It does not support multiple CPU cores"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "cpu_scheduling",
-      "difficulty": 3
-    },
-    {
-      "question": "Which data structure follows Last In First Out (LIFO) ordering?",
-      "answers": [
-        "Queue",
-        "Heap",
-        "Stack",
-        "Linked List"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "stacks_and_queues",
-      "difficulty": 1
-    },
-    {
-      "question": "What is a stack overflow in the context of a call stack?",
-      "answers": [
-        "Writing past the end of an array on the heap",
-        "Exhausting the call stack from too many nested or recursive calls",
-        "A queue becoming larger than its allocated buffer",
-        "An integer exceeding its maximum value"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "stacks_and_queues",
-      "difficulty": 2
-    },
-    {
-      "question": "Which data structure would you use to implement an undo feature in a text editor?",
-      "answers": [
-        "Queue",
-        "Stack",
-        "Hash Table",
-        "Graph"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "stacks_and_queues",
-      "difficulty": 2
-    },
-    {
-      "question": "A printer receives jobs from multiple users. Which data structure ensures jobs are printed in the order they were submitted?",
-      "answers": [
-        "Stack",
-        "Queue",
-        "Hash Table",
-        "Binary Tree"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "stacks_and_queues",
-      "difficulty": 2
-    },
-    {
-      "question": "What is the time complexity of push and pop operations on a stack implemented with a dynamic array?",
-      "answers": [
-        "O(n) for both",
-        "O(log n) for both",
-        "O(1) amortised for both",
-        "O(n) push, O(1) pop"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "stacks_and_queues",
-      "difficulty": 3
-    },
-    {
-      "question": "What is a process in an operating system?",
-      "answers": [
-        "A sequence of instructions stored on disk",
-        "A program in execution with its own memory space",
-        "A shared memory region between two programs",
-        "A function call within a running program"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "processes_threads",
-      "difficulty": 1
-    },
-    {
-      "question": "What is the key difference between a process and a thread?",
-      "answers": [
-        "Threads have separate memory; processes share memory",
-        "Processes have separate memory; threads share it",
-        "Threads can only run on a single CPU core",
-        "Processes are faster to create than threads"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "processes_threads",
-      "difficulty": 2
-    },
-    {
-      "question": "What does context switching refer to in an operating system?",
-      "answers": [
-        "Switching between different programming languages",
-        "Reloading the OS kernel",
-        "Saving and restoring CPU state between processes or threads",
-        "Transferring data between RAM and disk"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "processes_threads",
-      "difficulty": 2
-    },
-    {
-      "question": "What does it mean for a process to be in the blocked state?",
-      "answers": [
-        "It has been terminated by the OS",
-        "It is actively running on the CPU",
-        "It is waiting for an event such as I/O completion",
-        "It has been swapped out to disk"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "processes_threads",
-      "difficulty": 2
-    },
-    {
-      "question": "Which of the following is shared between all threads in the same process?",
-      "answers": [
-        "Stack",
-        "Program counter",
-        "Register set",
-        "Heap memory"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "processes_threads",
-      "difficulty": 3
-    },
-    {
-      "question": "What is a race condition?",
-      "answers": [
-        "A performance benchmark comparing two algorithms",
-        "A bug where two threads compete to finish first",
-        "Output that varies based on the ordering of concurrent operations",
-        "A deadlock between two processes waiting on each other"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "processes_threads",
-      "difficulty": 3
-    },
-    {
-      "question": "What is the average-case time complexity of a lookup in a hash table?",
-      "answers": [
-        "O(log n)",
-        "O(n)",
-        "O(1)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "hash_tables",
-      "difficulty": 1
-    },
-    {
-      "question": "What is a hash collision?",
-      "answers": [
-        "When a hash function returns a negative value",
-        "When the table is full and cannot accept more entries",
-        "When two different keys produce the same hash index",
-        "When a key is not found in the table"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "hash_tables",
-      "difficulty": 1
-    },
-    {
-      "question": "What does the load factor of a hash table measure?",
-      "answers": [
-        "The number of collisions that have occurred",
-        "The ratio of stored entries to total buckets",
-        "The maximum chain length under separate chaining",
-        "The percentage of memory wasted"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "hash_tables",
-      "difficulty": 2
-    },
-    {
-      "question": "Which collision resolution strategy stores multiple entries at the same index using a linked list?",
-      "answers": [
-        "Open addressing",
-        "Linear probing",
-        "Quadratic probing",
-        "Separate chaining"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "hash_tables",
-      "difficulty": 2
-    },
-    {
-      "question": "In open addressing, what happens when a collision occurs during insertion?",
-      "answers": [
-        "The entry is discarded",
-        "A linked list is created at that index",
-        "Another slot in the table is probed for insertion",
-        "The table is immediately resized"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "hash_tables",
-      "difficulty": 3
-    },
-    {
-      "question": "What property must every node in a BST satisfy?",
-      "answers": [
-        "Its value is greater than all other nodes in the tree",
-        "Left descendants are smaller, right descendants are greater",
-        "The left and right subtrees must have equal height",
-        "Each node must have exactly two children"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "trees_bst",
-      "difficulty": 1
-    },
-    {
-      "question": "What is the time complexity of searching in a balanced Binary Search Tree?",
-      "answers": [
-        "O(1)",
-        "O(log n)",
-        "O(n)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 1,
-      "conceptTag": "trees_bst",
-      "difficulty": 2
-    },
-    {
-      "question": "In a Binary Search Tree, where is the smallest value always located?",
-      "answers": [
-        "The root node",
-        "The rightmost leaf node",
-        "The leftmost node",
-        "The node at height 1"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "trees_bst",
-      "difficulty": 2
-    },
-    {
-      "question": "Which tree traversal visits nodes in sorted ascending order when applied to a BST?",
-      "answers": [
-        "Pre-order",
-        "Post-order",
-        "Level-order",
-        "In-order"
-      ],
-      "correctAnswerIndex": 3,
-      "conceptTag": "trees_bst",
-      "difficulty": 2
-    },
-    {
-      "question": "What is the worst-case time complexity of insertion into an unbalanced BST?",
-      "answers": [
-        "O(log n)",
-        "O(1)",
-        "O(n)",
-        "O(n^2)"
-      ],
-      "correctAnswerIndex": 2,
-      "conceptTag": "trees_bst",
-      "difficulty": 3
-    },
-    {
       "question": "What does bubble sort do during each pass through the array?",
       "answers": [
         "Divides the array in half and sorts each half",
@@ -624,185 +180,641 @@
       "conceptTag": "bfs_dfs",
       "difficulty": 3
     },
-{
-  "question": "Which port does HTTP use by default?",
-  "answers": [
-    "443",
-    "22",
-    "80",
-    "21"
-  ],
-  "correctAnswerIndex": 2,
-  "conceptTag": "networking_ports",
-  "difficulty": 1
-},
-{
-  "question": "A web server accepts encrypted HTTPS connections. Which port does it listen on by default?",
-  "answers": [
-    "80",
-    "443",
-    "8080",
-    "22"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "networking_ports",
-  "difficulty": 1
-},
-{
-  "question": "You need to securely log in to a remote Linux server from the command line. Which port must be open on the server?",
-  "answers": [
-    "23",
-    "80",
-    "21",
-    "22"
-  ],
-  "correctAnswerIndex": 3,
-  "conceptTag": "networking_ports",
-  "difficulty": 2
-},
-{
-  "question": "An old network device uses Telnet. Why is Telnet considered insecure compared to SSH?",
-  "answers": [
-    "Telnet uses a higher port number which is easier to block",
-    "Telnet transmits data in plaintext with no encryption",
-    "Telnet requires a password but SSH does not",
-    "Telnet is slower because it uses port 23 instead of 22"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "networking_ports",
-  "difficulty": 2
-},
-{
-  "question": "A mail server sends outgoing email to other servers. Which protocol and port does it use for this?",
-  "answers": [
-    "POP3 on port 110",
-    "IMAP on port 143",
-    "SMTP on port 25",
-    "FTP on port 21"
-  ],
-  "correctAnswerIndex": 2,
-  "conceptTag": "networking_ports",
-  "difficulty": 3
-},
-{
-  "question": "How many usable host addresses does a /29 subnet provide?",
-  "answers": [
-    "8",
-    "6",
-    "14",
-    "4"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "computer_networks",
-  "difficulty": 1
-},
-{
-  "question": "A subnet uses the mask 255.255.255.192. What is the equivalent CIDR prefix?",
-  "answers": [
-    "/25",
-    "/26",
-    "/27",
-    "/28"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "computer_networks",
-  "difficulty": 1
-},
-{
-  "question": "A department needs exactly 60 usable IP addresses. What is the smallest CIDR subnet that satisfies this?",
-  "answers": [
-    "/25",
-    "/26",
-    "/27",
-    "/28"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "computer_networks",
-  "difficulty": 2
-},
-{
-  "question": "You need subnets that each support 30 hosts from the network 192.168.10.0/24. Which prefix should you use?",
-  "answers": [
-    "/26",
-    "/27",
-    "/28",
-    "/29"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "computer_networks",
-  "difficulty": 2
-},
-{
-  "question": "A VLSM allocation on 10.0.0.0/24 needs a subnet for 100 hosts. Which prefix is the most efficient choice?",
-  "answers": [
-    "/24",
-    "/25",
-    "/26",
-    "/27"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "computer_networks",
-  "difficulty": 3
-},
-{
-  "question": "An attacker spoofs a legitimate client IP in their packets. Which firewall rule strategy can still block the attack?",
-  "answers": [
-    "DENY src:<attacker_ip>",
-    "DENY payload:<malicious_keyword> dst_port:<port>",
-    "ALLOW src:<legitimate_ip>",
-    "DENY proto:TCP"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "network_security",
-  "difficulty": 2
-},
-{
-  "question": "A firewall uses first-match-wins evaluation. You add 'ALLOW dst_port:4444' before 'DENY dst_port:4444'. What happens to malicious traffic on port 4444?",
-  "answers": [
-    "Both rules apply and the DENY wins",
-    "The ALLOW fires first -- malicious traffic passes through",
-    "The DENY fires first -- malicious traffic is blocked",
-    "The rules cancel each other out"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "network_security",
-  "difficulty": 2
-},
-{
-  "question": "A C2 beacon uses DNS tunnelling over UDP port 53. A legitimate DNS resolver also uses UDP port 53. Which rule blocks ONLY the C2 traffic?",
-  "answers": [
-    "DENY proto:UDP dst_port:53",
-    "DENY proto:UDP dst_port:53 src:10.0.1.x payload:BEACON_CMD",
-    "ALLOW proto:UDP dst_port:53",
-    "DENY src:10.0.1.x"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "network_security",
-  "difficulty": 3
-},
-{
-  "question": "What does 'collateral damage' mean in the context of firewall rules?",
-  "answers": [
-    "Rules that accidentally allow malicious traffic through",
-    "Rules that block legitimate services sharing a port with the attacker",
-    "Rules that exceed the firewall's processing capacity",
-    "Outbound packets that bypass the rule set entirely"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "network_security",
-  "difficulty": 1
-},
-{
-  "question": "In a multi-channel C2 scenario, all C2 source IPs are spoofed from the 10.0.1.0/24 range but so are legitimate clients. What additional fields should a DENY rule use to avoid false positives?",
-  "answers": [
-    "src IP only",
-    "dst_port and payload keyword together",
-    "proto only",
-    "dst IP only"
-  ],
-  "correctAnswerIndex": 1,
-  "conceptTag": "network_security",
-  "difficulty": 3
-}
+    {
+      "question": "What is the time complexity of binary search on a sorted array of n elements?",
+      "answers": [
+        "O(n)",
+        "O(n^2)",
+        "O(log n)",
+        "O(1)"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "complexity_big_o",
+      "difficulty": 1
+    },
+    {
+      "question": "An algorithm with two nested loops each iterating over n elements has what time complexity?",
+      "answers": [
+        "O(n)",
+        "O(2n)",
+        "O(n log n)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "complexity_big_o",
+      "difficulty": 2
+    },
+    {
+      "question": "What is the worst-case time complexity of bubble sort?",
+      "answers": [
+        "O(n log n)",
+        "O(n^2)",
+        "O(n)",
+        "O(log n)"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "complexity_big_o",
+      "difficulty": 2
+    },
+    {
+      "question": "Which of these time complexities is the most efficient for large values of n?",
+      "answers": [
+        "O(n^2)",
+        "O(n log n)",
+        "O(n)",
+        "O(log n)"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "complexity_big_o",
+      "difficulty": 2
+    },
+    {
+      "question": "A recursive function calls itself once per element and does O(1) work each call. What is its time complexity?",
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "complexity_big_o",
+      "difficulty": 3
+    },
+    {
+      "question": "How many usable host addresses does a /29 subnet provide?",
+      "answers": [
+        "8",
+        "6",
+        "14",
+        "4"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "computer_networks",
+      "difficulty": 1
+    },
+    {
+      "question": "A subnet uses the mask 255.255.255.192. What is the equivalent CIDR prefix?",
+      "answers": [
+        "/25",
+        "/26",
+        "/27",
+        "/28"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "computer_networks",
+      "difficulty": 1
+    },
+    {
+      "question": "A department needs exactly 60 usable IP addresses. What is the smallest CIDR subnet that satisfies this?",
+      "answers": [
+        "/25",
+        "/26",
+        "/27",
+        "/28"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "computer_networks",
+      "difficulty": 2
+    },
+    {
+      "question": "You need subnets that each support 30 hosts from the network 192.168.10.0/24. Which prefix should you use?",
+      "answers": [
+        "/26",
+        "/27",
+        "/28",
+        "/29"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "computer_networks",
+      "difficulty": 2
+    },
+    {
+      "question": "A VLSM allocation on 10.0.0.0/24 needs a subnet for 100 hosts. Which prefix is the most efficient choice?",
+      "answers": [
+        "/24",
+        "/25",
+        "/26",
+        "/27"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "computer_networks",
+      "difficulty": 3
+    },
+    {
+      "question": "In Round Robin CPU scheduling, what determines how long each process runs before being preempted?",
+      "answers": [
+        "Process priority",
+        "The time quantum",
+        "The number of threads in the process",
+        "Available memory"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "cpu_scheduling",
+      "difficulty": 1
+    },
+    {
+      "question": "What does throughput measure in the context of CPU scheduling?",
+      "answers": [
+        "CPU utilisation (% of time not idle)",
+        "Processes completed per unit of time",
+        "Time from process creation to first execution",
+        "Time spent waiting in the ready queue"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "cpu_scheduling",
+      "difficulty": 2
+    },
+    {
+      "question": "What is the difference between preemptive and non-preemptive scheduling?",
+      "answers": [
+        "Preemptive only works on multi-core CPUs",
+        "Only non-preemptive can interrupt a running process",
+        "Only preemptive can interrupt a running process",
+        "They behave identically but differ in implementation"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "cpu_scheduling",
+      "difficulty": 2
+    },
+    {
+      "question": "Which CPU scheduling algorithm can cause starvation for low-priority processes?",
+      "answers": [
+        "First Come First Served",
+        "Round Robin",
+        "Priority Scheduling",
+        "Shortest Job First with equal priorities"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "cpu_scheduling",
+      "difficulty": 2
+    },
+    {
+      "question": "What is the main disadvantage of First Come First Served (FCFS) scheduling?",
+      "answers": [
+        "Requires knowing burst time of each process in advance",
+        "It can cause starvation of long processes",
+        "Long processes block shorter ones, raising average wait time",
+        "It does not support multiple CPU cores"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "cpu_scheduling",
+      "difficulty": 3
+    },
+    {
+      "question": "What is the average-case time complexity of a lookup in a hash table?",
+      "answers": [
+        "O(log n)",
+        "O(n)",
+        "O(1)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "hash_tables",
+      "difficulty": 1
+    },
+    {
+      "question": "What is a hash collision?",
+      "answers": [
+        "When a hash function returns a negative value",
+        "When the table is full and cannot accept more entries",
+        "When two different keys produce the same hash index",
+        "When a key is not found in the table"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "hash_tables",
+      "difficulty": 1
+    },
+    {
+      "question": "What does the load factor of a hash table measure?",
+      "answers": [
+        "The number of collisions that have occurred",
+        "The ratio of stored entries to total buckets",
+        "The maximum chain length under separate chaining",
+        "The percentage of memory wasted"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "hash_tables",
+      "difficulty": 2
+    },
+    {
+      "question": "Which collision resolution strategy stores multiple entries at the same index using a linked list?",
+      "answers": [
+        "Open addressing",
+        "Linear probing",
+        "Quadratic probing",
+        "Separate chaining"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "hash_tables",
+      "difficulty": 2
+    },
+    {
+      "question": "In open addressing, what happens when a collision occurs during insertion?",
+      "answers": [
+        "The entry is discarded",
+        "A linked list is created at that index",
+        "Another slot in the table is probed for insertion",
+        "The table is immediately resized"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "hash_tables",
+      "difficulty": 3
+    },
+    {
+      "question": "What is the time complexity of inserting a new node at the head of a singly linked list?",
+      "answers": [
+        "O(n)",
+        "O(log n)",
+        "O(n^2)",
+        "O(1)"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "linked_lists",
+      "difficulty": 1
+    },
+    {
+      "question": "What extra field does a doubly linked list node have compared to a singly linked list node?",
+      "answers": [
+        "A pointer to the tail of the list",
+        "A reference count",
+        "A pointer to the previous node",
+        "A size field"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "linked_lists",
+      "difficulty": 1
+    },
+    {
+      "question": "What is the time complexity of finding the k-th element in a singly linked list?",
+      "answers": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(k log n)"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "linked_lists",
+      "difficulty": 2
+    },
+    {
+      "question": "Which of the following operations is faster in a linked list than in an array?",
+      "answers": [
+        "Random access by index",
+        "Binary search",
+        "Insertion at a known position given a pointer",
+        "Finding the last element"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "linked_lists",
+      "difficulty": 3
+    },
+    {
+      "question": "Given a direct pointer to a node in a doubly linked list, what is the time complexity of deleting that node?",
+      "answers": [
+        "O(n)",
+        "O(log n)",
+        "O(n^2)",
+        "O(1)"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "linked_lists",
+      "difficulty": 3
+    },
+    {
+      "question": "What is the time complexity of reversing a singly linked list in-place?",
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "linked_lists",
+      "difficulty": 3
+    },
+    {
+      "question": "What does 'collateral damage' mean in the context of firewall rules?",
+      "answers": [
+        "Rules that accidentally allow malicious traffic through",
+        "Rules that block legitimate services sharing a port with the attacker",
+        "Rules that exceed the firewall's processing capacity",
+        "Outbound packets that bypass the rule set entirely"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "network_security",
+      "difficulty": 1
+    },
+    {
+      "question": "An attacker spoofs a legitimate client IP in their packets. Which firewall rule strategy can still block the attack?",
+      "answers": [
+        "DENY src:<attacker_ip>",
+        "DENY payload:<malicious_keyword> dst_port:<port>",
+        "ALLOW src:<legitimate_ip>",
+        "DENY proto:TCP"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "network_security",
+      "difficulty": 2
+    },
+    {
+      "question": "A firewall uses first-match-wins evaluation. You add 'ALLOW dst_port:4444' before 'DENY dst_port:4444'. What happens to malicious traffic on port 4444?",
+      "answers": [
+        "Both rules apply and the DENY wins",
+        "The ALLOW fires first -- malicious traffic passes through",
+        "The DENY fires first -- malicious traffic is blocked",
+        "The rules cancel each other out"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "network_security",
+      "difficulty": 2
+    },
+    {
+      "question": "A C2 beacon uses DNS tunnelling over UDP port 53. A legitimate DNS resolver also uses UDP port 53. Which rule blocks ONLY the C2 traffic?",
+      "answers": [
+        "DENY proto:UDP dst_port:53",
+        "DENY proto:UDP dst_port:53 src:10.0.1.x payload:BEACON_CMD",
+        "ALLOW proto:UDP dst_port:53",
+        "DENY src:10.0.1.x"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "network_security",
+      "difficulty": 3
+    },
+    {
+      "question": "In a multi-channel C2 scenario, all C2 source IPs are spoofed from the 10.0.1.0/24 range but so are legitimate clients. What additional fields should a DENY rule use to avoid false positives?",
+      "answers": [
+        "src IP only",
+        "dst_port and payload keyword together",
+        "proto only",
+        "dst IP only"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "network_security",
+      "difficulty": 3
+    },
+    {
+      "question": "Which port does HTTP use by default?",
+      "answers": [
+        "443",
+        "22",
+        "80",
+        "21"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "networking_ports",
+      "difficulty": 1
+    },
+    {
+      "question": "A web server accepts encrypted HTTPS connections. Which port does it listen on by default?",
+      "answers": [
+        "80",
+        "443",
+        "8080",
+        "22"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "networking_ports",
+      "difficulty": 1
+    },
+    {
+      "question": "You need to securely log in to a remote Linux server from the command line. Which port must be open on the server?",
+      "answers": [
+        "23",
+        "80",
+        "21",
+        "22"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "networking_ports",
+      "difficulty": 2
+    },
+    {
+      "question": "An old network device uses Telnet. Why is Telnet considered insecure compared to SSH?",
+      "answers": [
+        "Telnet uses a higher port number which is easier to block",
+        "Telnet transmits data in plaintext with no encryption",
+        "Telnet requires a password but SSH does not",
+        "Telnet is slower because it uses port 23 instead of 22"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "networking_ports",
+      "difficulty": 2
+    },
+    {
+      "question": "A mail server sends outgoing email to other servers. Which protocol and port does it use for this?",
+      "answers": [
+        "POP3 on port 110",
+        "IMAP on port 143",
+        "SMTP on port 25",
+        "FTP on port 21"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "networking_ports",
+      "difficulty": 3
+    },
+    {
+      "question": "What is a process in an operating system?",
+      "answers": [
+        "A sequence of instructions stored on disk",
+        "A program in execution with its own memory space",
+        "A shared memory region between two programs",
+        "A function call within a running program"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "processes_threads",
+      "difficulty": 1
+    },
+    {
+      "question": "What is the key difference between a process and a thread?",
+      "answers": [
+        "Threads have separate memory; processes share memory",
+        "Processes have separate memory; threads share it",
+        "Threads can only run on a single CPU core",
+        "Processes are faster to create than threads"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "processes_threads",
+      "difficulty": 2
+    },
+    {
+      "question": "What does context switching refer to in an operating system?",
+      "answers": [
+        "Switching between different programming languages",
+        "Reloading the OS kernel",
+        "Saving and restoring CPU state between processes or threads",
+        "Transferring data between RAM and disk"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "processes_threads",
+      "difficulty": 2
+    },
+    {
+      "question": "What does it mean for a process to be in the blocked state?",
+      "answers": [
+        "It has been terminated by the OS",
+        "It is actively running on the CPU",
+        "It is waiting for an event such as I/O completion",
+        "It has been swapped out to disk"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "processes_threads",
+      "difficulty": 2
+    },
+    {
+      "question": "Which of the following is shared between all threads in the same process?",
+      "answers": [
+        "Stack",
+        "Program counter",
+        "Register set",
+        "Heap memory"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "processes_threads",
+      "difficulty": 3
+    },
+    {
+      "question": "What is a race condition?",
+      "answers": [
+        "A performance benchmark comparing two algorithms",
+        "A bug where two threads compete to finish first",
+        "Output that varies based on the ordering of concurrent operations",
+        "A deadlock between two processes waiting on each other"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "processes_threads",
+      "difficulty": 3
+    },
+    {
+      "question": "Which data structure follows Last In First Out (LIFO) ordering?",
+      "answers": [
+        "Queue",
+        "Heap",
+        "Stack",
+        "Linked List"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 1
+    },
+    {
+      "question": "Which data structure is most appropriate for implementing Breadth First Search (BFS)?",
+      "answers": [
+        "Stack",
+        "Priority Queue",
+        "Queue",
+        "Linked List"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 1
+    },
+    {
+      "question": "What is a stack overflow in the context of a call stack?",
+      "answers": [
+        "Writing past the end of an array on the heap",
+        "Exhausting the call stack from too many nested or recursive calls",
+        "A queue becoming larger than its allocated buffer",
+        "An integer exceeding its maximum value"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 2
+    },
+    {
+      "question": "Which data structure would you use to implement an undo feature in a text editor?",
+      "answers": [
+        "Queue",
+        "Stack",
+        "Hash Table",
+        "Graph"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 2
+    },
+    {
+      "question": "A printer receives jobs from multiple users. Which data structure ensures jobs are printed in the order they were submitted?",
+      "answers": [
+        "Stack",
+        "Queue",
+        "Hash Table",
+        "Binary Tree"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 2
+    },
+    {
+      "question": "What is the time complexity of push and pop operations on a stack implemented with a dynamic array?",
+      "answers": [
+        "O(n) for both",
+        "O(log n) for both",
+        "O(1) amortised for both",
+        "O(n) push, O(1) pop"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "stacks_and_queues",
+      "difficulty": 3
+    },
+    {
+      "question": "What property must every node in a BST satisfy?",
+      "answers": [
+        "Its value is greater than all other nodes in the tree",
+        "Left descendants are smaller, right descendants are greater",
+        "The left and right subtrees must have equal height",
+        "Each node must have exactly two children"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "trees_bst",
+      "difficulty": 1
+    },
+    {
+      "question": "What is the time complexity of searching in a balanced Binary Search Tree?",
+      "answers": [
+        "O(1)",
+        "O(log n)",
+        "O(n)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 1,
+      "conceptTag": "trees_bst",
+      "difficulty": 2
+    },
+    {
+      "question": "In a Binary Search Tree, where is the smallest value always located?",
+      "answers": [
+        "The root node",
+        "The rightmost leaf node",
+        "The leftmost node",
+        "The node at height 1"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "trees_bst",
+      "difficulty": 2
+    },
+    {
+      "question": "Which tree traversal visits nodes in sorted ascending order when applied to a BST?",
+      "answers": [
+        "Pre-order",
+        "Post-order",
+        "Level-order",
+        "In-order"
+      ],
+      "correctAnswerIndex": 3,
+      "conceptTag": "trees_bst",
+      "difficulty": 2
+    },
+    {
+      "question": "What is the worst-case time complexity of insertion into an unbalanced BST?",
+      "answers": [
+        "O(log n)",
+        "O(1)",
+        "O(n)",
+        "O(n^2)"
+      ],
+      "correctAnswerIndex": 2,
+      "conceptTag": "trees_bst",
+      "difficulty": 3
+    }
   ]
 }

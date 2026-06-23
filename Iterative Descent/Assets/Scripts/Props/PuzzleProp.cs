@@ -11,12 +11,18 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
     [Header("JSON Source (optional)")]
     [Tooltip("If enabled, questions are loaded from StreamingAssets instead of the Inspector array above.")]
     public bool loadFromJson = false;
-    [Tooltip("File name inside StreamingAssets, e.g. quiz_data.json")]
-    public string jsonFileName = "quiz_data.json";
+    [Tooltip("File name inside StreamingAssets, e.g. quiz_bank.json")]
+    public string jsonFileName = "quiz_bank.json";
 
     [Header("Question Selection")]
     [Tooltip("How many questions to show per quiz session.")]
     public int questionsPerSession = 5;
+
+    [Tooltip("If set, this terminal always draws from this concept tag only, " +
+             "bypassing BKT targeting and the first-session plan. " +
+             "Use for contextual terminals (e.g. 'bfs_dfs' before the Drain Puzzle). " +
+             "Leave blank to use normal BKT-driven selection.")]
+    public string pinnedConceptTag = "";
 
     [Header("UI")]
     [Tooltip("Assign the Puzzle Panel GameObject in the Canvas.")]
@@ -38,7 +44,6 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
     // Puzzle Logic
     private bool _puzzleOpen;
     private QuestionData[] _resolvedQuestions;  // full bank, loaded once
-    private int  _sessionCount = 0;             // increments each time the quiz opens
 
     void Awake()
     {
@@ -73,13 +78,12 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         {
             puzzleOverlay.SetActive(true);
 
-            // Select a session-appropriate subset from the full bank.
-            // Session 0 = first time: predetermined foundational concepts for BKT baseline.
-            // Session 1+ : BKT picks the weakest concept.
-            bool isFirst = _sessionCount == 0;
+            // isFirst is global: true only before the player has opened any quiz terminal
+            // this session. Per-prop tracking caused every new terminal to always give
+            // the same first-session questions.
+            bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
             QuestionData[] sessionQuestions = QuestionSelector.SelectQuestions(
-                _resolvedQuestions, isFirst, questionsPerSession);
-            _sessionCount++;
+                _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
 
             // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
             // here too or TotalQuizAttempts gets incremented twice per quiz.

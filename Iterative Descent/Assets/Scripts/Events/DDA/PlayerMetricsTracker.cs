@@ -78,6 +78,9 @@ public class PlayerMetricsTracker : MonoBehaviour
     /// <summary>Whether the player passed the most recent quiz (all correct).</summary>
     public bool LastQuizPassed { get; private set; }
 
+    /// <summary>True once any quiz terminal has been opened this session. Used by QuestionSelector to determine first-session globally rather than per-prop.</summary>
+    public bool HasStartedAnyQuiz { get; private set; }
+
     /// <summary>Total quiz attempts this session (including retries).</summary>
     public int TotalQuizAttempts { get; private set; }
 
@@ -164,6 +167,21 @@ public class PlayerMetricsTracker : MonoBehaviour
     private float _stackStartTime;   // realtimeSinceStartup -- immune to timeScale
     private bool  _stackInProgress;
 
+    // ── General Puzzle Pool State ─────────────────────────────────────────────
+    // Pools: Stack, Drain, Matching, Subnet, PacketFilter + any future puzzle types.
+    // Add a call to UpdateGeneralPool(wrongAttempts, timeTaken) in each new puzzle handler.
+
+    /// <summary>Total general-pool puzzles solved this session.</summary>
+    public int   TotalGeneralPuzzleSolved            { get; private set; }
+    /// <summary>Wrong attempts on the most recently solved general-pool puzzle.</summary>
+    public int   LastGeneralPuzzleWrongAttempts      { get; private set; }
+    /// <summary>Solve time for the most recently solved general-pool puzzle (seconds).</summary>
+    public float LastGeneralPuzzleTime               { get; private set; }
+    /// <summary>Running average wrong attempts per general-pool puzzle this session.</summary>
+    public float AverageGeneralPuzzleWrongAttempts   { get; private set; }
+    /// <summary>Running average solve time per general-pool puzzle this session.</summary>
+    public float AverageGeneralPuzzleTime            { get; private set; }
+
     // ── Combat / Encounter State ───────────────────────────────────────────────
 
     /// <summary>
@@ -206,6 +224,8 @@ public class PlayerMetricsTracker : MonoBehaviour
     {
         PuzzleUI.OnPuzzleFinished               += HandleQuizFinished;
         PuzzleUI.OnQuestionAnswered             += HandleQuestionAnswered;
+        ExamPaperPuzzleUI.OnPuzzleFinished      += HandleQuizFinished;
+        ExamPaperPuzzleUI.OnQuestionAnswered    += HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved   += HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   += HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             += HandleStackSolved;
@@ -219,6 +239,8 @@ public class PlayerMetricsTracker : MonoBehaviour
     {
         PuzzleUI.OnPuzzleFinished               -= HandleQuizFinished;
         PuzzleUI.OnQuestionAnswered             -= HandleQuestionAnswered;
+        ExamPaperPuzzleUI.OnPuzzleFinished      -= HandleQuizFinished;
+        ExamPaperPuzzleUI.OnQuestionAnswered    -= HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved   -= HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   -= HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             -= HandleStackSolved;
@@ -262,6 +284,7 @@ public class PlayerMetricsTracker : MonoBehaviour
     {
         _quizStartTime = Time.realtimeSinceStartup;
         _quizInProgress = true;
+        HasStartedAnyQuiz = true;
         TotalQuizAttempts++;
         Debug.Log($"[Metrics] Quiz started (attempt #{TotalQuizAttempts})");
     }
@@ -336,6 +359,8 @@ public class PlayerMetricsTracker : MonoBehaviour
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.CpuScheduling, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.CpuScheduling, true);
 
+        UpdateGeneralPool(wrongAttempts, timeTaken);
+
         Debug.Log($"[Metrics] Scheduling solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageSchedulingWrongAttempts:F1}");
     }
@@ -378,6 +403,8 @@ public class PlayerMetricsTracker : MonoBehaviour
         for (int i = 0; i < wrongAttempts; i++)
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.StacksAndQueues, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.StacksAndQueues, true);
+
+        UpdateGeneralPool(wrongAttempts, timeTaken);
 
         Debug.Log($"[Metrics] Stack puzzle solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageStackWrongAttempts:F1}");
@@ -432,6 +459,8 @@ public class PlayerMetricsTracker : MonoBehaviour
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.BfsDfs, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.BfsDfs, true);
 
+        UpdateGeneralPool(wrongAttempts, timeTaken);
+
         Debug.Log($"[Metrics] Drain puzzle solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageDrainWrongAttempts:F1}");
     }
@@ -481,6 +510,8 @@ public class PlayerMetricsTracker : MonoBehaviour
         for (int i = 0; i < wrongAttempts; i++)
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.LinkedLists, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.LinkedLists, true);
+
+        UpdateGeneralPool(wrongAttempts, timeTaken);
 
         Debug.Log($"[Metrics] Linked list solved | Wrong attempts: {wrongAttempts} | " +
                   $"Total submits: {LastLinkedListTotalSubmits} | " +
@@ -533,6 +564,8 @@ public class PlayerMetricsTracker : MonoBehaviour
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkingPorts, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkingPorts, true);
 
+        UpdateGeneralPool(wrongSubmissions, timeTaken);
+
         Debug.Log($"[Metrics] Matching puzzle solved | Wrong submissions: {wrongSubmissions} | " +
                   $"Time: {timeTaken:F1}s | Avg submissions: {AverageMatchingWrongSubmissions:F1}");
     }
@@ -578,6 +611,8 @@ public class PlayerMetricsTracker : MonoBehaviour
         for (int i = 0; i < wrongSubmissions; i++)
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ComputerNetworks, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ComputerNetworks, true);
+
+        UpdateGeneralPool(wrongSubmissions, timeTaken);
 
         Debug.Log($"[Metrics] Subnet puzzle solved | Wrong submissions: {wrongSubmissions} | " +
                   $"Time: {timeTaken:F1}s | Avg submissions: {AverageSubnetWrongSubmissions:F1}");
@@ -642,8 +677,34 @@ public class PlayerMetricsTracker : MonoBehaviour
             BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkSecurity, false);
         BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.NetworkSecurity, true);
 
+        UpdateGeneralPool(wrongSubmissions, timeTaken);
+
         Debug.Log($"[Metrics] Packet Filter solved | Wrong commits: {wrongSubmissions} | " +
                   $"Time: {timeTaken:F1}s | Avg submissions: {AveragePacketFilterWrongSubmissions:F1}");
+    }
+
+    // ── General Puzzle Pool API ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Call at the end of any puzzle handler that belongs to the general pool
+    /// (Stack, Drain, Matching, Subnet, PacketFilter, and future puzzles).
+    /// Maintains running averages used by PuzzleDDAController's general signal group.
+    /// </summary>
+    private void UpdateGeneralPool(int wrongAttempts, float timeTaken)
+    {
+        LastGeneralPuzzleWrongAttempts = wrongAttempts;
+        LastGeneralPuzzleTime          = timeTaken;
+        TotalGeneralPuzzleSolved++;
+
+        AverageGeneralPuzzleWrongAttempts = TotalGeneralPuzzleSolved <= 1
+            ? wrongAttempts
+            : (AverageGeneralPuzzleWrongAttempts * (TotalGeneralPuzzleSolved - 1) + wrongAttempts)
+              / TotalGeneralPuzzleSolved;
+
+        AverageGeneralPuzzleTime = TotalGeneralPuzzleSolved <= 1
+            ? timeTaken
+            : (AverageGeneralPuzzleTime * (TotalGeneralPuzzleSolved - 1) + timeTaken)
+              / TotalGeneralPuzzleSolved;
     }
 
     // ── Combat API ────────────────────────────────────────────────────────────
@@ -724,6 +785,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         _recentRooms.Clear();
 
         // Quiz
+        HasStartedAnyQuiz = false;
         LastQuizScore = 0f;
         LastQuizTime = 0f;
         LastQuizPassed = false;
@@ -770,6 +832,13 @@ public class PlayerMetricsTracker : MonoBehaviour
         TotalPacketFilterSolved            = 0;
         AveragePacketFilterWrongSubmissions = 0f;
         _packetFilterInProgress            = false;
+
+        // General puzzle pool
+        LastGeneralPuzzleWrongAttempts    = 0;
+        LastGeneralPuzzleTime             = 0f;
+        TotalGeneralPuzzleSolved          = 0;
+        AverageGeneralPuzzleWrongAttempts = 0f;
+        AverageGeneralPuzzleTime          = 0f;
 
         // Combat
         ShotsFired               = 0;

@@ -1,27 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// Puzzle DDA controller driven by quiz AND linked list puzzle signals.
-/// Renamed from DDAController to PuzzleDDAController.
+/// Puzzle DDA controller. Two signal groups:
 ///
-/// NOTE: This file should be renamed to PuzzleDDAController.cs in the Unity Editor
-///       (right-click in Project window -> Rename). Unity will remap scene references.
-///       Inspector-serialized field values will need to be re-entered after the rename.
-///
-/// Signal weights (Inspector-tunable):
 ///   QUIZ GROUP     (default 60% combined)
-///     [35%] Average quiz score across session
+///     [35%] Average quiz score across session  (MCQ Quiz + Exam Paper)
 ///     [15%] Last quiz completion time
 ///     [10%] Session pass rate
-///   LINKED LIST GROUP  (default 30% combined)
+///
+///   GENERAL PUZZLE GROUP  (default 30% combined)
 ///     [20%] Average wrong attempts before solving  (fewer = harder)
 ///     [10%] Average solve time                     (faster = harder)
-///   SCHEDULING GROUP   (default ~30% combined)
-///     [20%] Average wrong submissions              (fewer = harder)
-///     [10%] Average solve time                     (faster = harder)
+///     Pools: LinkedList, Scheduling, Stack, Drain, Matching, Subnet,
+///            PacketFilter + any future puzzle types.
 ///
-/// Evaluates immediately after any puzzle completes (event-driven),
-/// plus on a periodic timer as a fallback.
+/// Evaluates immediately after any puzzle completes (event-driven, no timer fallback).
 ///
 /// Output: CurrentScore [0,1] + CurrentTier [0-4] via Debug.Log.
 ///
@@ -35,12 +28,9 @@ public class PuzzleDDAController : MonoBehaviour
 
     // ── Inspector: Evaluation ─────────────────────────────────────────────
     [Header("Evaluation")]
-    [Tooltip("Fallback re-evaluation interval in seconds.")]
-    [SerializeField] private float evaluationInterval = 10f;
-
     [Tooltip("Score smoothing -- 0 = instant, 0.9 = very gradual.")]
     [Range(0f, 0.95f)]
-    [SerializeField] private float scoreSmoothing = 0.5f;
+    [SerializeField] private float scoreSmoothing = 0.3f;
 
     [Header("BKT Blend")]
     [Tooltip("How much weight BKT global P(knows) has vs. the heuristic signal " +
@@ -59,25 +49,19 @@ public class PuzzleDDAController : MonoBehaviour
     [SerializeField] private float fastQuizTime = 20f;
     [SerializeField] private float slowQuizTime = 90f;
 
-    // ── Inspector: Linked List Weights ────────────────────────────────────
-    [Header("Linked List Signal Weights")]
-    [Range(0f, 1f)][SerializeField] private float llWrongAttemptsWeight = 0.20f;
-    [Range(0f, 1f)][SerializeField] private float llSolveTimeWeight     = 0.10f;
+    // ── Inspector: General Puzzle Weights ──────────────────────────────────
+    // Pools ALL non-quiz puzzle types: LinkedList, Scheduling, Stack, Drain,
+    // Matching, Subnet, PacketFilter + any future puzzles.
+    // To add a new puzzle: subscribe its solved event to OnGeneralPuzzleSolved below
+    // AND call UpdateGeneralPool() in its PlayerMetricsTracker handler.
+    [Header("General Puzzle Signal Weights (all non-quiz puzzles)")]
+    [Range(0f, 1f)][SerializeField] private float generalWrongAttemptsWeight = 0.20f;
+    [Range(0f, 1f)][SerializeField] private float generalSolveTimeWeight     = 0.10f;
 
-    [Header("Linked List Thresholds")]
-    [SerializeField] private float llMaxWrongAttempts = 8f;
-    [SerializeField] private float llFastSolveTime    = 20f;
-    [SerializeField] private float llSlowSolveTime    = 120f;
-
-    // ── Inspector: Scheduling Weights ─────────────────────────────────────
-    [Header("Scheduling Puzzle Signal Weights")]
-    [Range(0f, 1f)][SerializeField] private float schedWrongAttemptsWeight = 0.20f;
-    [Range(0f, 1f)][SerializeField] private float schedSolveTimeWeight     = 0.10f;
-
-    [Header("Scheduling Thresholds")]
-    [SerializeField] private float schedMaxWrongAttempts = 8f;
-    [SerializeField] private float schedFastSolveTime    = 20f;
-    [SerializeField] private float schedSlowSolveTime    = 120f;
+    [Header("General Puzzle Thresholds")]
+    [SerializeField] private float generalMaxWrongAttempts = 8f;
+    [SerializeField] private float generalFastSolveTime    = 30f;
+    [SerializeField] private float generalSlowSolveTime    = 180f;
 
     // ── Public State ───────────────────────────────────────────────────────
     public float CurrentScore { get; private set; } = 0.5f;
@@ -87,9 +71,8 @@ public class PuzzleDDAController : MonoBehaviour
     public static readonly string[] TierNames =
         { "Very Easy", "Easy", "Normal", "Hard", "Very Hard" };
 
-    public bool HasQuizData       { get; private set; }
-    public bool HasLinkedListData { get; private set; }
-    public bool HasSchedulingData { get; private set; }
+    public bool HasQuizData    { get; private set; }
+    public bool HasGeneralData { get; private set; }
 
     // ── Per-Concept BKT Tier Access ───────────────────────────────────────
     /// <summary>
@@ -118,9 +101,6 @@ public class PuzzleDDAController : MonoBehaviour
     // ── PPO Override Hook ─────────────────────────────────────────────────
     public System.Func<float[], float> AgentScoreOverride { get; set; } = null;
 
-    // ── Private ────────────────────────────────────────────────────────────
-    private float _evalTimer = 0f;
-
     // ── Unity Lifecycle ────────────────────────────────────────────────────
     private void Awake()
     {
@@ -130,37 +110,38 @@ public class PuzzleDDAController : MonoBehaviour
 
     private void OnEnable()
     {
-        PuzzleUI.OnPuzzleFinished             += OnQuizFinished;
-        LinkedListPuzzleUI.OnLinkedListSolved += OnLinkedListSolved;
-        SchedulingPuzzleUI.OnSchedulingSolved += OnSchedulingSolved;
+        PuzzleUI.OnPuzzleFinished                 += OnQuizFinished;
+        ExamPaperPuzzleUI.OnPuzzleFinished        += OnQuizFinished;
+        // General pool -- add new puzzle types here only; no other file changes needed.
+        LinkedListPuzzleUI.OnLinkedListSolved     += OnGeneralPuzzleSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved     += OnGeneralPuzzleSolved;
+        StackPuzzleUI.OnStackSolved               += OnGeneralPuzzleSolved;
+        DrainPuzzleUI.OnDrainSolved               += OnGeneralPuzzleSolved;
+        MatchingPuzzleUI.OnMatchingSolved         += OnGeneralPuzzleSolved;
+        SubnetPuzzleUI.OnSubnetSolved             += OnGeneralPuzzleSolved;
+        PacketFilterPuzzleUI.OnPacketFilterSolved += OnGeneralPuzzleSolved;
     }
 
     private void OnDisable()
     {
-        PuzzleUI.OnPuzzleFinished             -= OnQuizFinished;
-        LinkedListPuzzleUI.OnLinkedListSolved -= OnLinkedListSolved;
-        SchedulingPuzzleUI.OnSchedulingSolved -= OnSchedulingSolved;
+        PuzzleUI.OnPuzzleFinished                 -= OnQuizFinished;
+        ExamPaperPuzzleUI.OnPuzzleFinished        -= OnQuizFinished;
+        LinkedListPuzzleUI.OnLinkedListSolved     -= OnGeneralPuzzleSolved;
+        SchedulingPuzzleUI.OnSchedulingSolved     -= OnGeneralPuzzleSolved;
+        StackPuzzleUI.OnStackSolved               -= OnGeneralPuzzleSolved;
+        DrainPuzzleUI.OnDrainSolved               -= OnGeneralPuzzleSolved;
+        MatchingPuzzleUI.OnMatchingSolved         -= OnGeneralPuzzleSolved;
+        SubnetPuzzleUI.OnSubnetSolved             -= OnGeneralPuzzleSolved;
+        PacketFilterPuzzleUI.OnPacketFilterSolved -= OnGeneralPuzzleSolved;
     }
 
-    private void OnQuizFinished(int correct, int total) => StartCoroutine(EvaluateNextFrame());
-    private void OnLinkedListSolved(int wrongAttempts)  => StartCoroutine(EvaluateNextFrame());
-    private void OnSchedulingSolved(int wrongAttempts)  => StartCoroutine(EvaluateNextFrame());
+    private void OnQuizFinished(int correct, int total)   => StartCoroutine(EvaluateNextFrame());
+    private void OnGeneralPuzzleSolved(int wrongAttempts) => StartCoroutine(EvaluateNextFrame());
 
     private System.Collections.IEnumerator EvaluateNextFrame()
     {
         yield return null;
         Evaluate();
-        _evalTimer = evaluationInterval;
-    }
-
-    private void Update()
-    {
-        _evalTimer -= Time.deltaTime;
-        if (_evalTimer <= 0f)
-        {
-            _evalTimer = evaluationInterval;
-            Evaluate();
-        }
     }
 
     // ── Core Evaluation ────────────────────────────────────────────────────
@@ -169,11 +150,10 @@ public class PuzzleDDAController : MonoBehaviour
         PlayerMetricsTracker m = PlayerMetricsTracker.Instance;
         if (m == null) return;
 
-        HasQuizData       = m.TotalQuizAttempts    > 0;
-        HasLinkedListData = m.TotalLinkedListSolved > 0;
-        HasSchedulingData = m.TotalSchedulingSolved > 0;
+        HasQuizData    = m.TotalQuizAttempts       > 0;
+        HasGeneralData = m.TotalGeneralPuzzleSolved > 0;
 
-        if (!HasQuizData && !HasLinkedListData && !HasSchedulingData) return;
+        if (!HasQuizData && !HasGeneralData) return;
 
         float heuristicScore = AgentScoreOverride != null
             ? Mathf.Clamp01(AgentScoreOverride(m.GetObservations()))
@@ -226,30 +206,19 @@ public class PuzzleDDAController : MonoBehaviour
             totalWeight += avgScoreWeight + lastTimeWeight + passRateWeight;
         }
 
-        // ── Linked list signals ────────────────────────────────────────────
-        if (HasLinkedListData)
+        // ── General puzzle signals ─────────────────────────────────────────────
+        // All non-quiz puzzles pooled: LinkedList, Scheduling, Stack, Drain,
+        // Matching, Subnet, PacketFilter + future puzzles.
+        if (HasGeneralData)
         {
-            float llWrongSignal = Mathf.Clamp01(
-                1f - (m.AverageLinkedListWrongAttempts / llMaxWrongAttempts));
-            float llTimeSignal = Mathf.Clamp01(
-                1f - Mathf.InverseLerp(llFastSolveTime, llSlowSolveTime, m.AverageLinkedListTime));
+            float generalWrongSignal = Mathf.Clamp01(
+                1f - (m.AverageGeneralPuzzleWrongAttempts / generalMaxWrongAttempts));
+            float generalTimeSignal = Mathf.Clamp01(
+                1f - Mathf.InverseLerp(generalFastSolveTime, generalSlowSolveTime, m.AverageGeneralPuzzleTime));
 
-            score       += llWrongAttemptsWeight * llWrongSignal
-                         + llSolveTimeWeight     * llTimeSignal;
-            totalWeight += llWrongAttemptsWeight + llSolveTimeWeight;
-        }
-
-        // ── Scheduling signals ─────────────────────────────────────────────
-        if (HasSchedulingData)
-        {
-            float schedWrongSignal = Mathf.Clamp01(
-                1f - (m.AverageSchedulingWrongAttempts / schedMaxWrongAttempts));
-            float schedTimeSignal = Mathf.Clamp01(
-                1f - Mathf.InverseLerp(schedFastSolveTime, schedSlowSolveTime, m.AverageSchedulingTime));
-
-            score       += schedWrongAttemptsWeight * schedWrongSignal
-                         + schedSolveTimeWeight     * schedTimeSignal;
-            totalWeight += schedWrongAttemptsWeight + schedSolveTimeWeight;
+            score       += generalWrongAttemptsWeight * generalWrongSignal
+                         + generalSolveTimeWeight     * generalTimeSignal;
+            totalWeight += generalWrongAttemptsWeight + generalSolveTimeWeight;
         }
 
         return totalWeight > 0f ? Mathf.Clamp01(score / totalWeight) : 0.5f;

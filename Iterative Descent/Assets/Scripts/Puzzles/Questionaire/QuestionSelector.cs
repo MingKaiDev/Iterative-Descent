@@ -36,17 +36,42 @@ public static class QuestionSelector
     /// Returns a session-appropriate subset of questions from allQuestions.
     /// </summary>
     /// <param name="allQuestions">The full loaded question bank.</param>
-    /// <param name="isFirstSession">True on the player's first quiz interaction.</param>
+    /// <param name="isFirstSession">True on the player's first quiz interaction globally (not per-prop).</param>
     /// <param name="questionsPerSession">How many questions to return per session.</param>
+    /// <param name="pinnedConceptTag">
+    /// When non-empty, bypasses first-session plan and BKT targeting entirely.
+    /// Questions are drawn only from this concept, shuffled. Use this for
+    /// contextual terminals that should always test a specific concept (e.g. bfs_dfs
+    /// before the Drain Puzzle room).
+    /// </param>
     public static QuestionData[] SelectQuestions(
         QuestionData[] allQuestions,
         bool           isFirstSession,
-        int            questionsPerSession = 5)
+        int            questionsPerSession = 5,
+        string         pinnedConceptTag   = "")
     {
         if (allQuestions == null || allQuestions.Length == 0)
         {
             Debug.LogWarning("[QuestionSelector] No questions available.");
             return allQuestions;
+        }
+
+        if (!string.IsNullOrEmpty(pinnedConceptTag))
+        {
+            QuestionData[] pinned = allQuestions
+                .Where(q => q.conceptTag == pinnedConceptTag)
+                .ToArray();
+
+            if (pinned.Length == 0)
+            {
+                Debug.LogWarning($"[QuestionSelector] Pinned concept '{pinnedConceptTag}' has no questions -- falling back to BKT.");
+            }
+            else
+            {
+                QuestionData[] result = Shuffle(pinned).Take(questionsPerSession).ToArray();
+                Debug.Log($"[QuestionSelector] Pinned concept '{pinnedConceptTag}' | Returning {result.Length} questions.");
+                return result;
+            }
         }
 
         QuestionData[] selected = isFirstSession

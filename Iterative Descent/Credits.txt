@@ -12,3 +12,6 @@ Shotgun Trigger Pull by DrinkingWindGames -- https://freesound.org/s/789658/ -- 
 Textures
 https://polyhaven.com/a/granite_tile
 https://polyhaven.com/a/painted_plaster_wall
+
+Audio
+Power Down https://freesound.org/people/noirenex/sounds/159399/

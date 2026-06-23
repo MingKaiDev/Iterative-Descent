@@ -28,7 +28,7 @@ public static class QuizDataLoader
     /// Returns null and logs an error if the file is missing or malformed.
     /// </summary>
     /// <param name="fileName">File name relative to StreamingAssets (e.g. "quiz_data.json")</param>
-    public static QuestionData[] Load(string fileName = "quiz_data.json")
+    public static QuestionData[] Load(string fileName = "quiz_bank.json")
     {
         string path = Path.Combine(Application.streamingAssetsPath, fileName);
 

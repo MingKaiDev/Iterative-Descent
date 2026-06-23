@@ -16,7 +16,9 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
     public string jsonFileName   = "quiz2_data.json";
 
     [Header("Question Selection")]
-    public int questionsPerSession = 5;
+    public int    questionsPerSession = 5;
+    [Tooltip("If set, always draws from this concept tag only, bypassing BKT and first-session logic. Leave blank for normal BKT-driven selection.")]
+    public string pinnedConceptTag   = "";
 
     [Header("UI")]
     [Tooltip("Assign the ExamPaperPanel GameObject in the Canvas.")]
@@ -36,9 +38,8 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
 
     // ── Private ──────────────────────────────────────────────────────────────
 
-    private bool            _open;
-    private QuestionData[]  _resolvedQuestions;
-    private int             _sessionCount;
+    private bool           _open;
+    private QuestionData[] _resolvedQuestions;
 
     void Awake()
     {
@@ -72,10 +73,9 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         {
             examPaperOverlay.SetActive(true);
 
-            bool isFirst = _sessionCount == 0;
+            bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
             QuestionData[] sessionQuestions = QuestionSelector.SelectQuestions(
-                _resolvedQuestions, isFirst, questionsPerSession);
-            _sessionCount++;
+                _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
 
             // NotifyQuizStarted() is called inside ExamPaperPuzzleUI.Setup()
             // Do NOT call it here -- same rule as PuzzleProp.
