@@ -7,9 +7,9 @@
 //   2. Attach this script to ANY scene GameObject (e.g. GameManager).
 //   3. Assign pausePanel to that GameObject in the Inspector.
 //   4. Add three Button children inside Pause Panel:
-//        - resumeButton  -> calls PauseMenuUI.Instance.ClosePause()
-//        - howToPlayButton (stub -- wires to TutorialUI when Story 28 is done)
-//        - quitButton    -> calls PauseMenuUI.Instance.QuitToMainMenu()
+//        - resumeButton   -> calls PauseMenuUI.Instance.ClosePause()
+//        - howToPlayButton -> calls HelpPanelUI.Instance.Show()
+//        - quitButton     -> calls PauseMenuUI.Instance.QuitToMainMenu()
 //   5. The Canvas must have a GraphicRaycaster; scene must have an EventSystem.
 //
 // BEHAVIOUR
@@ -64,12 +64,8 @@ public class PauseMenuUI : MonoBehaviour
         if (resumeButton  != null) resumeButton.onClick.AddListener(ClosePause);
         if (quitButton    != null) quitButton.onClick.AddListener(QuitToMainMenu);
 
-        // How-to-play is a stub until TutorialUI (Story 28) is implemented.
         if (howToPlayButton != null)
-        {
-            howToPlayButton.interactable = false;  // greyed out for now
-            // howToPlayButton.onClick.AddListener(() => TutorialUI.Instance.Show(...));
-        }
+            howToPlayButton.onClick.AddListener(() => HelpPanelUI.Instance?.Show());
     }
 
     void Update()

@@ -42,6 +42,8 @@ public class ItemSpawner : MonoBehaviour
     public GameObject ammoBoxPrefab;
     [Tooltip("HealthKit prefab with HealthPickup script and trigger Collider.")]
     public GameObject healthKitPrefab;
+    [Tooltip("ShotgunShells prefab with ShotgunAmmoPickup script and trigger Collider.")]
+    public GameObject shotgunShellsPrefab;
 
     // ─── Inspector: Base Drop Chances ─────────────────────────────────────────
 
@@ -52,6 +54,9 @@ public class ItemSpawner : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Flat probability a health kit drops per kill, before any modifiers.")]
     public float healthBaseChance = 0.25f;
+    [Range(0f, 1f)]
+    [Tooltip("Flat probability shotgun shells drop per kill. Only rolls if shotgun is unlocked.")]
+    public float shellBaseChance  = 0.30f;
 
     // ─── Inspector: DDA Modifier ──────────────────────────────────────────────
 
@@ -80,6 +85,13 @@ public class ItemSpawner : MonoBehaviour
     [Tooltip("Extra multiplier on health drop chance when player is below the health threshold.")]
     public float healthNeedsMultiplier = 1.5f;
 
+    [Range(0f, 20f)]
+    [Tooltip("Spare shell count below which the player is considered to need shotgun ammo.")]
+    public float shellNeedsThreshold   = 8f;
+    [Range(1f, 3f)]
+    [Tooltip("Extra multiplier on shell drop chance when player is below the shell threshold.")]
+    public float shellNeedsMultiplier  = 1.5f;
+
     // ─── Inspector: Spawn Settings ────────────────────────────────────────────
 
     [Header("Spawn Settings")]
@@ -93,8 +105,10 @@ public class ItemSpawner : MonoBehaviour
 
     // ─── Private ──────────────────────────────────────────────────────────────
 
-    private PlayerHealth _playerHealth;
-    private PlayerCombat _playerCombat;
+    private PlayerHealth      _playerHealth;
+    private PlayerCombat      _playerCombat;
+    private ShotgunController _shotgun;
+    private WeaponManager     _weaponManager;
 
     // ─── Unity Lifecycle ──────────────────────────────────────────────────────
 
@@ -129,23 +143,26 @@ public class ItemSpawner : MonoBehaviour
 
         bool dropAmmo   = RollAmmo();
         bool dropHealth = RollHealth();
+        bool dropShells = RollShotgunShells();
 
-        if (!dropAmmo && !dropHealth) return;
+        if (!dropAmmo && !dropHealth && !dropShells) return;
 
         if (maxOneDropPerKill)
         {
-            // Health is higher priority — more urgent to survive than to have bullets.
+            // Priority: health > pistol ammo > shotgun shells.
             if (dropHealth)
-                SpawnItem(healthKitPrefab, deathPosition);
+                SpawnItem(healthKitPrefab,    deathPosition);
+            else if (dropAmmo)
+                SpawnItem(ammoBoxPrefab,      deathPosition);
             else
-                SpawnItem(ammoBoxPrefab, deathPosition);
+                SpawnItem(shotgunShellsPrefab, deathPosition);
         }
         else
         {
-            // Allow both to drop on the same kill (rare but possible at high needs + low DDA).
-            // Offset the second item slightly so they don't overlap.
-            if (dropHealth) SpawnItem(healthKitPrefab, deathPosition);
-            if (dropAmmo)   SpawnItem(ammoBoxPrefab,   deathPosition + Vector3.right * 0.3f);
+            // Allow multiple drops on the same kill. Offset so they don't stack.
+            if (dropHealth) SpawnItem(healthKitPrefab,     deathPosition);
+            if (dropAmmo)   SpawnItem(ammoBoxPrefab,       deathPosition + Vector3.right * 0.3f);
+            if (dropShells) SpawnItem(shotgunShellsPrefab, deathPosition - Vector3.right * 0.3f);
         }
     }
 
@@ -175,6 +192,21 @@ public class ItemSpawner : MonoBehaviour
 
         bool drop = Random.value < chance;
         Debug.Log($"[ItemSpawner] Health roll: base={healthBaseChance:F2} dda={ddaMult:F2} " +
+                  $"needs={needsMult:F2} final={chance:F2} -> {(drop ? "DROP" : "no drop")}");
+        return drop;
+    }
+
+    private bool RollShotgunShells()
+    {
+        if (shotgunShellsPrefab == null) return false;
+        if (_weaponManager == null || !_weaponManager.IsShotgunUnlocked) return false;
+
+        float ddaMult   = DDAMultiplier();
+        float needsMult = ShellNeedsMultiplier();
+        float chance    = Mathf.Clamp01(shellBaseChance * ddaMult * needsMult);
+
+        bool drop = Random.value < chance;
+        Debug.Log($"[ItemSpawner] Shell roll: base={shellBaseChance:F2} dda={ddaMult:F2} " +
                   $"needs={needsMult:F2} final={chance:F2} -> {(drop ? "DROP" : "no drop")}");
         return drop;
     }
@@ -229,6 +261,17 @@ public class ItemSpawner : MonoBehaviour
         return needsHealth ? healthNeedsMultiplier : 1f;
     }
 
+    /// <summary>
+    /// Returns shellNeedsMultiplier when spare shells are below the threshold.
+    /// Falls back to 1.0 if ShotgunController is not found.
+    /// </summary>
+    private float ShellNeedsMultiplier()
+    {
+        if (_shotgun == null) return 1f;
+        bool needsShells = _shotgun.SpareShells < shellNeedsThreshold;
+        return needsShells ? shellNeedsMultiplier : 1f;
+    }
+
     // ─── Spawn ────────────────────────────────────────────────────────────────
 
     private void SpawnItem(GameObject prefab, Vector3 origin)
@@ -247,12 +290,18 @@ public class ItemSpawner : MonoBehaviour
 
     private void CachePlayerRefs()
     {
-        _playerHealth = FindFirstObjectByType<PlayerHealth>();
-        _playerCombat = FindFirstObjectByType<PlayerCombat>();
+        _playerHealth  = FindFirstObjectByType<PlayerHealth>();
+        _playerCombat  = FindFirstObjectByType<PlayerCombat>();
+        _shotgun       = FindFirstObjectByType<ShotgunController>();
+        _weaponManager = FindFirstObjectByType<WeaponManager>();
 
-        if (_playerHealth == null)
+        if (_playerHealth  == null)
             Debug.LogWarning("[ItemSpawner] PlayerHealth not found in scene. Health needs check disabled.");
-        if (_playerCombat == null)
+        if (_playerCombat  == null)
             Debug.LogWarning("[ItemSpawner] PlayerCombat not found in scene. Ammo needs check disabled.");
+        if (_shotgun       == null)
+            Debug.LogWarning("[ItemSpawner] ShotgunController not found in scene. Shell needs check disabled.");
+        if (_weaponManager == null)
+            Debug.LogWarning("[ItemSpawner] WeaponManager not found in scene. Shotgun unlock gate disabled.");
     }
 }

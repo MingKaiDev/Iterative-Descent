@@ -47,6 +47,29 @@ public class LockedDoorProp : MonoBehaviour, IInteractable
              "Assign a shared DialogueSequence asset here (e.g. Dialogue_DoorLocked_Default).")]
     public DialogueSequence defaultLockedDialogue;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    void OnEnable()
+    {
+        if (door != null)
+            door.OnUnlocked += HandleDoorUnlocked;
+    }
+
+    void OnDisable()
+    {
+        if (door != null)
+            door.OnUnlocked -= HandleDoorUnlocked;
+    }
+
+    void HandleDoorUnlocked()
+    {
+        this.enabled = false;
+        var ib = GetComponent<InteractableBase>();
+        if (ib != null) ib.enabled = false;
+        var ir = GetComponent<InteractableRegistrar>();
+        if (ir != null) ir.enabled = false;
+    }
+
     // ── IInteractable ─────────────────────────────────────────────────────────
 
     public string InteractLabel => "Try Door";

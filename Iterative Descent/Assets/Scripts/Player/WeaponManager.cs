@@ -24,6 +24,9 @@ public class WeaponManager : MonoBehaviour
     private bool _shotgunUnlocked;
     private int  _currentIndex;   // 0 = pistol, 1 = shotgun
 
+    /// <summary>True once the player has picked up the shotgun.</summary>
+    public bool IsShotgunUnlocked => _shotgunUnlocked;
+
     // ─── Unity Lifecycle ─────────────────────────────────────────────────────────
 
     void Awake()

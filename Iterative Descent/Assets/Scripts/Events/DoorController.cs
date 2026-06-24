@@ -57,10 +57,16 @@ public class DoorController : MonoBehaviour
     }
 
     /// <summary>
+    /// Fired when the door is unlocked. LockedDoorProp subscribes to disable itself.
+    /// </summary>
+    public System.Action OnUnlocked;
+
+    /// <summary>
     /// Called by PuzzleEventHandler — unlocks and opens the door.
     /// </summary>
     public void Unlock()
     {
+        OnUnlocked?.Invoke();
         isLocked = false;
         Open();
     }

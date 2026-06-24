@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 public class PlayerInteractor : MonoBehaviour
 {
+    // ── Singleton instance (used by HelpPanelUI to detect scene context) ──
+    public static PlayerInteractor Instance { get; private set; }
+
     // ── Pause flag — set by PuzzleProp when UI is open ───────────
     private static bool _paused = false;
     public static bool IsPaused => _paused;
@@ -32,6 +35,16 @@ public class PlayerInteractor : MonoBehaviour
     // ── Runtime ──────────────────────────────────────────────────
     private readonly List<InteractableBase> _inRange = new();
     private int _selectedIndex = 0;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
 
     void LateUpdate()
     {

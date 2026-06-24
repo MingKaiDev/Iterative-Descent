@@ -216,6 +216,48 @@ Sprint 2 priorities:
 - Start offline training pipeline design for supervised DDA model
 - Continue level construction: Classroom 2, Computer Lab
 
-[TODO: Literature Review section — DDA survey, BKT origins, serious games research, Alien Isolation as AI case study, RE2 Mr. X design analysis]
+---
+
+## 2. Literature Review
+
+### 2.1 Serious games and educational game design
+
+The term "serious games" was coined by Clark Abt (1970), who defined them as games with "an explicit and carefully thought-out educational purpose and are not intended to be played primarily for amusement." Abt was writing about board games and policy simulations, but the principle transfers: games impose structure, goals, and feedback loops that can be deliberately shaped to build knowledge rather than just entertain.
+
+Prensky (2001) made the case for digital serious games directly. His argument was that the properties that make games engaging, things like clear rules, adaptive feedback, and meaningful goals, are the same properties that make learning stick. Learners who resist a worksheet will voluntarily grind through a difficult game level, because the game frames the work as something worth doing. That matters because engagement is not incidental to learning; it is a prerequisite. A student who checks out halfway through retains very little, since later material builds on earlier material they never properly absorbed.
+
+Gee (2003) went further and looked at how games structure knowledge acquisition rather than just motivating it. He identified 36 learning principles in well-designed commercial games, including learning in context rather than in the abstract, being allowed to experiment and fail without catastrophic consequence, and receiving information at the moment it becomes relevant. His conclusion was that good games already function as good tutors, and the implication for educational game design is that content should be woven into the mechanics, not added on top.
+
+Several researchers formalised this into models. Garris, Ahlers, and Driskell (2002) proposed an input-process-output model where instructional content and game characteristics produce a game cycle of user behaviour and feedback, which in turn drives learning outcomes. The model treats motivational states like interest and challenge as the mechanism that converts game activity into actual learning: if the player is not engaged, the cycle runs but nothing sticks. Plass, Homer, and Kinzer (2015) added that no single learning theory covers everything, because games operate across cognitive, behavioural, affective, and sociocultural dimensions simultaneously.
+
+The evidence that serious games work is real, though it is thinner than advocates sometimes imply. Connolly et al. (2012) reviewed 129 empirical studies and found consistent positive effects on knowledge acquisition and engagement, with complex multi-mechanic genres outperforming simpler ones. The catch is that many studies lacked control groups or ran too briefly to test retention rather than just immediate recall. The honest summary is that well-designed serious games can match conventional instruction on learning outcomes while clearly outperforming it on engagement, and that engagement advantage matters because it predicts whether students persist and return to the material.
+
+
+**References cited in section 2.1:**
+- Abt, C. C. (1970). *Serious Games*. Viking Press.
+- Connolly, T. M., Boyle, E. A., MacArthur, E., Hainey, T., & Boyle, J. M. (2012). A systematic literature review of empirical evidence on computer games and serious games. *Computers & Education, 59*(2), 661-686.
+- Garris, R., Ahlers, R., & Driskell, J. E. (2002). Games, motivation, and learning: A research and practice model. *Simulation & Gaming, 33*(4), 441-467.
+- Gee, J. P. (2003). *What Video Games Have to Teach Us About Learning and Literacy*. Palgrave Macmillan.
+- Plass, J. L., Homer, B. D., & Kinzer, C. K. (2015). Foundations of game-based learning. *Educational Psychologist, 50*(4), 258-283.
+- Prensky, M. (2001). *Digital Game-Based Learning*. McGraw-Hill.
+
+### 2.2 Flow theory, Zone of Proximal Development and engagement
+
+Two theoretical constructs sit behind most of the serious game design literature when it comes to engagement: Csikszentmihalyi's flow theory and Vygotsky's Zone of Proximal Development. They come from different traditions but point at the same practical problem, which is how to keep a learner working at a level that is challenging enough to produce learning without being so hard that they give up.
+
+Flow, as Csikszentmihalyi (1990) described it, is the subjective state of complete absorption in a task. It occurs when the demands of the activity are closely matched to the person's current skill level. When challenge significantly outpaces skill, the result is anxiety. When skill significantly outpaces challenge, the result is boredom. The narrow corridor between these two states is where flow lives, and it is characterised by focused attention, loss of self-consciousness, distorted time perception, and intrinsic motivation to continue. Nakamura and Csikszentmihalyi (2002) later identified the specific conditions that reliably produce flow: clear and proximate goals, immediate feedback on progress, and a perceived balance between challenge and personal capability. These conditions are not unique to games, but games are unusually good at satisfying all three simultaneously.
+
+*[Figure: Csikszentmihalyi flow channel diagram -- challenge on the vertical axis, skill on the horizontal axis, with the flow corridor running diagonally, anxiety above and boredom below.]*
+
+Vygotsky's Zone of Proximal Development (ZPD) addresses a related but distinct question. Where flow theory describes the experiential state a learner needs to be in, ZPD describes where their knowledge needs to be. Vygotsky (1978) defined the ZPD as "the distance between the actual developmental level as determined by independent problem solving and the level of potential development as determined through problem solving under adult guidance." In plain terms, the ZPD is the band of difficulty just above what a learner can already do unassisted. Tasks below the ZPD are too easy to produce learning. Tasks above it are inaccessible without support. The concept of scaffolding, formalised by Wood, Bruner, and Ross (1976) [insert citation here], extends this by describing how a more capable guide can temporarily support a learner through tasks that sit above their current independent capability, then gradually withdraw that support as competence grows.
+
+The practical overlap between flow and ZPD is significant. Both frameworks require the difficulty of the task to track the learner's current level of capability. A fixed difficulty level satisfies neither: a learner who improves will pass through the optimal window and into boredom, while a learner who struggles will pass through it in the other direction into anxiety. This is the theoretical basis for Dynamic Difficulty Adjustment in educational games, explored in the next section. DDA is, in effect, an automated attempt to keep the player simultaneously in flow and inside their ZPD.
+
+**References cited in section 2.2:**
+- Csikszentmihalyi, M. (1990). *Flow: The Psychology of Optimal Experience*. Harper & Row.
+- Nakamura, J., & Csikszentmihalyi, M. (2002). The concept of flow. In C. R. Snyder & S. J. Lopez (Eds.), *Handbook of Positive Psychology* (pp. 89-105). Oxford University Press.
+- Vygotsky, L. S. (1978). *Mind in Society: The Development of Higher Psychological Processes*. Harvard University Press.
+
+[TODO: Literature Review sections 2.3-2.6 — DDA survey, BKT origins, Alien Isolation as AI case study, RE2 Mr. X design analysis]
 
 [TODO: Evaluation plan — how to measure if the DDA actually improves learning outcomes vs. static difficulty]

@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &60665403926698023
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8700617353114198275, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -7.3238277
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.21
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -17.27088
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -5076484507258936684, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -5076484507258936684, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 65702495048144492, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_Name
+      value: ShotgunShells
+      objectReference: {fileID: 0}
+    - target: {fileID: 5392398322951045289, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5710317391758533898, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.231
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4258352867701932331}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5532344416234482074}
+  m_SourcePrefab: {fileID: 100100000, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+--- !u!1 &871146416774964598 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 938029eadf0589a45b99c8fab63974eb, type: 3}
+  m_PrefabInstance: {fileID: 60665403926698023}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &4258352867701932331
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871146416774964598}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 0.45656928, z: 1}
+  m_Center: {x: 0, y: 0.27171537, z: 0}
+--- !u!114 &5532344416234482074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871146416774964598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa8e9f2a4de9e61408085dafb9b11cde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShotgunAmmoPickup
+  enableBob: 1
+  bobHeight: 0.08
+  bobSpeed: 2.2
+  rotateSpeed: 55
+  shellAmount: 6
