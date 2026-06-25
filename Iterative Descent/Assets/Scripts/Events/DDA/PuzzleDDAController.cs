@@ -120,6 +120,7 @@ public class PuzzleDDAController : MonoBehaviour
         MatchingPuzzleUI.OnMatchingSolved         += OnGeneralPuzzleSolved;
         SubnetPuzzleUI.OnSubnetSolved             += OnGeneralPuzzleSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved += OnGeneralPuzzleSolved;
+        PaintingPuzzleManager.OnPaintingSolved    += OnGeneralPuzzleSolved;
     }
 
     private void OnDisable()
@@ -133,6 +134,7 @@ public class PuzzleDDAController : MonoBehaviour
         MatchingPuzzleUI.OnMatchingSolved         -= OnGeneralPuzzleSolved;
         SubnetPuzzleUI.OnSubnetSolved             -= OnGeneralPuzzleSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved -= OnGeneralPuzzleSolved;
+        PaintingPuzzleManager.OnPaintingSolved    -= OnGeneralPuzzleSolved;
     }
 
     private void OnQuizFinished(int correct, int total)   => StartCoroutine(EvaluateNextFrame());

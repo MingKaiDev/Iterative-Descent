@@ -233,6 +233,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         MatchingPuzzleUI.OnMatchingSolved       += HandleMatchingSolved;
         SubnetPuzzleUI.OnSubnetSolved           += HandleSubnetSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved += HandlePacketFilterSolved;
+        PaintingPuzzleManager.OnPaintingSolved    += HandlePaintingSolved;
     }
 
     private void OnDisable()
@@ -248,6 +249,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         MatchingPuzzleUI.OnMatchingSolved       -= HandleMatchingSolved;
         SubnetPuzzleUI.OnSubnetSolved           -= HandleSubnetSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved -= HandlePacketFilterSolved;
+        PaintingPuzzleManager.OnPaintingSolved    -= HandlePaintingSolved;
     }
 
     private void Update()
@@ -683,11 +685,46 @@ public class PlayerMetricsTracker : MonoBehaviour
                   $"Time: {timeTaken:F1}s | Avg submissions: {AveragePacketFilterWrongSubmissions:F1}");
     }
 
+    // ── Painting Puzzle API ───────────────────────────────────────────────────
+
+    public int   TotalPaintingSolved             { get; private set; }
+    public int   LastPaintingWrongAttempts       { get; private set; }
+    public float LastPaintingTime                { get; private set; }
+    public float AveragePaintingWrongAttempts    { get; private set; }
+
+    private void HandlePaintingSolved(int wrongAttempts)
+    {
+        // Painting puzzle runs in world-space (no timeScale pause), so deltaTime
+        // clocks are fine. We read elapsed time from the manager itself.
+        float timeTaken = PaintingPuzzleManager.Instance != null
+            ? PaintingPuzzleManager.Instance.ElapsedTime
+            : 0f;
+
+        LastPaintingWrongAttempts = wrongAttempts;
+        LastPaintingTime          = timeTaken;
+        TotalPaintingSolved++;
+
+        AveragePaintingWrongAttempts = TotalPaintingSolved <= 1
+            ? wrongAttempts
+            : (AveragePaintingWrongAttempts * (TotalPaintingSolved - 1) + wrongAttempts)
+              / TotalPaintingSolved;
+
+        // BKT update -- each wrong confirm is a failed attempt on processes_threads
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ProcessesThreads, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.ProcessesThreads, true);
+
+        UpdateGeneralPool(wrongAttempts, timeTaken);
+
+        Debug.Log($"[Metrics] Painting puzzle solved | Wrong confirms: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s");
+    }
+
     // ── General Puzzle Pool API ────────────────────────────────────────────────
 
     /// <summary>
     /// Call at the end of any puzzle handler that belongs to the general pool
-    /// (Stack, Drain, Matching, Subnet, PacketFilter, and future puzzles).
+    /// (Stack, Drain, Matching, Subnet, PacketFilter, Painting, and future puzzles).
     /// Maintains running averages used by PuzzleDDAController's general signal group.
     /// </summary>
     private void UpdateGeneralPool(int wrongAttempts, float timeTaken)
@@ -832,6 +869,12 @@ public class PlayerMetricsTracker : MonoBehaviour
         TotalPacketFilterSolved            = 0;
         AveragePacketFilterWrongSubmissions = 0f;
         _packetFilterInProgress            = false;
+
+        // Painting puzzle
+        LastPaintingWrongAttempts    = 0;
+        LastPaintingTime             = 0f;
+        TotalPaintingSolved          = 0;
+        AveragePaintingWrongAttempts = 0f;
 
         // General puzzle pool
         LastGeneralPuzzleWrongAttempts    = 0;

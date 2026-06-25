@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77ef10872cccf5d48bc747366f93dc18, type: 3}
+  m_Name: Note_WashroomF
+  m_EditorClassIdentifier: Assembly-CSharp::NoteData
+  title: Work Order #4471
+  author: 
+  body: "NEXUS INSTITUTE -- FACILITIES MANAGEMENT\nWORK ORDER #4471\n\nLocation:
+    Female Washroom, Main Building\nPriority: Low\nReported By: Janitorial Staff\n\nISSUE:\nIrregular
+    water pressure in the female washroom drainage system.\nSlow drain times and
+    intermittent blockage reported in the\nsecondary pipe network (junctions B4 through
+    B9).\n\nACTION REQUIRED:\nManual flow test. Blockage clearance if required.\nAssigned
+    to: Maintenance Team 2\nExpected completion: Within 5 business days.\n\n-------------------------------\nSTATUS:
+    AUTO-CLOSED\n\nResolved by: ARBITEX\nNotes: Drainage flow within acceptable parameters.\n      
+    Manual inspection is not required.\n\n-- Automatically processed by ARBITEX Facilities
+    Protocol v2.1"
+  noteType: 0

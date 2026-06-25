@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77ef10872cccf5d48bc747366f93dc18, type: 3}
+  m_Name: Note_Classroom1
+  m_EditorClassIdentifier: Assembly-CSharp::NoteData
+  title: Help
+  author: 
+  body: 'I don''t know who will find this.
+
+
+    The doors locked around 2AM and
+    the PA system started talking some random nonsense
+
+
+    Professor Tan was rushing
+    down to the control terminal to override it
+
+
+    I don''t know what happened
+    to her after that.
+
+
+    I hid in here with the other students when the alarms
+    blared
+
+
+    Oh god, they are breaking down the front door
+
+
+    God protect
+    us'
+  noteType: 0

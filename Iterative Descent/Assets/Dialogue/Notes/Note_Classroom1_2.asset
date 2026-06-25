@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77ef10872cccf5d48bc747366f93dc18, type: 3}
+  m_Name: Note_Classroom1_2
+  m_EditorClassIdentifier: Assembly-CSharp::NoteData
+  title: Summary Notes SC2005
+  author: 
+  body: 'CPU SCHEDULING ALGORITHMS
+
+    Quick reference for this week''s practical.
+
+    
+
+    ---
+
+    
+
+    ROUND
+    ROBIN (RR)
+
+    Each process gets a fixed time slice called a quantum.
+
+    When
+    the quantum expires, the process goes back to the queue
+
+    and the next one
+    runs. Fair, but not optimal for long jobs.
+
+    
+
+    Note: if the quantum
+    is too short, context-switching overhead
+
+    hurts performance. Too long and
+    it behaves like FCFS.
+
+    
+
+    ---
+
+    
+
+    FIRST COME FIRST SERVED (FCFS)
+
+    Processes
+    run in order of arrival. Simple, but a long process
+
+    can block everything
+    behind it. This is called the convoy effect.
+
+    
+
+    ---
+
+    
+
+    SHORTEST
+    JOB FIRST (SJF)
+
+    Prioritises the process with the shortest burst time.
+
+    Optimal
+    in theory. Hard to use in practice because
+
+    burst times are estimates, not
+    certainties.
+
+    
+
+    ---
+
+    
+
+    EXAM TIP: Know how each algorithm
+    affects waiting time
+
+    and turnaround time. Draw a Gantt chart when in doubt.'
+  noteType: 1
