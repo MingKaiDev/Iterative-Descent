@@ -22,6 +22,12 @@ public class PaintingInteractable : MonoBehaviour, IInteractable
     [Tooltip("The spotlight illuminating this painting/button.")]
     public Light spotLight;
 
+    [Tooltip("Sound played when the player presses this button.")]
+    public AudioClip pressSound;
+
+    [Tooltip("AudioSource to play pressSound through. If unassigned, one is added automatically.")]
+    public AudioSource audioSource;
+
     // ── IInteractable ──────────────────────────────────────────────────────
     public string InteractLabel => "Examine";
 
@@ -29,6 +35,7 @@ public class PaintingInteractable : MonoBehaviour, IInteractable
     {
         if (PaintingPuzzleManager.Instance == null) return;
         if (PaintingPuzzleManager.Instance.IsSolved) return;
+        if (pressSound != null) audioSource.PlayOneShot(pressSound);
         PaintingPuzzleManager.Instance.OnPaintingPressed(this);
     }
 
@@ -48,24 +55,28 @@ public class PaintingInteractable : MonoBehaviour, IInteractable
             _originalIntensity = spotLight.intensity;
             spotLight.color    = ColourIdle;
         }
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
     }
 
     // ── Light state (called by PaintingPuzzleManager) ──────────────────────
 
-    /// <summary>Correct press -- brighten to 2x.</summary>
+    /// <summary>Correct press -- bright green.</summary>
     public void OnCycled()
     {
         if (spotLight == null) return;
-        spotLight.color     = ColourIdle;
-        spotLight.intensity = _originalIntensity * 2f;
+        spotLight.color     = ColourCorrect;
+        spotLight.intensity = _originalIntensity * 3f;
     }
 
-    /// <summary>All 8 correct -- turn green.</summary>
+    /// <summary>All 8 correct -- bright green.</summary>
     public void OnCorrect()
     {
         if (spotLight == null) return;
         spotLight.color     = ColourCorrect;
-        spotLight.intensity = _originalIntensity * 2f;
+        spotLight.intensity = _originalIntensity * 3f;
     }
 
     /// <summary>Wrong press anywhere -- reset to original.</summary>
