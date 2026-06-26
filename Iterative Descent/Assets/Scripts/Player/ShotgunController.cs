@@ -55,6 +55,12 @@ public class ShotgunController : MonoBehaviour
     [Tooltip("Local rotation relative to Camera.")]
     public Vector3 fpsLocalRotation = new Vector3(0f, 0f, 0f);
 
+    [Header("Reload Tilt")]
+    [Tooltip("Euler angle offset applied to the weapon during reload. Z = sideways tilt.")]
+    public Vector3 reloadTiltAngle = new Vector3(0f, 0f, 45f);
+    [Tooltip("Speed of the tilt in and tilt back transitions.")]
+    public float reloadTiltSpeed = 8f;
+
     // --- Public Read-Only State ---------------------------------------------
     public bool IsAiming    => _isAiming;
     public bool IsReloading => _isReloading;
@@ -74,7 +80,6 @@ public class ShotgunController : MonoBehaviour
     private Coroutine      _reloadCoroutine;
 
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
-    private static readonly int FireHash     = Animator.StringToHash("Fire");
     private static readonly int ReloadHash   = Animator.StringToHash("Reload");
 
     // --- Unity Lifecycle ----------------------------------------------------
@@ -94,23 +99,16 @@ public class ShotgunController : MonoBehaviour
     {
         if (weaponModel == null) return;
 
-        Transform handBone = FindBone("mixamorig:RightHand");
-        if (handBone == null)
+        Transform cam = Camera.main?.transform;
+        if (cam == null)
         {
-            Debug.LogWarning("[ShotgunController] mixamorig:RightHand not found -- cannot parent shotgun model.");
+            Debug.LogWarning("[ShotgunController] No main camera found -- cannot parent shotgun model.");
             return;
         }
 
-        weaponModel.transform.SetParent(handBone, worldPositionStays: false);
+        weaponModel.transform.SetParent(cam, worldPositionStays: false);
         weaponModel.transform.localPosition = fpsLocalPosition;
         weaponModel.transform.localRotation = Quaternion.Euler(fpsLocalRotation);
-    }
-
-    Transform FindBone(string boneName)
-    {
-        foreach (Transform t in GetComponentsInChildren<Transform>(includeInactive: true))
-            if (t.name == boneName) return t;
-        return null;
     }
 
     void OnDestroy()
@@ -208,7 +206,6 @@ public class ShotgunController : MonoBehaviour
 
         _currentMag--;
         _lastFireTime = Time.time;
-        _animator.SetTrigger(FireHash);
         if (muzzleFlash != null) muzzleFlash.Play();
         OnFired?.Invoke();
         BroadcastAmmo();
@@ -288,6 +285,7 @@ public class ShotgunController : MonoBehaviour
     {
         _isReloading = true;
         _animator.SetTrigger(ReloadHash);
+        StartCoroutine(ReloadTiltRoutine());
 
         while (_currentMag < magazineSize && _spareShells > 0)
         {
@@ -306,6 +304,37 @@ public class ShotgunController : MonoBehaviour
 
         _isReloading     = false;
         _reloadCoroutine = null;
+    }
+
+    IEnumerator ReloadTiltRoutine()
+    {
+        if (weaponModel == null) yield break;
+
+        Quaternion baseRot   = Quaternion.Euler(fpsLocalRotation);
+        Quaternion tiltedRot = Quaternion.Euler(fpsLocalRotation + reloadTiltAngle);
+
+        // Tilt out
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime * reloadTiltSpeed;
+            weaponModel.transform.localRotation = Quaternion.Slerp(baseRot, tiltedRot, Mathf.Clamp01(t));
+            yield return null;
+        }
+
+        // Hold across all shell insertions until reload finishes or player dies
+        yield return new WaitUntil(() => !_isReloading || _isDead);
+
+        // Tilt back
+        t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime * reloadTiltSpeed;
+            weaponModel.transform.localRotation = Quaternion.Slerp(tiltedRot, baseRot, Mathf.Clamp01(t));
+            yield return null;
+        }
+
+        weaponModel.transform.localRotation = baseRot;
     }
 
     // --- Death --------------------------------------------------------------
