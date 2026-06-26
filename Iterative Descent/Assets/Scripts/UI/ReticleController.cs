@@ -31,20 +31,15 @@ public class ReticleController : MonoBehaviour
     public float maxOffset = 48f;
     [Tooltip("Arm offset in pixels when AccuracyT = 1 (fully settled).")]
     public float minOffset = 10f;
-    [Tooltip("How fast the arm positions lerp visually (cosmetic smoothing on top of accuracy).")]
-    public float lerpSpeed = 12f;
-
     // --- Private ------------------------------------------------------------
     private PlayerCombat      _pistol;
     private ShotgunController _shotgun;
     private CanvasGroup       _canvasGroup;
-    private float             _currentOffset;
 
     void Start()
     {
-        _pistol        = FindObjectOfType<PlayerCombat>();
-        _shotgun       = FindObjectOfType<ShotgunController>();
-        _currentOffset = maxOffset;
+        _pistol  = FindObjectOfType<PlayerCombat>();
+        _shotgun = FindObjectOfType<ShotgunController>();
 
         // Use CanvasGroup alpha so this GO stays active and Update() always runs.
         _canvasGroup       = GetComponent<CanvasGroup>();
@@ -69,22 +64,18 @@ public class ReticleController : MonoBehaviour
             accuracyT = 0f; // shotgun has fixed spread -- reticle stays at maxOffset
         }
 
-        bool shouldShow        = isAiming && !PlayerInteractor.IsPaused;
-        _canvasGroup.alpha     = shouldShow ? 1f : 0f;
+        bool shouldShow    = isAiming && !PlayerInteractor.IsPaused;
+        _canvasGroup.alpha = shouldShow ? 1f : 0f;
         if (!shouldShow) return;
 
-        float targetOffset = Mathf.Lerp(maxOffset, minOffset, accuracyT);
-        _currentOffset = Mathf.Lerp(_currentOffset, targetOffset, lerpSpeed * Time.deltaTime);
+        // Directly mirror AccuracyT -- no extra smoothing so the visual
+        // always matches actual accuracy (no lag after a shot resets the timer).
+        float offset = Mathf.Lerp(maxOffset, minOffset, accuracyT);
 
-        if (armTop    != null) armTop.anchoredPosition    = new Vector2(0f,             _currentOffset);
-        if (armBottom != null) armBottom.anchoredPosition = new Vector2(0f,            -_currentOffset);
-        if (armLeft   != null) armLeft.anchoredPosition   = new Vector2(-_currentOffset, 0f);
-        if (armRight  != null) armRight.anchoredPosition  = new Vector2( _currentOffset, 0f);
+        if (armTop    != null) armTop.anchoredPosition    = new Vector2(0f,     offset);
+        if (armBottom != null) armBottom.anchoredPosition = new Vector2(0f,    -offset);
+        if (armLeft   != null) armLeft.anchoredPosition   = new Vector2(-offset, 0f);
+        if (armRight  != null) armRight.anchoredPosition  = new Vector2( offset, 0f);
     }
 
-    /// <summary>Called by CombatHUD when aim stops so the offset snaps back to max immediately.</summary>
-    public void ResetSpread()
-    {
-        _currentOffset = maxOffset;
-    }
 }

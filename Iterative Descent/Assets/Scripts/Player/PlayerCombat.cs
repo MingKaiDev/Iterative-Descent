@@ -66,6 +66,8 @@ public class PlayerCombat : MonoBehaviour
     public float maxSpreadAngle = 6f;
     [Tooltip("Min bullet spread angle (degrees) at full accuracy.")]
     public float minSpreadAngle = 0.3f;
+    [Tooltip("Multiplier on settle speed while the player is moving. 0.3 = 30% as fast.")]
+    public float moveSettleRate = 0.3f;
 
     // --- Public Read-Only State ---------------------------------------------
     public bool  IsReloading => _isReloading;
@@ -148,7 +150,12 @@ public class PlayerCombat : MonoBehaviour
         if (_isReloading) return;
 
         HandleAimToggle();
-        if (_isAiming) _aimTimer = Mathf.Min(_aimTimer + Time.deltaTime, settleTime);
+        if (_isAiming)
+        {
+            bool isMoving = _movement != null && (_movement.IsWalking || _movement.IsRunning);
+            float rate    = isMoving ? moveSettleRate : 1f;
+            _aimTimer     = Mathf.Min(_aimTimer + Time.deltaTime * rate, settleTime);
+        }
         HandleFiring();
         HandleReload();
     }
@@ -191,13 +198,13 @@ public class PlayerCombat : MonoBehaviour
 
         _currentMag--;
         _lastFireTime = Time.time;
-        _aimTimer     = 0f;   // recoil breaks settle -- reticle resets on each shot
         if (muzzleFlash != null) muzzleFlash.Play();
         OnFired?.Invoke();
         BroadcastAmmo();
 
         PlayerMetricsTracker.Instance?.NotifyShotFired();
-        FireBullet();
+        FireBullet();         // reads AccuracyT -- must fire before timer resets
+        _aimTimer = 0f;       // reset after shot so next bullet starts wide again
     }
 
     void FireBullet()

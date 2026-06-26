@@ -135104,9 +135104,10 @@ MonoBehaviour:
   fpsLocalRotation: {x: 270, y: 174.63, z: 86.897}
   reloadTiltAngle: {x: -80, y: 90, z: -87}
   reloadTiltSpeed: 4
-  settleTime: 1.5
+  settleTime: 1
   maxSpreadAngle: 6
-  minSpreadAngle: 0.3
+  minSpreadAngle: 0
+  moveSettleRate: 0.5
 --- !u!114 &979139187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135262,8 +135263,6 @@ MonoBehaviour:
   fpsLocalRotation: {x: 261.59, y: -10.75, z: 281.35}
   reloadTiltAngle: {x: 105, y: -44, z: 83}
   reloadTiltSpeed: 8
-  settleTime: 1
-  freshAimExtraSpread: 8
 --- !u!114 &979139191
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135331,7 +135330,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab22e8f88418a7146bfd1280154c903e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AimCameraController
-  zoomOffset: 0.25
+  aimFOV: 45
   zoomSpeed: 10
 --- !u!1 &979896487
 GameObject:
