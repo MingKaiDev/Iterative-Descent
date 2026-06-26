@@ -124,6 +124,7 @@ public class ShotgunController : MonoBehaviour
 
     void OnDisable()
     {
+        // Always hide model when component is disabled (weapon switch away or death).
         if (weaponModel != null) weaponModel.SetActive(false);
     }
 
@@ -140,14 +141,14 @@ public class ShotgunController : MonoBehaviour
 
     void HandleAimToggle()
     {
-        if (_movement != null && _movement.IsRunning)
-        {
-            CancelAim();
-            return;
-        }
+        bool wantsAim = Mouse.current.rightButton.isPressed;
+        if (wantsAim != _isAiming)
+            SetAiming(wantsAim);
+    }
 
-        if (!Mouse.current.rightButton.wasPressedThisFrame) return;
-        _isAiming = !_isAiming;
+    void SetAiming(bool aim)
+    {
+        _isAiming = aim;
         _animator.SetBool(IsAimingHash, _isAiming);
     }
 
@@ -169,8 +170,7 @@ public class ShotgunController : MonoBehaviour
     public void CancelAim()
     {
         if (!_isAiming) return;
-        _isAiming = false;
-        if (_animator != null) _animator.SetBool(IsAimingHash, false);
+        SetAiming(false);
     }
 
     public void AddAmmo(int amount)
@@ -258,7 +258,7 @@ public class ShotgunController : MonoBehaviour
     Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up)
     {
         float diskRadius = Mathf.Tan(spreadAngle * Mathf.Deg2Rad);
-        float angle      = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
+        float angle      = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
         float r          = Mathf.Sqrt(UnityEngine.Random.Range(0f, 1f));
 
         float offsetX = Mathf.Cos(angle) * r * diskRadius;
@@ -283,6 +283,7 @@ public class ShotgunController : MonoBehaviour
 
     IEnumerator ReloadRoutine()
     {
+        CancelAim();   // drop out of aim mode while reloading
         _isReloading = true;
         _animator.SetTrigger(ReloadHash);
         StartCoroutine(ReloadTiltRoutine());

@@ -27,8 +27,9 @@ public class CombatHUD : MonoBehaviour
     public TextMeshProUGUI ammoText;
 
     [Header("Crosshair")]
-    [Tooltip("GameObject to show only while the player is aiming. Assign a dot/crosshair image.")]
-    public GameObject crosshair;
+    [Tooltip("Assign the ReticleController component (on the Reticle Canvas child). " +
+             "It manages its own visibility -- do not assign a plain crosshair here.")]
+    public ReticleController reticle;
 
     [Header("Puzzle Visibility")]
     [Tooltip("Parent GameObject containing the health bar and ammo display. " +
@@ -58,6 +59,8 @@ public class CombatHUD : MonoBehaviour
         // Death overlay starts hidden.
         if (deathOverlay != null)
             deathOverlay.SetActive(false);
+
+        // Reticle manages its own visibility via CanvasGroup alpha.
     }
 
     void OnDestroy()
@@ -73,10 +76,6 @@ public class CombatHUD : MonoBehaviour
         _combat  = FindObjectOfType<PlayerCombat>();
         _shotgun = FindObjectOfType<ShotgunController>();
 
-        // Hide crosshair until we aim
-        if (crosshair != null)
-            crosshair.SetActive(false);
-
         // Seed ammo display in case events fire before this Start()
         if (_combat != null)
             HandlePistolAmmoChanged(_combat.CurrentMag, _combat.SpareAmmo);
@@ -88,11 +87,7 @@ public class CombatHUD : MonoBehaviour
         if (combatHUDPanel != null)
             combatHUDPanel.SetActive(!PlayerInteractor.IsPaused);
 
-        // Crosshair tracks aiming state every frame (cheap bool check).
-        // Also suppressed while a puzzle is open (PlayerCombat already cancels aim,
-        // but guard here too in case the crosshair is shown for a single frame).
-        if (crosshair != null && _combat != null)
-            crosshair.SetActive(_combat.IsAiming && !_combat.IsReloading && !PlayerInteractor.IsPaused);
+        // Reticle self-manages visibility via ReticleController.Update().
     }
 
     // ─── Event Handlers ─────────────────────────────────────────────────────────

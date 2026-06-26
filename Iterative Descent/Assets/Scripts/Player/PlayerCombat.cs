@@ -59,9 +59,19 @@ public class PlayerCombat : MonoBehaviour
     [Tooltip("Speed of the tilt in and tilt back transitions.")]
     public float reloadTiltSpeed = 8f;
 
+    [Header("Aim Accuracy")]
+    [Tooltip("Seconds of holding aim before reaching full accuracy.")]
+    public float settleTime     = 1.5f;
+    [Tooltip("Max bullet spread angle (degrees) on fresh aim.")]
+    public float maxSpreadAngle = 6f;
+    [Tooltip("Min bullet spread angle (degrees) at full accuracy.")]
+    public float minSpreadAngle = 0.3f;
+
     // --- Public Read-Only State ---------------------------------------------
-    public bool IsReloading => _isReloading;
-    public bool IsAiming    => _isAiming;
+    public bool  IsReloading => _isReloading;
+    public bool  IsAiming    => _isAiming;
+    /// <summary>0 = fresh aim (inaccurate), 1 = fully settled (accurate).</summary>
+    public float AccuracyT   => settleTime > 0f ? Mathf.Clamp01(_aimTimer / settleTime) : 1f;
     public int  CurrentMag  => _currentMag;
     public int  SpareAmmo   => _spareAmmo;
 
@@ -78,6 +88,7 @@ public class PlayerCombat : MonoBehaviour
     private int            _spareAmmo;
     private float          _nextFireTime;
     private float          _lastFireTime = -999f;
+    private float          _aimTimer;
 
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
     private static readonly int ReloadHash   = Animator.StringToHash("Reload");
@@ -126,6 +137,7 @@ public class PlayerCombat : MonoBehaviour
 
     void OnDisable()
     {
+        // Always hide model when component is disabled (weapon switch away or death).
         if (weaponModel != null) weaponModel.SetActive(false);
     }
 
@@ -136,29 +148,29 @@ public class PlayerCombat : MonoBehaviour
         if (_isReloading) return;
 
         HandleAimToggle();
+        if (_isAiming) _aimTimer = Mathf.Min(_aimTimer + Time.deltaTime, settleTime);
         HandleFiring();
         HandleReload();
     }
 
     void HandleAimToggle()
     {
-        // Sprint cancels aim so the run animation doesn't conflict.
-        if (_movement != null && _movement.IsRunning)
-        {
-            CancelAim();
-            return;
-        }
+        bool wantsAim = Mouse.current.rightButton.isPressed;
+        if (wantsAim != _isAiming)
+            SetAiming(wantsAim);
+    }
 
-        if (!Mouse.current.rightButton.wasPressedThisFrame) return;
-        _isAiming = !_isAiming;
+    void SetAiming(bool aim)
+    {
+        _isAiming = aim;
         _animator.SetBool(IsAimingHash, _isAiming);
+        if (!aim) _aimTimer = 0f; // reset settle timer when gun is lowered
     }
 
     public void CancelAim()
     {
         if (!_isAiming) return;
-        _isAiming = false;
-        _animator.SetBool(IsAimingHash, false);
+        SetAiming(false);
     }
 
     // --- Fire ---------------------------------------------------------------
@@ -179,6 +191,7 @@ public class PlayerCombat : MonoBehaviour
 
         _currentMag--;
         _lastFireTime = Time.time;
+        _aimTimer     = 0f;   // recoil breaks settle -- reticle resets on each shot
         if (muzzleFlash != null) muzzleFlash.Play();
         OnFired?.Invoke();
         BroadcastAmmo();
@@ -198,7 +211,10 @@ public class PlayerCombat : MonoBehaviour
         Transform cam      = Camera.main.transform;
         Vector3   spawnPos = muzzlePoint != null ? muzzlePoint.position
                                                  : cam.position + cam.forward * 0.5f;
-        Vector3   dir      = cam.forward;
+
+        // Spread shrinks as AccuracyT rises (wide on fresh aim, tight when settled).
+        float   spread = Mathf.Lerp(maxSpreadAngle, minSpreadAngle, AccuracyT);
+        Vector3 dir    = ApplySpread(cam.forward, cam.right, cam.up, spread);
 
         GameObject    bulletObj = Instantiate(bulletPrefab, spawnPos, Quaternion.LookRotation(dir));
         ShotgunPellet bullet    = bulletObj.GetComponent<ShotgunPellet>();
@@ -224,6 +240,16 @@ public class PlayerCombat : MonoBehaviour
         bullet.Launch(dir, bulletSpeed);
     }
 
+    static Vector3 ApplySpread(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)
+    {
+        if (angleDeg <= 0f) return forward;
+        float disk  = Mathf.Tan(angleDeg * Mathf.Deg2Rad);
+        float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+        float r     = Mathf.Sqrt(UnityEngine.Random.Range(0f, 1f));
+        return (forward + right * (Mathf.Cos(angle) * r * disk)
+                        + up    * (Mathf.Sin(angle) * r * disk)).normalized;
+    }
+
     // --- Reload -------------------------------------------------------------
 
     void HandleReload()
@@ -239,6 +265,7 @@ public class PlayerCombat : MonoBehaviour
 
     IEnumerator ReloadRoutine()
     {
+        CancelAim();   // drop out of aim mode while reloading
         _isReloading = true;
         _animator.SetTrigger(ReloadHash);
         OnReloadStart?.Invoke();
