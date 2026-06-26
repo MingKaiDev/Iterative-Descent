@@ -26,6 +26,11 @@ public abstract class BossAttackBase : MonoBehaviour
 
     // ─── Inspector ──────────────────────────────────────────────────────────────
 
+    [Header("Range")]
+    [Tooltip("Maximum distance to player at which this attack can trigger. " +
+             "Set to match the attack's actual reach so it never fires out of range.")]
+    public float maxRange = 3f;
+
     [Header("Timing")]
     [Tooltip("Seconds before this attack can be used again after it ends.")]
     public float cooldown = 3f;

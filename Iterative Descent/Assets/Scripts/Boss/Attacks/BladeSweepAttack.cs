@@ -1,40 +1,36 @@
 using UnityEngine;
 
 /// <summary>
-/// DROID-7 Slash attack -- basic close-range melee swing.
+/// DROID-7 Blade Sweep attack -- wide horizontal arc, more damage than Slash.
 ///
-/// Animation Event setup (add these to the triggerSlash clip in DROIDAnimator):
-///   - "OnHitboxOpen"   -- frame where the blade connects (deals damage)
+/// Animation Event setup (add to the triggerBladeSweep clip in DROIDAnimator):
+///   - "OnHitboxOpen"    -- frame where the sweep connects (deals damage)
 ///   - "OnAttackAnimEnd" -- last frame of the clip (signals attack done)
-///
-/// If animation events are not yet set up, the attack will play visually
-/// but deal no damage, and will end via the attackTimeoutDuration safety net.
 ///
 /// Unity Setup:
 ///   - Attach to the DROID-7 root GameObject (same as Animator).
-///   - Assign playerLayer in the Inspector (the layer your Player GameObject is on).
-///   - Tune hitRange and damage in the Inspector.
+///   - Assign playerLayer in the Inspector.
 /// </summary>
-public class SlashAttack : BossAttackBase
+public class BladeSweepAttack : BossAttackBase
 {
     // ─── Inspector ──────────────────────────────────────────────────────────────
 
-    [Header("Slash Settings")]
+    [Header("Blade Sweep Settings")]
     [Tooltip("Damage dealt to the player on hit.")]
-    public float damage = 25f;
+    public float damage = 40f;
 
     [Tooltip("Radius of the hit check sphere around the boss.")]
-    public float hitRange = 2.5f;
+    public float hitRange = 3.5f;
 
-    [Tooltip("Half-angle of the hit cone in front of the boss (degrees). " +
-             "90 = 180 degree arc, 45 = 90 degree arc.")]
-    public float hitHalfAngle = 70f;
+    [Tooltip("Half-angle of the sweep arc in front of the boss (degrees). " +
+             "Wider than Slash to reward spacing.")]
+    public float hitHalfAngle = 100f;
 
-    [Tooltip("Layer the player is on. Set in Inspector to avoid hitting other colliders.")]
+    [Tooltip("Layer the player is on.")]
     public LayerMask playerLayer;
 
     // ─── Animator Parameter ──────────────────────────────────────────────────────
-    private static readonly int TriggerSlash = Animator.StringToHash("triggerSlash");
+    private static readonly int TriggerBladeSweep = Animator.StringToHash("triggerBladeSweep");
 
     // ─── Component References ────────────────────────────────────────────────────
     private Animator _animator;
@@ -43,7 +39,7 @@ public class SlashAttack : BossAttackBase
     {
         _animator = GetComponent<Animator>();
         if (_animator == null)
-            Debug.LogError("[SlashAttack] No Animator found on this GameObject.");
+            Debug.LogError("[BladeSweepAttack] No Animator found on this GameObject.");
     }
 
     // ─── BossAttackBase Implementation ───────────────────────────────────────────
@@ -51,13 +47,12 @@ public class SlashAttack : BossAttackBase
     protected override void PerformAttack()
     {
         if (_animator == null) return;
-        _animator.SetTrigger(TriggerSlash);
-        Debug.Log("[SlashAttack] Slash triggered.");
+        _animator.SetTrigger(TriggerBladeSweep);
+        Debug.Log("[BladeSweepAttack] Blade Sweep triggered.");
     }
 
     // ─── Animation Event Receivers ───────────────────────────────────────────────
 
-    /// <summary>Called by Animation Event at the damage frame of the Slash clip.</summary>
     public override void OnHitboxOpen()
     {
         if (!IsActive) return;
@@ -72,7 +67,7 @@ public class SlashAttack : BossAttackBase
             {
                 var hitPoint = hit.ClosestPoint(transform.position);
                 damageable.TakeDamage(damage, hitPoint);
-                Debug.Log($"[SlashAttack] Hit {hit.gameObject.name} for {damage} damage.");
+                Debug.Log($"[BladeSweepAttack] Hit {hit.gameObject.name} for {damage} damage.");
             }
         }
     }
@@ -81,7 +76,7 @@ public class SlashAttack : BossAttackBase
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.4f);
+        Gizmos.color = new Color(1f, 0.5f, 0.1f, 0.4f);
         Gizmos.DrawWireSphere(transform.position, hitRange);
     }
 }

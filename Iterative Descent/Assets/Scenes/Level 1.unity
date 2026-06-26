@@ -76951,7 +76951,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.72
+      value: 0.9
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -76959,23 +76959,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.85
+      value: 10.26
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
-      propertyPath: m_LocalRotation.y
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -144495,6 +144495,7 @@ GameObject:
   - component: {fileID: 1039256815}
   - component: {fileID: 1039256818}
   - component: {fileID: 1039256817}
+  - component: {fileID: 1039256819}
   m_Layer: 0
   m_Name: DROID_Boss
   m_TagString: Untagged
@@ -144554,10 +144555,10 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.3
-  m_Speed: 3.5
+  m_Speed: 4.5
   m_Acceleration: 8
   avoidancePriority: 50
-  m_AngularSpeed: 120
+  m_AngularSpeed: 240
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
@@ -144600,7 +144601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f9d4bd32ce046409b725924aaf233f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossStateMachine
-  detectionRadius: 8.4
+  detectionRadius: 12
   phaseTransitionDuration: 2
 --- !u!114 &1039256816
 MonoBehaviour:
@@ -144614,7 +144615,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54179b6a554b5f64a9cba2deef408e6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
-  maxHealth: 500
+  maxHealth: 700
   phaseThreshold: 0.5
 --- !u!114 &1039256817
 MonoBehaviour:
@@ -144628,11 +144629,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06d1ec491046213469eff46f56ac364e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlashAttack
+  maxRange: 3
   cooldown: 3
   attackTimeoutDuration: 3
   damage: 25
-  hitRange: 2.5
-  hitHalfAngle: 70
+  hitRange: 3
+  hitHalfAngle: 90
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -144649,6 +144651,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossAttackRegistry
   attackDecisionInterval: 2
+--- !u!114 &1039256819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039256810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdf3de2bbb6fbc0409fa8f80d0384c2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BladeSweepAttack
+  maxRange: 3
+  cooldown: 3
+  attackTimeoutDuration: 5
+  damage: 40
+  hitRange: 3
+  hitHalfAngle: 100
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &1039532905
 GameObject:
   m_ObjectHideFlags: 0

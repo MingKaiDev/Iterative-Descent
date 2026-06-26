@@ -26,6 +26,7 @@ public class BossAttackRegistry : MonoBehaviour
     // ─── Private ────────────────────────────────────────────────────────────────
     private BossAttackBase[]  _attacks;
     private BossStateMachine  _stateMachine;
+    private Transform         _player;
     private float             _decisionTimer;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
@@ -40,6 +41,12 @@ public class BossAttackRegistry : MonoBehaviour
 
         if (_attacks.Length == 0)
             Debug.LogWarning("[BossAttackRegistry] No BossAttackBase components found on this GameObject.");
+
+        var playerHealth = FindObjectOfType<PlayerHealth>();
+        if (playerHealth != null)
+            _player = playerHealth.transform;
+        else
+            Debug.LogWarning("[BossAttackRegistry] No PlayerHealth found in scene.");
     }
 
     void OnDestroy()
@@ -65,11 +72,15 @@ public class BossAttackRegistry : MonoBehaviour
 
     void TryExecuteRandomAttack()
     {
-        // Collect attacks that are off cooldown.
+        if (_player == null) return;
+
+        float distToPlayer = Vector3.Distance(transform.position, _player.position);
+
+        // Collect attacks that are off cooldown AND within range.
         var available = new List<BossAttackBase>();
         foreach (var attack in _attacks)
         {
-            if (!attack.IsOnCooldown)
+            if (!attack.IsOnCooldown && distToPlayer <= attack.maxRange)
                 available.Add(attack);
         }
 
