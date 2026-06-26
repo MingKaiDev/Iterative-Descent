@@ -88,7 +88,7 @@ public abstract class BossAttackBase : MonoBehaviour
     /// Called by Animation Event on the final frame of the attack clip.
     /// This is the primary signal that the attack is done.
     /// </summary>
-    public void OnAttackAnimEnd()
+    public virtual void OnAttackAnimEnd()
     {
         EndAttack();
     }

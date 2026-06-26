@@ -144769,14 +144769,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CoreOverloadAttack
   maxRange: 15
   cooldown: 3
-  attackTimeoutDuration: 6
+  attackTimeoutDuration: 7
   damage: 35
-  laserRange: 20
-  beamDuration: 2
+  beamExtendSpeed: 25
+  maxBeamRange: 20
+  beamHoldDuration: 2
   playerLayer:
     serializedVersion: 2
     m_Bits: 64
   laserOrigin: {fileID: 1842020377}
+  telegraphColor: {r: 1, g: 0.2, b: 0.2, a: 0.3}
+  beamColor: {r: 1, g: 0.1, b: 0.1, a: 1}
   hitBurstPrefab: {fileID: 8307363356145600766, guid: 7ac3b4aa582f0c74e806eff2e0209ec0, type: 3}
 --- !u!1 &1039532905
 GameObject:
