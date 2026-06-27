@@ -144619,7 +144619,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f9d4bd32ce046409b725924aaf233f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossStateMachine
-  detectionRadius: 12
+  detectionRadius: 8
   phaseTransitionDuration: 2
 --- !u!114 &1039256816
 MonoBehaviour:
@@ -144797,6 +144797,8 @@ MonoBehaviour:
   maxRange: 15
   cooldown: 3
   attackTimeoutDuration: 6
+  leapDuration: 1.5
+  leapHeight: 2
   damage: 45
   slamRadius: 5
   playerLayer:
