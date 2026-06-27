@@ -144513,6 +144513,7 @@ GameObject:
   - component: {fileID: 1039256821}
   - component: {fileID: 1039256822}
   - component: {fileID: 1039256823}
+  - component: {fileID: 1039256824}
   m_Layer: 0
   m_Name: DROID_Boss
   m_TagString: Untagged
@@ -144781,6 +144782,27 @@ MonoBehaviour:
   telegraphColor: {r: 1, g: 0.2, b: 0.2, a: 0.3}
   beamColor: {r: 1, g: 0.1, b: 0.1, a: 1}
   hitBurstPrefab: {fileID: 8307363356145600766, guid: 7ac3b4aa582f0c74e806eff2e0209ec0, type: 3}
+--- !u!114 &1039256824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039256810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6fe7d639fda5b74baa8ec1514426552, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundSlamAttack
+  maxRange: 15
+  cooldown: 3
+  attackTimeoutDuration: 6
+  damage: 45
+  slamRadius: 5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  groundSlamVFXPrefab: {fileID: 51326846010064188, guid: 5dd2e716c0c57cf49929f9af09e3a06a, type: 3}
 --- !u!1 &1039532905
 GameObject:
   m_ObjectHideFlags: 0
