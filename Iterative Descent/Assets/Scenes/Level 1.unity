@@ -144514,6 +144514,7 @@ GameObject:
   - component: {fileID: 1039256822}
   - component: {fileID: 1039256823}
   - component: {fileID: 1039256824}
+  - component: {fileID: 1039256825}
   m_Layer: 0
   m_Name: DROID_Boss
   m_TagString: Untagged
@@ -144530,7 +144531,7 @@ Transform:
   m_GameObject: {fileID: 1039256810}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: -2.82, y: 0.1, z: 4.15}
+  m_LocalPosition: {x: -2.121, y: 0.1, z: 4.555}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -144805,6 +144806,33 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   groundSlamVFXPrefab: {fileID: 51326846010064188, guid: 5dd2e716c0c57cf49929f9af09e3a06a, type: 3}
+--- !u!114 &1039256825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039256810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be209e9a44960334a85cbca3a8996bcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PounceAttack
+  maxRange: 18
+  cooldown: 3
+  attackTimeoutDuration: 5
+  jumpDuration: 0.8
+  teleportAtPeak: 0.5
+  teleportDelay: 0.25
+  behindPlayerOffset: 1.5
+  navMeshSampleRadius: 5
+  damage: 30
+  hitRadius: 2.5
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  teleportOutVFX: {fileID: 1413222554161622911, guid: 3539fa74d4370534aafe78f49b171c38, type: 3}
+  teleportInVFX: {fileID: 3791894357469964965, guid: eb8072afb29ffee41912b39195c63e74, type: 3}
 --- !u!1 &1039532905
 GameObject:
   m_ObjectHideFlags: 0

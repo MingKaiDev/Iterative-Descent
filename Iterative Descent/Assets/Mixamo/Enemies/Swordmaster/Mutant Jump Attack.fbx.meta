@@ -55,8 +55,8 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.9933414
-        functionName: OnLanding
+      - time: 0.5152785
+        functionName: OnHitboxOpen
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
@@ -64,13 +64,6 @@ ModelImporter:
         messageOptions: 0
       - time: 1
         functionName: OnAttackAnimEnd
-        data: 
-        objectReferenceParameter: {instanceID: 0}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.5072464
-        functionName: OnHitboxOpen
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
