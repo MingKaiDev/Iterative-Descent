@@ -89,13 +89,11 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
             ? _pendingSessionQuestions[0].conceptTag
             : "";
 
-        // First time the player sees this concept, ARBITEX gives a one-line primer
-        // before the quiz opens. Every subsequent time (or if no primer exists for
-        // this tag) the puzzle opens immediately, same as before.
-        if (ConceptPrimers.HasUnseenPrimer(primaryConcept))
-            ConceptPrimers.PlayThenCallback(primaryConcept, OpenPuzzleUI);
-        else
-            OpenPuzzleUI();
+        // First time the player sees this concept, a graphical tutorial panel
+        // explains it before the quiz opens. Every subsequent time (or if no
+        // tutorial exists yet for this tag) the puzzle opens immediately, same
+        // as before. OpenPuzzleUI is always eventually called either way.
+        ConceptTutorials.ShowIfUnseenThenContinue(primaryConcept, OpenPuzzleUI);
     }
 
     private void OpenPuzzleUI()
