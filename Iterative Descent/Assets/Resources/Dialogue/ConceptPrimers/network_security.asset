@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: network_security
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: A firewall reads its rules in order and stops at the first match. Block too broadly and you lock out the innocent along with the guilty. Block too narrowly and the attacker walks straight through the gap you left open.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

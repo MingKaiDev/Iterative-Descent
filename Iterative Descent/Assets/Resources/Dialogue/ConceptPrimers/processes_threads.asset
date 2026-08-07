@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: processes_threads
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: A process is a sealed room with its own walls and its own air. A thread is a worker who can share a room with others, using the same walls, the same shared memory. Share too carelessly between threads and you get a race, where the outcome depends on who moves first.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

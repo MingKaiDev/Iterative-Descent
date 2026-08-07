@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: basic_sorts
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: You will be asked to sort. Every sorting method makes the same trade: how much time you spend comparing against how much time you spend moving things around. Bubble sort compares neighbours and swaps them. Merge sort splits the problem in half and stitches it back together. Choose carefully.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

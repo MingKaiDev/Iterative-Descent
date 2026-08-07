@@ -16,7 +16,9 @@ MonoBehaviour:
   author: Prof. H. Cross
   body: "Hi Newbie,\n\nCongraulation on getting into our summer program.\n\nYou will
     be assigned to the Computing Division under my supervision. Your primary duties
-    involve server maintenance. \n\nYour access card will be in the locker\nYour
-    password is written in the book beside you\n\nPlease report to work immediately\n\nP.S.
+    involve server maintenance. \n\nYour access card will be in the locker.\n\nThis
+    floor runs a competency-gated login system. Pass an assessment at any terminal
+    on this level and the password here will authenticate itself automatically
+    the next time you sit down.\n\nPlease report to work immediately\n\nP.S.
     Failure will result in early expulsion.\n\nCome on\n\nFutile\nWarrior"
   noteType: 0

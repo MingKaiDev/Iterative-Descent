@@ -9,6 +9,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "Arrays sit in contiguous memory, so the address of index i is computed directly as base address plus i times element size. No searching is needed.",
       "conceptTag": "arrays_and_lists",
       "difficulty": 1
     },
@@ -21,6 +22,7 @@
         "O(n)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "With no ordering to exploit, you may have to check every one of the n elements before you find, or rule out, the target.",
       "conceptTag": "arrays_and_lists",
       "difficulty": 1
     },
@@ -33,6 +35,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Every existing element has to shift one position to the right to make room at index 0, touching all n elements.",
       "conceptTag": "arrays_and_lists",
       "difficulty": 2
     },
@@ -45,6 +48,7 @@
         "Constant-time insertion at any position"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A dynamic array (like C#'s List) automatically allocates a bigger backing array and copies elements over when it fills up, so you never need to know the size in advance.",
       "conceptTag": "arrays_and_lists",
       "difficulty": 2
     },
@@ -57,6 +61,7 @@
         "Selects a pivot and partitions elements around it"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Bubble sort walks the array comparing neighbours and swapping any pair that is out of order, letting the largest unsorted value bubble to the end each pass.",
       "conceptTag": "basic_sorts",
       "difficulty": 1
     },
@@ -69,6 +74,7 @@
         "O(n)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "If the array is already sorted, each element only needs one comparison against its neighbour before insertion sort confirms it is already in place, giving a single O(n) pass.",
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
@@ -81,6 +87,7 @@
         "Quicksort"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Selection sort always scans the entire remaining unsorted section to find the minimum, doing the same number of comparisons whether the input is sorted, reversed, or random.",
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
@@ -93,6 +100,7 @@
         "Find the minimum and move it to the front each pass"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Merge sort recursively splits the array until each piece is trivially sorted (size 1), then merges pairs of sorted pieces back together in order.",
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
@@ -105,6 +113,7 @@
         "O(log n)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "If the chosen pivot is repeatedly the smallest or largest element, each partition only removes one element, so the algorithm degrades to O(n^2).",
       "conceptTag": "basic_sorts",
       "difficulty": 2
     },
@@ -117,6 +126,7 @@
         "Insertion sort"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "Insertion sort only moves each element a short distance when the array is nearly sorted, so it approaches O(n) instead of its worst-case O(n^2).",
       "conceptTag": "basic_sorts",
       "difficulty": 3
     },
@@ -129,6 +139,7 @@
         "Linked list"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "BFS explores level by level, so it needs first-in-first-out order: a queue ensures nodes discovered earlier are visited before nodes discovered later.",
       "conceptTag": "bfs_dfs",
       "difficulty": 1
     },
@@ -141,6 +152,7 @@
         "Hash table"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "DFS dives as deep as possible before backtracking, which is naturally last-in-first-out: a stack lets you resume the most recently discovered branch first.",
       "conceptTag": "bfs_dfs",
       "difficulty": 1
     },
@@ -153,6 +165,7 @@
         "The minimum spanning tree"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "Because BFS visits nodes in order of increasing distance from the start, the first time it reaches any node is guaranteed to be via a shortest path, when every edge has equal weight.",
       "conceptTag": "bfs_dfs",
       "difficulty": 2
     },
@@ -165,6 +178,7 @@
         "Root, A, B, E, C, D"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "BFS finishes the current depth before moving deeper: root first, then both of its children (A, B), then all of their children (C, D, E).",
       "conceptTag": "bfs_dfs",
       "difficulty": 2
     },
@@ -177,6 +191,7 @@
         "Root, B, E, A, C, D"
       ],
       "correctAnswerIndex": 0,
+      "explanation": "Pre-order DFS visits a node, then fully explores its first child's subtree before moving to the next sibling: Root, then all of A's subtree (A, C, D), then all of B's subtree (B, E).",
       "conceptTag": "bfs_dfs",
       "difficulty": 3
     },
@@ -189,6 +204,7 @@
         "O(1)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Binary search halves the remaining search space with every comparison, so it takes roughly log2(n) steps to narrow down to one element.",
       "conceptTag": "complexity_big_o",
       "difficulty": 1
     },
@@ -201,6 +217,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "The inner loop runs n times for each of the n iterations of the outer loop, giving n times n, which is O(n^2) total operations.",
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
@@ -213,6 +230,7 @@
         "O(log n)"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "In the worst case, a reverse-sorted array, bubble sort needs roughly n passes, each comparing up to n elements, giving O(n^2).",
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
@@ -225,6 +243,7 @@
         "O(log n)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "O(log n) grows the slowest of the options as n increases. Doubling n only adds one more step, unlike O(n) or O(n^2) which grow much faster.",
       "conceptTag": "complexity_big_o",
       "difficulty": 2
     },
@@ -237,6 +256,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "One call per element with constant work per call means the total work scales linearly with the number of elements: n calls times O(1) equals O(n).",
       "conceptTag": "complexity_big_o",
       "difficulty": 3
     },
@@ -249,6 +269,7 @@
         "4"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A /29 leaves 3 host bits (32 minus 29), giving 2^3 = 8 total addresses. Subtract the network address and the broadcast address, leaving 6 usable hosts.",
       "conceptTag": "computer_networks",
       "difficulty": 1
     },
@@ -261,6 +282,7 @@
         "/28"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "255.255.255.192 in binary is 11111111.11111111.11111111.11000000, which is 26 leading 1-bits, so it is a /26.",
       "conceptTag": "computer_networks",
       "difficulty": 1
     },
@@ -273,6 +295,7 @@
         "/28"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A /26 gives 2^6 minus 2 = 62 usable addresses, the smallest standard subnet that fits 60 hosts. A /27 only gives 30, which is too few.",
       "conceptTag": "computer_networks",
       "difficulty": 2
     },
@@ -285,6 +308,7 @@
         "/29"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A /27 leaves 5 host bits, giving 2^5 minus 2 = 30 usable addresses, exactly enough for 30 hosts.",
       "conceptTag": "computer_networks",
       "difficulty": 2
     },
@@ -297,6 +321,7 @@
         "/27"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A /25 gives 2^7 minus 2 = 126 usable addresses, the smallest subnet within a /24 that still fits 100 hosts. A /26 only gives 62, which is too small.",
       "conceptTag": "computer_networks",
       "difficulty": 3
     },
@@ -309,6 +334,7 @@
         "Available memory"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Round Robin gives every process a fixed slice of CPU time called the time quantum. When it expires, the OS preempts the process and moves to the next one in the queue.",
       "conceptTag": "cpu_scheduling",
       "difficulty": 1
     },
@@ -321,6 +347,7 @@
         "Time spent waiting in the ready queue"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Throughput is a rate: how many processes the system finishes over a given period. That's different from how responsive or fair the scheduling feels to any single process.",
       "conceptTag": "cpu_scheduling",
       "difficulty": 2
     },
@@ -333,6 +360,7 @@
         "They behave identically but differ in implementation"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Preemptive scheduling can forcibly pause a running process to give the CPU to another one, for example when its time quantum ends. Non-preemptive scheduling always lets the running process finish or block on its own first.",
       "conceptTag": "cpu_scheduling",
       "difficulty": 2
     },
@@ -345,6 +373,7 @@
         "Shortest Job First with equal priorities"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "If higher-priority processes keep arriving, a strict priority scheduler can keep pushing a low-priority process to the back indefinitely, so it never gets CPU time.",
       "conceptTag": "cpu_scheduling",
       "difficulty": 2
     },
@@ -357,6 +386,7 @@
         "It does not support multiple CPU cores"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "FCFS runs processes strictly in arrival order, so a short process stuck behind a long one has to wait for the entire long process to finish, known as the convoy effect.",
       "conceptTag": "cpu_scheduling",
       "difficulty": 3
     },
@@ -369,6 +399,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "A good hash function spreads keys evenly across buckets, so on average you land close to the right bucket directly instead of searching through many entries.",
       "conceptTag": "hash_tables",
       "difficulty": 1
     },
@@ -381,6 +412,7 @@
         "When a key is not found in the table"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Since a hash table has far fewer buckets than possible keys, two different keys can hash to the same index. That is a collision, and the table needs a strategy to handle it.",
       "conceptTag": "hash_tables",
       "difficulty": 1
     },
@@ -393,6 +425,7 @@
         "The percentage of memory wasted"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Load factor equals entries stored divided by number of buckets. As it climbs toward 1 or beyond, collisions become more likely, which is why tables resize when it gets too high.",
       "conceptTag": "hash_tables",
       "difficulty": 2
     },
@@ -405,6 +438,7 @@
         "Separate chaining"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "Separate chaining keeps a small linked list at each bucket, so when a collision happens the new entry is simply appended to that bucket's chain.",
       "conceptTag": "hash_tables",
       "difficulty": 2
     },
@@ -417,6 +451,7 @@
         "The table is immediately resized"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Open addressing has no per-bucket list. If a slot is taken, it follows a probing sequence, such as linear or quadratic probing, to find the next open slot in the same table.",
       "conceptTag": "hash_tables",
       "difficulty": 3
     },
@@ -429,6 +464,7 @@
         "O(1)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "Inserting at the head just means creating a new node and pointing it at the current head. No traversal is needed regardless of list length.",
       "conceptTag": "linked_lists",
       "difficulty": 1
     },
@@ -441,6 +477,7 @@
         "A size field"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "A singly linked list only points forward with a next pointer. A doubly linked list adds a previous pointer so you can also traverse backward.",
       "conceptTag": "linked_lists",
       "difficulty": 1
     },
@@ -453,6 +490,7 @@
         "O(k log n)"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Unlike an array, a linked list has no direct addressing. You have to walk from the head one node at a time until you reach the k-th node.",
       "conceptTag": "linked_lists",
       "difficulty": 2
     },
@@ -465,6 +503,7 @@
         "Finding the last element"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "If you already hold a pointer to the right spot, inserting into a linked list is just rewiring a couple of pointers in O(1). An array would need to shift every element after that position.",
       "conceptTag": "linked_lists",
       "difficulty": 3
     },
@@ -477,6 +516,7 @@
         "O(1)"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "With a doubly linked list you can reach both the previous and next node directly through the node's own pointers, so unlinking it takes constant time with no traversal needed.",
       "conceptTag": "linked_lists",
       "difficulty": 3
     },
@@ -489,6 +529,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Reversing means visiting every node once to flip its next pointer, so the work scales linearly with the number of nodes.",
       "conceptTag": "linked_lists",
       "difficulty": 3
     },
@@ -501,6 +542,7 @@
         "Outbound packets that bypass the rule set entirely"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "If you block an entire port or IP to stop an attacker, you might also block legitimate traffic that happens to share that port or address. That unintended side effect is the collateral damage.",
       "conceptTag": "network_security",
       "difficulty": 1
     },
@@ -513,6 +555,7 @@
         "DENY proto:TCP"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Since the source IP is faked and cannot be trusted, the rule needs to match something the attacker cannot spoof, like the malicious payload itself, combined with the destination port it targets.",
       "conceptTag": "network_security",
       "difficulty": 2
     },
@@ -525,6 +568,7 @@
         "The rules cancel each other out"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "In first-match-wins evaluation, the firewall stops checking as soon as it finds a matching rule. The earlier ALLOW rule wins, so the later DENY rule never gets evaluated for that traffic.",
       "conceptTag": "network_security",
       "difficulty": 2
     },
@@ -537,6 +581,7 @@
         "DENY src:10.0.1.x"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Blocking all of UDP port 53 would also break legitimate DNS, so the rule needs extra, specific fields, the known malicious source range and the payload signature, to isolate just the malicious traffic.",
       "conceptTag": "network_security",
       "difficulty": 3
     },
@@ -549,6 +594,7 @@
         "dst IP only"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Since the source IP range is shared between attacker and legitimate clients, matching on source IP alone would block innocent traffic too. Combining destination port with a payload signature narrows the match to the actual malicious pattern.",
       "conceptTag": "network_security",
       "difficulty": 3
     },
@@ -561,6 +607,7 @@
         "21"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Port 80 is the standard, IANA-assigned default for unencrypted HTTP traffic.",
       "conceptTag": "networking_ports",
       "difficulty": 1
     },
@@ -573,6 +620,7 @@
         "22"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Port 443 is the standard port for HTTPS, which is HTTP wrapped in TLS/SSL encryption.",
       "conceptTag": "networking_ports",
       "difficulty": 1
     },
@@ -585,6 +633,7 @@
         "22"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "SSH, the standard protocol for encrypted remote command-line access, listens on port 22 by default.",
       "conceptTag": "networking_ports",
       "difficulty": 2
     },
@@ -597,6 +646,7 @@
         "Telnet is slower because it uses port 23 instead of 22"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Telnet sends everything, including usernames and passwords, as plain unencrypted text, so anyone monitoring the network can read it. SSH encrypts the entire session.",
       "conceptTag": "networking_ports",
       "difficulty": 2
     },
@@ -609,6 +659,7 @@
         "FTP on port 21"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "SMTP on port 25 is used for server-to-server mail delivery. POP3 and IMAP are instead used by a mail client to retrieve mail, not send it.",
       "conceptTag": "networking_ports",
       "difficulty": 3
     },
@@ -621,6 +672,7 @@
         "A function call within a running program"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A program on disk is just static instructions. Once the OS loads it and gives it its own memory space, registers, and execution state, it becomes a running process.",
       "conceptTag": "processes_threads",
       "difficulty": 1
     },
@@ -633,6 +685,7 @@
         "Processes are faster to create than threads"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Each process gets its own isolated memory space. Threads are lighter-weight execution units that live inside a process and share that same memory space with each other.",
       "conceptTag": "processes_threads",
       "difficulty": 2
     },
@@ -645,6 +698,7 @@
         "Transferring data between RAM and disk"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "To let multiple processes share one CPU, the OS saves the current process's registers and program counter, then loads another's. That save-and-restore is a context switch.",
       "conceptTag": "processes_threads",
       "difficulty": 2
     },
@@ -657,6 +711,7 @@
         "It has been swapped out to disk"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "A blocked process cannot proceed until something external happens, most commonly waiting for disk, network, or user input, so the OS sets it aside and runs something else meanwhile.",
       "conceptTag": "processes_threads",
       "difficulty": 2
     },
@@ -669,6 +724,7 @@
         "Heap memory"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "Threads in the same process share the heap and other process-wide resources, but each thread keeps its own stack, program counter, and register set so it can execute independently.",
       "conceptTag": "processes_threads",
       "difficulty": 3
     },
@@ -681,6 +737,7 @@
         "A deadlock between two processes waiting on each other"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "When multiple threads access shared data without proper coordination, the final result can depend on the unpredictable order in which their operations happen to interleave.",
       "conceptTag": "processes_threads",
       "difficulty": 3
     },
@@ -693,6 +750,7 @@
         "Linked List"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "LIFO means the most recently added item is the first one removed, exactly like a stack of plates: you take from the top, the last one placed.",
       "conceptTag": "stacks_and_queues",
       "difficulty": 1
     },
@@ -705,6 +763,7 @@
         "Linked List"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "BFS needs to process discovered nodes in the order they were found, which is first-in-first-out behaviour, exactly what a queue provides.",
       "conceptTag": "stacks_and_queues",
       "difficulty": 1
     },
@@ -717,6 +776,7 @@
         "An integer exceeding its maximum value"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Each function call reserves a small block of memory on the call stack. If calls nest too deeply, often from recursion with no proper base case, the stack runs out of reserved space and crashes.",
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
     },
@@ -729,6 +789,7 @@
         "Graph"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Undo needs to reverse the most recent action first, then the one before that. That is last-in-first-out behaviour, a natural fit for a stack of past actions.",
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
     },
@@ -741,6 +802,7 @@
         "Binary Tree"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "Printing jobs in the order they arrive is first-in-first-out behaviour, exactly what a queue guarantees.",
       "conceptTag": "stacks_and_queues",
       "difficulty": 2
     },
@@ -753,6 +815,7 @@
         "O(n) push, O(1) pop"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Push and pop normally just adjust one end of the array in O(1). Occasionally push triggers a resize that copies everything, but that cost is spread out, or amortised, over many pushes, so the average stays O(1).",
       "conceptTag": "stacks_and_queues",
       "difficulty": 3
     },
@@ -765,6 +828,7 @@
         "Each node must have exactly two children"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "The binary search tree ordering rule, every node's left subtree holds smaller values and its right subtree holds larger values, is what makes searching by comparison possible.",
       "conceptTag": "trees_bst",
       "difficulty": 1
     },
@@ -777,6 +841,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 1,
+      "explanation": "A balanced tree's height is roughly log2(n), and each comparison during search eliminates one whole subtree, so search time scales with the tree's height.",
       "conceptTag": "trees_bst",
       "difficulty": 2
     },
@@ -789,6 +854,7 @@
         "The node at height 1"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "Because every left child is smaller than its parent, following left pointers as far as possible always leads to the smallest value in the tree.",
       "conceptTag": "trees_bst",
       "difficulty": 2
     },
@@ -801,6 +867,7 @@
         "In-order"
       ],
       "correctAnswerIndex": 3,
+      "explanation": "In-order traversal visits left subtree, then the node itself, then right subtree. Since left is always smaller and right is always larger, this visits every value in ascending order.",
       "conceptTag": "trees_bst",
       "difficulty": 2
     },
@@ -813,6 +880,7 @@
         "O(n^2)"
       ],
       "correctAnswerIndex": 2,
+      "explanation": "If the tree is unbalanced, for example values inserted in already-sorted order, it degenerates into a straight line, so inserting a new node can require walking all n existing nodes.",
       "conceptTag": "trees_bst",
       "difficulty": 3
     }

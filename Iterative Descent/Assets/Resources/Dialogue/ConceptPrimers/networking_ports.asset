@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: networking_ports
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: Every service listens on its own door. Port 80 for the unlocked web. Port 443 for the same door, sealed. Port 22 for a private, encrypted way in. Know which door a service uses, and you know where to watch.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

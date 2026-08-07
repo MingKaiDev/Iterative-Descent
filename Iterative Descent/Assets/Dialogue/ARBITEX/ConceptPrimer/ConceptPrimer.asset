@@ -10,11 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: ConceptPrimer
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: 
+    text: 
+    displayDuration: 0
+    choices: []
+    voiceClip: {fileID: 0}
+  - speakerName: 
+    text: 
     displayDuration: 0
     choices: []
     voiceClip: {fileID: 0}

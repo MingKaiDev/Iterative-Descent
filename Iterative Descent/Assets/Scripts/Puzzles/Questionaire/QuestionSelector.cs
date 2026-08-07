@@ -102,7 +102,7 @@ public static class QuestionSelector
                 continue;
             }
 
-            selected.AddRange(Shuffle(pool).Take(count));
+            selected.AddRange(PickEasiestFirst(pool, count));
         }
 
         if (selected.Count == 0)
@@ -112,6 +112,35 @@ public static class QuestionSelector
         }
 
         return selected.ToArray();
+    }
+
+    /// <summary>
+    /// Fills up to `count` questions from pool, preferring the lowest difficulty
+    /// tier available and only reaching for harder questions if the concept
+    /// doesn't have enough easy ones to fill the quota. This keeps a brand-new
+    /// player's very first quiz as gentle as the question bank allows, without
+    /// silently returning fewer questions than FirstSessionPlan configured.
+    /// </summary>
+    private static QuestionData[] PickEasiestFirst(QuestionData[] pool, int count)
+    {
+        var result = new List<QuestionData>();
+        var remaining = new List<QuestionData>(Shuffle(pool));
+
+        foreach (int maxDifficulty in new[] { 1, 2, 3, int.MaxValue })
+        {
+            if (result.Count >= count) break;
+
+            for (int i = remaining.Count - 1; i >= 0 && result.Count < count; i--)
+            {
+                if (remaining[i].difficulty <= maxDifficulty)
+                {
+                    result.Add(remaining[i]);
+                    remaining.RemoveAt(i);
+                }
+            }
+        }
+
+        return result.ToArray();
     }
 
     // ── BKT-Driven Session ────────────────────────────────────────────────────

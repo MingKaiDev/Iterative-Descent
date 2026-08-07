@@ -13,13 +13,21 @@ MonoBehaviour:
   m_Name: Initial Dialogue
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName: 
+  - speakerName:
     text: Ugh my head
     displayDuration: 2.65
     choices: []
     voiceClip: {fileID: 8300000, guid: 68652a2fee3ca454a99c42cd04bdc4f7, type: 3}
-  - speakerName: 
+  - speakerName:
     text: Where am I?
     displayDuration: 1.5
     choices: []
     voiceClip: {fileID: 8300000, guid: be751ba6dad1e96468813bc023d18dcb, type: 3}
+  - speakerName:
+    text: I don't remember any of this.
+    displayDuration: 0
+    choices: []
+  - speakerName:
+    text: There has to be something around here that explains what happened. I should start looking.
+    displayDuration: 0
+    choices: []

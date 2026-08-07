@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: cpu_scheduling
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: The processor can only run one instruction at a time, yet you believe many things run at once. That illusion is scheduling. Round Robin gives everyone a slice of time. First Come First Served makes you wait your turn, no matter how long the process ahead of you takes.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

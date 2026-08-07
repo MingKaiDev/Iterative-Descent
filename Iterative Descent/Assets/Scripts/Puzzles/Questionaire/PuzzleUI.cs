@@ -53,6 +53,14 @@ public class PuzzleUI : MonoBehaviour
 
     void Awake()
     {
+        // Defensive TMP config for the two free-text fields. This does not
+        // replace giving them a properly sized RectTransform in the Editor,
+        // but it guarantees text can never blow past the notebook panel again
+        // even if a future string (or the current explanation text) turns out
+        // longer than whatever box size is configured there right now.
+        ConfigureWrappingText(questionText);
+        ConfigureWrappingText(feedbackText);
+
         // Force button color blocks to pure white so our Image colour
         // is never tinted or multiplied by Unity's button state colours
         foreach (var btn in answerButtons)
@@ -142,18 +150,62 @@ public class PuzzleUI : MonoBehaviour
             SetButtonImageColour(
                 answerButtons[_questions[_currentIndex].correctAnswerIndex], correctColour);
 
+        // feedbackText only ever holds this short headline now -- the same string
+        // it always held before explanations existed, so it stays within whatever
+        // small box it was already sized for.
         feedbackText.text = correct ? "Correct!" : "Wrong!";
         if (correct) _correctCount++;
 
         foreach (var btn in answerButtons) btn.interactable = false;
-        StartCoroutine(AdvanceAfterDelay(1.4f));
+        StartCoroutine(RevealExplanationThenAdvance(_questions[_currentIndex].explanation));
     }
 
-    IEnumerator AdvanceAfterDelay(float seconds)
+    // Timing constants for the reveal-then-advance sequence.
+    const float HeadlineHoldSeconds = 0.9f;      // time spent just showing "Correct!/Wrong!"
+    const float BaseDelaySeconds = 1.4f;         // total pace when there's no explanation (matches old behaviour)
+    const float MinExplanationReadSeconds = 2.0f;
+    const float MaxExplanationReadSeconds = 5.0f;
+    const float CharsPerSecondReadingSpeed = 35f; // faster than average silent reading --
+                                                   // this is reinforcement text after the player
+                                                   // already read the question, not a first read
+
+    // Explanation is shown in questionText's area (not feedbackText) because that
+    // field already has a properly sized, word-wrapping container -- proven by the
+    // fact that two-line questions already render correctly there. feedbackText was
+    // never sized for a full sentence and overflowed the notebook panel when explanations
+    // were placed there.
+    IEnumerator RevealExplanationThenAdvance(string explanation)
     {
-        yield return new WaitForSecondsRealtime(seconds);
+        yield return new WaitForSecondsRealtime(HeadlineHoldSeconds);
+
+        if (!string.IsNullOrEmpty(explanation))
+        {
+            questionText.text = explanation;
+            float readSeconds = Mathf.Clamp(explanation.Length / CharsPerSecondReadingSpeed, MinExplanationReadSeconds, MaxExplanationReadSeconds);
+            yield return new WaitForSecondsRealtime(readSeconds);
+        }
+        else
+        {
+            float remaining = BaseDelaySeconds - HeadlineHoldSeconds;
+            if (remaining > 0f) yield return new WaitForSecondsRealtime(remaining);
+        }
+
         _currentIndex++;
         ShowQuestion(_currentIndex);
+    }
+
+    // Enables word wrap + auto-shrink-to-fit + ellipsis overflow as a last resort,
+    // so this field can never again render text past the bounds of its RectTransform,
+    // no matter how long a future string turns out to be. Does not replace giving it
+    // a properly sized box in the Editor -- this is a safety net, not a layout fix.
+    void ConfigureWrappingText(TMP_Text text)
+    {
+        if (text == null) return;
+        text.enableWordWrapping = true;
+        text.enableAutoSizing = true;
+        text.fontSizeMin = buttonFontSizeMin;
+        text.fontSizeMax = Mathf.Max(text.fontSize, buttonFontSizeMax);
+        text.overflowMode = TMPro.TextOverflowModes.Ellipsis;
     }
 
     void ShowCompletion()

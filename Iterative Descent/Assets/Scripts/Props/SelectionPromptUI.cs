@@ -26,6 +26,17 @@ public class SelectionPromptUI : MonoBehaviour
     }
 
     /// <summary>
+    /// Force-hides the cycle hint panel immediately. Needed because PlayerInteractor.Update()
+    /// returns early while paused and never calls UpdateHint() again -- without this, the panel
+    /// stays stuck in whatever visible state it was in the instant a puzzle/overlay opened,
+    /// bleeding through behind it. Call this from PlayerInteractor.Pause().
+    /// </summary>
+    public void Hide()
+    {
+        if (cycleHintPanel != null) cycleHintPanel.SetActive(false);
+    }
+
+    /// <summary>
     /// Called by PlayerInteractor every frame with current in-range list and selected index.
     /// </summary>
     public void UpdateHint(List<InteractableBase> inRange, int selectedIndex)

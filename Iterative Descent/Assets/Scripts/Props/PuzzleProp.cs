@@ -65,6 +65,10 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         }
     }
 
+    // Holds the selected questions between OpenPuzzle() and OpenPuzzleUI() when
+    // a concept primer plays in between (see ConceptPrimers.cs).
+    private QuestionData[] _pendingSessionQuestions;
+
     public void OpenPuzzle()
     {
         _puzzleOpen = true;
@@ -74,20 +78,35 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         if (interactBase != null && interactBase.promptPanel != null)
             interactBase.promptPanel.SetActive(false);
 
+        // isFirst is global: true only before the player has opened any quiz terminal
+        // this session. Per-prop tracking caused every new terminal to always give
+        // the same first-session questions.
+        bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
+        _pendingSessionQuestions = QuestionSelector.SelectQuestions(
+            _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
+
+        string primaryConcept = (_pendingSessionQuestions != null && _pendingSessionQuestions.Length > 0)
+            ? _pendingSessionQuestions[0].conceptTag
+            : "";
+
+        // First time the player sees this concept, ARBITEX gives a one-line primer
+        // before the quiz opens. Every subsequent time (or if no primer exists for
+        // this tag) the puzzle opens immediately, same as before.
+        if (ConceptPrimers.HasUnseenPrimer(primaryConcept))
+            ConceptPrimers.PlayThenCallback(primaryConcept, OpenPuzzleUI);
+        else
+            OpenPuzzleUI();
+    }
+
+    private void OpenPuzzleUI()
+    {
         if (puzzleOverlay != null)
         {
             puzzleOverlay.SetActive(true);
 
-            // isFirst is global: true only before the player has opened any quiz terminal
-            // this session. Per-prop tracking caused every new terminal to always give
-            // the same first-session questions.
-            bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
-            QuestionData[] sessionQuestions = QuestionSelector.SelectQuestions(
-                _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
-
             // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
             // here too or TotalQuizAttempts gets incremented twice per quiz.
-            puzzleOverlay.GetComponent<PuzzleUI>().Setup(sessionQuestions, ClosePuzzle);
+            puzzleOverlay.GetComponent<PuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle);
         }
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;

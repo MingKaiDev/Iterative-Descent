@@ -34,7 +34,7 @@ public class NoteUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _bodyText;
 
     [Header("Close Hint")]
-    [Tooltip("Optional label telling the player how to close. E.g. 'Press E to close'")]
+    [Tooltip("Optional label telling the player how to close. E.g. 'Press Esc to close'")]
     [SerializeField] private TextMeshProUGUI _closeHintText;
 
     // ── Runtime ────────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ public class NoteUI : MonoBehaviour
         if (_authorRow  != null) _authorRow.SetActive(hasAuthor);
         if (_authorText != null) _authorText.text = hasAuthor ? $"-- {data.author}" : "";
 
-        if (_closeHintText != null) _closeHintText.text = "[ E ] Close";
+        if (_closeHintText != null) _closeHintText.text = "[Esc] Close";
 
         gameObject.SetActive(true);
     }

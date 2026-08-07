@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: linked_lists
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: Not every structure lives side by side in memory. A linked list is a chain, each piece only knows where the next one is. Finding something means following the chain link by link. But if you already hold a link, joining or removing pieces nearby costs almost nothing.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}

@@ -11,7 +11,14 @@ public class PlayerInteractor : MonoBehaviour
     // ── Pause flag — set by PuzzleProp when UI is open ───────────
     private static bool _paused = false;
     public static bool IsPaused => _paused;
-    public static void Pause() => _paused = true;
+    public static void Pause()
+    {
+        _paused = true;
+        // Update() returns early while paused and never calls UpdateHint() again,
+        // so without this the cycle hint panel freezes visible if it happened to
+        // be showing the instant an overlay opened, bleeding through behind it.
+        SelectionPromptUI.Instance?.Hide();
+    }
     public static void Resume() => _paused = false;
 
     // ── Active closeable — the currently-open puzzle overlay ─────

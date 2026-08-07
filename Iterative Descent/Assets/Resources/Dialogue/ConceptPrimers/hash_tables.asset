@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Locked Dialogue
+  m_Name: hash_tables
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
-  - speakerName:
-    text: Its Locked
+  - speakerName: ARBITEX
+    text: A hash table trades order for speed. It scrambles every key into a number, then uses that number to jump straight to a storage slot. Fast, unless two keys scramble to the same slot. That is a collision, and how you handle it decides how fast this stays.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}
