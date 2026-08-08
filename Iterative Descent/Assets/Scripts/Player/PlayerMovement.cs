@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,6 +6,16 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PlayerMovement : MonoBehaviour
 {
+    // --- Events ---------------------------------------------------------------
+
+    /// <summary>
+    /// Fired once, at the end of Start(), when this Player instance becomes active
+    /// in the scene. Use this instead of a trigger collider for "on spawn" logic
+    /// (e.g. initial dialogue) - trigger colliders are unreliable when the player
+    /// already overlaps them at scene load instead of walking into them.
+    /// </summary>
+    public static event Action OnPlayerSpawned;
+
     // --- Inspector ----------------------------------------------------------
 
     [Header("Movement")]
@@ -70,6 +81,8 @@ public class PlayerMovement : MonoBehaviour
         _pitch = 0f;
 
         PlayerHealth.OnPlayerDied += HandlePlayerDied;
+
+        OnPlayerSpawned?.Invoke();
     }
 
     void OnEnable()

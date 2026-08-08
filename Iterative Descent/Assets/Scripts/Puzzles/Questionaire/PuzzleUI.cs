@@ -49,6 +49,13 @@ public class PuzzleUI : MonoBehaviour
     private int _correctCount;
     private bool _answered;
 
+    // Optional -- if set via Setup(), and the player passes this quiz session
+    // (see the threshold in ShowCompletion), this literal string is shown on
+    // the completion screen instead of the generic pass/fail text. Used by
+    // the Prop_Desk_Folder quiz to reveal the PC password as the reward.
+    // Left null for every other quiz that reuses this same PuzzleUI panel.
+    private string _passwordToReveal;
+
     // ────────────────────────────────────────────────────────────
 
     void Awake()
@@ -88,11 +95,12 @@ public class PuzzleUI : MonoBehaviour
         }
     }
 
-    public void Setup(QuestionData[] questions, Action<bool> onClose)
+    public void Setup(QuestionData[] questions, Action<bool> onClose, string passwordToReveal = null)
     {
         PlayerMetricsTracker.Instance?.NotifyQuizStarted();
         _questions = questions;
         _onClose = onClose;
+        _passwordToReveal = passwordToReveal;
         _currentIndex = 0;
         _correctCount = 0;
         _answered = false;
@@ -211,9 +219,25 @@ public class PuzzleUI : MonoBehaviour
     void ShowCompletion()
     {
         bool allCorrect = _correctCount == _questions.Length;
-        questionText.text = allCorrect
-            ? "All questions answered correctly!"
-            : $"Finished!  {_correctCount} / {_questions.Length} correct.";
+
+        // 60% pass threshold -- keep this formula in sync with
+        // PasswordEventHandler.HandlePuzzleFinished(), which uses the same
+        // check to decide whether to unlock the password auto-type on the
+        // PC login screen. This local copy only controls what the
+        // completion screen displays.
+        int required = Mathf.CeilToInt(_questions.Length * 0.6f);
+        bool passed = _correctCount >= required;
+
+        if (passed && !string.IsNullOrEmpty(_passwordToReveal))
+        {
+            questionText.text = $"Access granted. Password: {_passwordToReveal}";
+        }
+        else
+        {
+            questionText.text = allCorrect
+                ? "All questions answered correctly!"
+                : $"Finished!  {_correctCount} / {_questions.Length} correct.";
+        }
         progressText.text = "";
         feedbackText.text = "";
 

@@ -29,6 +29,22 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
     [Tooltip("Assign the Puzzle Panel GameObject in the Canvas.")]
     public GameObject puzzleOverlay;
 
+    [Header("Pre-Quiz Briefing (optional)")]
+    [Tooltip("If set, shown as a notice every time this quiz opens, before any concept " +
+             "tutorial or the quiz itself, explaining what the quiz is for (e.g. why the " +
+             "player should bother answering). Leave blank to skip straight to the quiz. " +
+             "Requires a QuizBriefingUI in the scene -- see FYP/setup-guides/QuizBriefing_UnitySetup.md.")]
+    [TextArea(2, 4)]
+    [SerializeField] private string briefingMessage = "";
+
+    [Header("Password Reveal (optional)")]
+    [Tooltip("If assigned, passing this quiz (60% or higher) reveals this PasswordScreenUI's " +
+             "correctPassword directly on the completion screen, e.g. 'Access granted. " +
+             "Password: X'. The password string itself always comes from the PasswordScreenUI " +
+             "component, never duplicated here, so the two can never drift out of sync. " +
+             "Leave blank for a normal quiz with no password reward text.")]
+    [SerializeField] private PasswordScreenUI passwordScreenToReveal;
+
     [Header("Outcome Events")]
     [Tooltip("Fired when the player completes the quiz (clicks Close after all questions). Wire up door unlocks, enemy spawns, etc. here.")]
     [SerializeField] private UnityEvent onCompleted;
@@ -108,7 +124,17 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         // tutorial exists yet for a tag) that tag is skipped. OpenPuzzleUI is
         // always eventually called once the queue is empty, even if it was
         // empty to begin with.
-        ConceptTutorials.ShowAllUnseenThenContinue(sessionConcepts, OpenPuzzleUI);
+        //
+        // The briefing notice (if configured) runs first, ahead of the concept
+        // tutorial queue -- it explains why the player is doing this quiz at
+        // all, before any per-concept teaching content.
+        void ContinueToConceptTutorials()
+            => ConceptTutorials.ShowAllUnseenThenContinue(sessionConcepts, OpenPuzzleUI);
+
+        if (QuizBriefingUI.Instance != null && !string.IsNullOrEmpty(briefingMessage))
+            QuizBriefingUI.Instance.Show(briefingMessage, ContinueToConceptTutorials);
+        else
+            ContinueToConceptTutorials();
     }
 
     private void OpenPuzzleUI()
@@ -117,9 +143,11 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         {
             puzzleOverlay.SetActive(true);
 
+            string reveal = passwordScreenToReveal != null ? passwordScreenToReveal.correctPassword : null;
+
             // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
             // here too or TotalQuizAttempts gets incremented twice per quiz.
-            puzzleOverlay.GetComponent<PuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle);
+            puzzleOverlay.GetComponent<PuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle, reveal);
         }
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
