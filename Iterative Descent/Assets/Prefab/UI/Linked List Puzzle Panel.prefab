@@ -527,7 +527,7 @@ MonoBehaviour:
   submitButton: {fileID: 7873581804943595581}
   closeButton: {fileID: 2580906256110872084}
   scatterHalfW: 260
-  scatterHalfH: 100
+  scatterHalfH: 170
   scatterCentreY: -40
   headSideOffset: 80
   nullSideOffset: 80

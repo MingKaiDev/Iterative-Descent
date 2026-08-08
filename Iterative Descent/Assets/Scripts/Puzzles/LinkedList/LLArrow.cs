@@ -46,6 +46,15 @@ public class LLArrow : MonoBehaviour
     private RectTransform _panelRect;   // nodeContainer -- used for coordinate conversion
     private Vector2       _floatingEnd; // panel-local cursor pos when _target == null
 
+    // ── Fixed-point segment mode ─────────────────────────────────────────────
+    // Used by the orthogonal elbow router in LinkedListPuzzleUI: a segment
+    // between two explicit panel-local points, no per-frame rect edge-snapping.
+    // Kept fully separate from the RectTransform-based mode above, which still
+    // drives the floating/ghost arrow while a connection is pending.
+    private bool _fixedMode;
+    private Vector2 _pointA;
+    private Vector2 _pointB;
+
     // ── Unity ─────────────────────────────────────────────────────────────────
     void Awake()
     {
@@ -72,7 +81,14 @@ public class LLArrow : MonoBehaviour
         }
     }
 
-    void LateUpdate() => Refresh();
+    void LateUpdate()
+    {
+        // Fixed-point segments are static once placed (nodes don't move after
+        // the grid is laid out) -- RefreshFixed() already ran once in InitPoints.
+        // Only the RectTransform-based mode needs per-frame recomputation.
+        if (_fixedMode) return;
+        Refresh();
+    }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -81,12 +97,33 @@ public class LLArrow : MonoBehaviour
     /// </summary>
     public void Init(RectTransform source, RectTransform target, RectTransform panelRect)
     {
+        _fixedMode = false;
         _source    = source;
         _target    = target;
         _panelRect = panelRect;
 
-        if (_image) _image.color = shaftColor;
+        if (_image)     _image.color = shaftColor;
+        if (arrowHead)  arrowHead.gameObject.SetActive(true);
         Refresh();
+    }
+
+    /// <summary>
+    /// Call once after Instantiate to draw a single straight segment between two
+    /// explicit panel-local points. Used by the orthogonal elbow router for
+    /// committed connections -- each elbow is 1-2 of these chained together.
+    /// </summary>
+    /// <param name="showArrowHead">
+    /// Only the last segment of a multi-segment path should show the arrowhead.
+    /// </param>
+    public void InitPoints(Vector2 pointA, Vector2 pointB, bool showArrowHead)
+    {
+        _fixedMode = true;
+        _pointA    = pointA;
+        _pointB    = pointB;
+
+        if (_image)    _image.color = shaftColor;
+        if (arrowHead) arrowHead.gameObject.SetActive(showArrowHead);
+        RefreshFixed();
     }
 
     /// <summary>
@@ -107,6 +144,33 @@ public class LLArrow : MonoBehaviour
     }
 
     // ── Internal ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Draws the shaft as a straight line between the two fixed points set in
+    /// InitPoints. No edge-snapping -- the router already computed exact
+    /// exit/bend/entry points before calling in.
+    /// </summary>
+    private void RefreshFixed()
+    {
+        Vector2 shaftVec = _pointB - _pointA;
+        float   shaftLen = shaftVec.magnitude;
+
+        if (shaftLen < 2f)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+        gameObject.SetActive(true);
+
+        float angle = Mathf.Atan2(shaftVec.y, shaftVec.x) * Mathf.Rad2Deg;
+
+        _rect.anchoredPosition = _pointA;
+        _rect.sizeDelta        = new Vector2(shaftLen, thickness);
+        _rect.localEulerAngles = new Vector3(0f, 0f, angle);
+
+        if (arrowHead != null)
+            arrowHead.anchoredPosition = Vector2.zero;
+    }
 
     private void Refresh()
     {

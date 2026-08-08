@@ -84,12 +84,15 @@ public class LinkedListPuzzleUI : MonoBehaviour
     [SerializeField] private Button              submitButton;
     [SerializeField] private Button              closeButton;
 
-    [Header("Layout - Scatter")]
-    [Tooltip("Half-width of the area nodes can be placed in (pixels). Total width = 2x this.")]
+    [Header("Layout - Grid")]
+    // NOTE: field names kept as "scatter*" even though placement is now a fixed
+    // grid, not a random scatter -- renaming would break the serialized values
+    // already saved on the prefab (Unity keys them by field name).
+    [Tooltip("Half-width of the area nodes are laid out in (pixels). Total width = 2x this.")]
     [SerializeField] private float scatterHalfW   = 320f;
-    [Tooltip("Half-height of the area nodes can be placed in (pixels). Total height = 2x this.")]
+    [Tooltip("Half-height of the area nodes are laid out in (pixels). Total height = 2x this.")]
     [SerializeField] private float scatterHalfH   = 140f;
-    [Tooltip("Vertical offset of the entire scatter zone from panel centre. Negative = push down.")]
+    [Tooltip("Vertical offset of the entire grid zone from panel centre. Negative = push down.")]
     [SerializeField] private float scatterCentreY = -40f;
     [Tooltip("How far to the LEFT of the scatter area the HEAD box sits (pixels).")]
     [SerializeField] private float headSideOffset  = 80f;
@@ -200,8 +203,9 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _originalValues = values;                       // forward order -- for reference display
         _solution       = values.Reverse().ToArray();   // reversed order -- the correct answer
 
-        // Scatter nodes across the panel area.
-        Vector2[] positions = GenerateScatteredPositions(count);
+        // Lay nodes out on a fixed grid, in spawn-order index -- position never
+        // depends on the solution, so the layout can't leak the answer.
+        Vector2[] positions = GenerateGridPositions(count);
 
         for (int i = 0; i < count; i++)
         {
@@ -243,51 +247,34 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _nextCorruptionTime = Time.realtimeSinceStartup + _corruptionInterval;
     }
 
-    // ── Scatter Placement ─────────────────────────────────────────────────────
+    // ── Grid Placement ────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Generates <paramref name="count"/> positions using a zone-based layout.
-    ///
-    /// The scatter area is divided into a grid of cells (cols x rows). Each node
-    /// gets exactly one cell and is placed randomly within a central portion of
-    /// that cell. This guarantees even distribution with no overlap while still
-    /// looking natural -- not a rigid grid.
-    ///
-    /// The cell assignment order is shuffled so the same node value doesn't always
-    /// appear in the same screen region on repeated playthroughs.
+    /// Generates <paramref name="count"/> positions on a fixed cols x rows grid,
+    /// filled in spawn-order (node i always sits in cell i, reading left-to-right,
+    /// top-to-bottom). No randomness -- deterministic placement means:
+    ///   1. The grid cell size only has to cover one card, not a card plus jitter,
+    ///      so real margins are guaranteed between neighbours.
+    ///   2. Node position never correlates with the solution, so a fixed layout
+    ///      doesn't leak the answer.
     /// </summary>
-    private Vector2[] GenerateScatteredPositions(int count)
+    private Vector2[] GenerateGridPositions(int count)
     {
         int cols   = Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(count)));
         int rows   = Mathf.CeilToInt((float)count / cols);
         float cellW = (scatterHalfW * 2f) / cols;
         float cellH = (scatterHalfH * 2f) / rows;
 
-        // Build a shuffled list of cell indices so placement order varies.
-        var cellIndices = new List<int>(cols * rows);
-        for (int i = 0; i < cols * rows; i++) cellIndices.Add(i);
-        for (int i = cellIndices.Count - 1; i > 0; i--)
-        {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (cellIndices[i], cellIndices[j]) = (cellIndices[j], cellIndices[i]);
-        }
-
         var positions = new Vector2[count];
-        // Jitter fraction: node can land anywhere within the middle 60% of its cell.
-        const float jitter = 0.30f;
-
         for (int i = 0; i < count; i++)
         {
-            int cell = cellIndices[i];
-            int col  = cell % cols;
-            int row  = cell / cols;
+            int col = i % cols;
+            int row = i / cols;
 
             float cx = -scatterHalfW + col * cellW + cellW * 0.5f;
-            float cy = -scatterHalfH + row * cellH + cellH * 0.5f;
+            float cy =  scatterHalfH - row * cellH - cellH * 0.5f;
 
-            positions[i] = new Vector2(
-                cx + UnityEngine.Random.Range(-cellW * jitter, cellW * jitter),
-                cy + UnityEngine.Random.Range(-cellH * jitter, cellH * jitter));
+            positions[i] = new Vector2(cx, cy);
         }
 
         return positions;
@@ -411,34 +398,153 @@ public class LinkedListPuzzleUI : MonoBehaviour
     }
 
     // ── Arrow Management ──────────────────────────────────────────────────────
+    //
+    // Orthogonal elbow router: every committed connection renders as either one
+    // straight segment (source and target share a row or column) or a 2-segment
+    // elbow (horizontal leg out of the source, vertical leg into the target).
+    // Angles are always exactly 0/90/180/270 -- there is no diagonal case.
+    //
+    // Multiple connections can share the same horizontal or vertical corridor
+    // (e.g. two arrows both bending through row Y=40). Those are grouped into
+    // "lanes" and nudged apart by laneStep pixels so they don't render on top
+    // of each other. Applies uniformly to node-node, HEAD-node and node-NULL
+    // connections since it only looks at the actual computed positions, not at
+    // grid row/col indices.
+
+    private const float RowColEpsilon = 6f;   // treat a Y/X gap this small as "aligned"
+    private const float CorridorGrid  = 10f;  // corridor key rounding, groups near-identical rows/cols together
+    private const float LaneStep      = 14f;  // pixel offset between parallel arrows sharing a corridor
+
+    private enum ConnectionKind { Horizontal, Vertical, Elbow }
+
     public void RebuildArrows()
     {
         foreach (var a in _staticArrows) if (a) Destroy(a.gameObject);
         _staticArrows.Clear();
 
+        // Collect every active connection as (source handle, target rect).
+        var connections = new List<(RectTransform src, RectTransform tgt)>();
+
         if (_headPointer?.TargetNode != null)
-        {
-            _staticArrows.Add(SpawnArrow(
-                _headPointer.HandleRect,
-                _headPointer.TargetNode.NodeRect));
-        }
+            connections.Add((_headPointer.HandleRect, _headPointer.TargetNode.NodeRect));
 
         foreach (var node in _nodes)
         {
             RectTransform target = node.NextNode != null
                 ? node.NextNode.NodeRect
                 : _nullTerminal.TerminalRect;
+            connections.Add((node.HandleRect, target));
+        }
 
-            _staticArrows.Add(SpawnArrow(node.HandleRect, target));
+        int n = connections.Count;
+        if (n == 0) return;
+
+        // Pass 1: classify each connection and record which corridors it uses.
+        var kinds      = new ConnectionKind[n];
+        var srcPoints  = new Vector2[n];
+        var tgtPoints  = new Vector2[n];
+        var rowGroups  = new Dictionary<float, List<int>>(); // horizontal corridor key -> connection indices
+        var colGroups  = new Dictionary<float, List<int>>(); // vertical corridor key   -> connection indices
+
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 s = nodeContainer.InverseTransformPoint(connections[i].src.position);
+            Vector2 t = nodeContainer.InverseTransformPoint(connections[i].tgt.position);
+            srcPoints[i] = s;
+            tgtPoints[i] = t;
+
+            bool sameRow = Mathf.Abs(s.y - t.y) <= RowColEpsilon;
+            bool sameCol = Mathf.Abs(s.x - t.x) <= RowColEpsilon;
+
+            if (sameRow && !sameCol)
+            {
+                kinds[i] = ConnectionKind.Horizontal;
+                AddToCorridor(rowGroups, RoundToCorridor(s.y), i);
+            }
+            else if (sameCol)
+            {
+                kinds[i] = ConnectionKind.Vertical;
+                AddToCorridor(colGroups, RoundToCorridor(s.x), i);
+            }
+            else
+            {
+                kinds[i] = ConnectionKind.Elbow;
+                AddToCorridor(rowGroups, RoundToCorridor(s.y), i); // horizontal leg out of source
+                AddToCorridor(colGroups, RoundToCorridor(t.x), i); // vertical leg into target
+            }
+        }
+
+        // Pass 2: now that corridor membership is known, build the actual segments.
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 s = srcPoints[i];
+            Vector2 t = tgtPoints[i];
+            RectTransform tgtRect = connections[i].tgt;
+
+            switch (kinds[i])
+            {
+                case ConnectionKind.Horizontal:
+                {
+                    float laneY = LaneOffset(rowGroups[RoundToCorridor(s.y)], i);
+                    Vector2 a = new Vector2(s.x, s.y + laneY);
+                    Vector2 b = new Vector2(t.x - Mathf.Sign(t.x - s.x) * HalfW(tgtRect), t.y + laneY);
+                    _staticArrows.Add(SpawnSegment(a, b, showHead: true));
+                    break;
+                }
+                case ConnectionKind.Vertical:
+                {
+                    float laneX = LaneOffset(colGroups[RoundToCorridor(s.x)], i);
+                    Vector2 a = new Vector2(s.x + laneX, s.y);
+                    Vector2 b = new Vector2(t.x + laneX, t.y - Mathf.Sign(t.y - s.y) * HalfH(tgtRect));
+                    _staticArrows.Add(SpawnSegment(a, b, showHead: true));
+                    break;
+                }
+                case ConnectionKind.Elbow:
+                {
+                    float laneY = LaneOffset(rowGroups[RoundToCorridor(s.y)], i);
+                    float laneX = LaneOffset(colGroups[RoundToCorridor(t.x)], i);
+
+                    Vector2 exitPt  = new Vector2(s.x, s.y + laneY);
+                    Vector2 bendPt  = new Vector2(t.x + laneX, s.y + laneY);
+                    Vector2 entryPt = new Vector2(t.x + laneX, t.y - Mathf.Sign(t.y - s.y) * HalfH(tgtRect));
+
+                    _staticArrows.Add(SpawnSegment(exitPt, bendPt, showHead: false));
+                    _staticArrows.Add(SpawnSegment(bendPt, entryPt, showHead: true));
+                    break;
+                }
+            }
         }
     }
 
-    private LLArrow SpawnArrow(RectTransform from, RectTransform to)
+    private static float RoundToCorridor(float v) => Mathf.Round(v / CorridorGrid) * CorridorGrid;
+
+    private static void AddToCorridor(Dictionary<float, List<int>> groups, float key, int index)
     {
-        var go    = Instantiate(arrowPrefab, nodeContainer);
+        if (!groups.TryGetValue(key, out var list))
+        {
+            list = new List<int>();
+            groups[key] = list;
+        }
+        list.Add(index);
+    }
+
+    /// <summary>Centred lane offset for connectionIndex within its corridor group.</summary>
+    private static float LaneOffset(List<int> corridor, int connectionIndex)
+    {
+        int slot  = corridor.IndexOf(connectionIndex);
+        int count = corridor.Count;
+        return (slot - (count - 1) * 0.5f) * LaneStep;
+    }
+
+    private static float HalfW(RectTransform rt) => rt.rect.width  * 0.5f;
+    private static float HalfH(RectTransform rt) => rt.rect.height * 0.5f;
+
+    private LLArrow SpawnSegment(Vector2 pointA, Vector2 pointB, bool showHead)
+    {
+        var go = Instantiate(arrowPrefab, nodeContainer);
         go.transform.SetAsFirstSibling();
         var arrow = go.GetComponent<LLArrow>();
-        arrow.Init(from, to, nodeContainer);
+        arrow.InitPoints(pointA, pointB, showHead);
         return arrow;
     }
 
