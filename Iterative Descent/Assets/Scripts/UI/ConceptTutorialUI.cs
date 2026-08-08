@@ -38,6 +38,7 @@
 //   ConceptTutorialUI.Instance.Show(conceptTag, captionText, onClosed)
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -131,13 +132,21 @@ public class ConceptTutorialUI : MonoBehaviour, ICloseable
     // while this panel is the registered closeable.
     public void Close() => Hide();
 
+    // Words that should render fully uppercase in a title instead of just
+    // Title-Case (e.g. "Bfs Dfs" -> "BFS DFS"). Add to this set rather than
+    // hardcoding a title override per concept tag -- keeps FormatTitle
+    // generic for the other 11 tags that don't need it.
+    private static readonly HashSet<string> AcronymWords = new HashSet<string> { "bfs", "dfs", "cpu" };
+
     private static string FormatTitle(string conceptTag)
     {
         string[] words = conceptTag.Replace('_', ' ').Split(' ');
         for (int i = 0; i < words.Length; i++)
         {
             if (words[i].Length == 0) continue;
-            words[i] = char.ToUpperInvariant(words[i][0]) + words[i].Substring(1);
+            words[i] = AcronymWords.Contains(words[i].ToLowerInvariant())
+                ? words[i].ToUpperInvariant()
+                : char.ToUpperInvariant(words[i][0]) + words[i].Substring(1);
         }
         return string.Join(" ", words);
     }

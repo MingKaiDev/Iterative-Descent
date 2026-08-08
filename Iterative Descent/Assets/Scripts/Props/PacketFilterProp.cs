@@ -52,6 +52,13 @@ public class PacketFilterProp : MonoBehaviour, IInteractable, ICloseable
         if (interactBase?.promptPanel != null)
             interactBase.promptPanel.SetActive(false);
 
+        // First time the player sees this concept, show the tutorial panel
+        // before the puzzle overlay opens. See ConceptTutorials.cs.
+        ConceptTutorials.ShowIfUnseenThenContinue("network_security", OpenPacketFilterUI);
+    }
+
+    private void OpenPacketFilterUI()
+    {
         if (packetFilterOverlay != null)
         {
             packetFilterOverlay.SetActive(true);

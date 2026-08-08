@@ -1,4 +1,5 @@
 ﻿// PuzzleProp.cs
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -85,15 +86,29 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         _pendingSessionQuestions = QuestionSelector.SelectQuestions(
             _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
 
-        string primaryConcept = (_pendingSessionQuestions != null && _pendingSessionQuestions.Length > 0)
-            ? _pendingSessionQuestions[0].conceptTag
-            : "";
+        // A single session can mix questions from more than one concept tag
+        // (e.g. the first session mixes arrays_and_lists + complexity_big_o --
+        // see QuestionSelector.FirstSessionPlan). Collect every distinct tag
+        // present, in the order each first appears in the session, so a
+        // tutorial can be shown for each one the player hasn't seen yet --
+        // not just whichever tag happens to land on question 1.
+        var sessionConcepts = new List<string>();
+        if (_pendingSessionQuestions != null)
+        {
+            foreach (QuestionData q in _pendingSessionQuestions)
+            {
+                if (!string.IsNullOrEmpty(q.conceptTag) && !sessionConcepts.Contains(q.conceptTag))
+                    sessionConcepts.Add(q.conceptTag);
+            }
+        }
 
-        // First time the player sees this concept, a graphical tutorial panel
-        // explains it before the quiz opens. Every subsequent time (or if no
-        // tutorial exists yet for this tag) the puzzle opens immediately, same
-        // as before. OpenPuzzleUI is always eventually called either way.
-        ConceptTutorials.ShowIfUnseenThenContinue(primaryConcept, OpenPuzzleUI);
+        // First time the player sees each of these concepts, a graphical
+        // tutorial panel explains it before the quiz opens -- shown one after
+        // another if more than one is unseen. Every subsequent time (or if no
+        // tutorial exists yet for a tag) that tag is skipped. OpenPuzzleUI is
+        // always eventually called once the queue is empty, even if it was
+        // empty to begin with.
+        ConceptTutorials.ShowAllUnseenThenContinue(sessionConcepts, OpenPuzzleUI);
     }
 
     private void OpenPuzzleUI()

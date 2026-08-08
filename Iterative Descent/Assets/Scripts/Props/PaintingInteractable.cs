@@ -35,8 +35,25 @@ public class PaintingInteractable : MonoBehaviour, IInteractable
     {
         if (PaintingPuzzleManager.Instance == null) return;
         if (PaintingPuzzleManager.Instance.IsSolved) return;
-        if (pressSound != null) audioSource.PlayOneShot(pressSound);
-        PaintingPuzzleManager.Instance.OnPaintingPressed(this);
+
+        // This puzzle has no overlay -- it is live, walk-around gameplay
+        // (press a button, keep walking), unlike every other dedicated
+        // puzzle prop. So on the player's first ever painting press, show
+        // the tutorial panel first; ConceptTutorialUI.Show() pauses the
+        // player and unlocks the cursor for the panel, but since no overlay
+        // follows here to re-assert that paused state (see the pause-
+        // ownership note in ConceptTutorialUI.cs), this callback must
+        // explicitly resume play itself before processing the press.
+        ConceptTutorials.ShowIfUnseenThenContinue("processes_threads", () =>
+        {
+            PlayerInteractor.Resume();
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            Time.timeScale = 1f;
+
+            if (pressSound != null) audioSource.PlayOneShot(pressSound);
+            PaintingPuzzleManager.Instance.OnPaintingPressed(this);
+        });
     }
 
     // ── Public ─────────────────────────────────────────────────────────────

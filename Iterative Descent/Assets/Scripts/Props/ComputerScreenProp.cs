@@ -58,11 +58,30 @@ public class ComputerScreenProp : MonoBehaviour, IInteractable, ICloseable
     {
         if (passwordOverlay != null) passwordOverlay.SetActive(false);
 
+        // First time the player sees this concept, a graphical tutorial panel
+        // explains it before the puzzle opens. Every subsequent time (or if no
+        // tutorial exists yet for this tag) the puzzle opens immediately, same
+        // as before. OpenLinkedListUI is always eventually called either way.
+        // Mirrors PuzzleProp.OpenPuzzle -- see ConceptTutorials.cs.
+        ConceptTutorials.ShowIfUnseenThenContinue("linked_lists", OpenLinkedListUI);
+    }
+
+    private void OpenLinkedListUI()
+    {
         if (linkedListOverlay != null)
         {
             linkedListOverlay.SetActive(true);
             linkedListOverlay.GetComponent<LinkedListPuzzleUI>().InitPuzzle(CloseScreen);
         }
+
+        // Re-assert closeable/cursor/timescale -- ConceptTutorials may have
+        // shown a tutorial panel in between, which registers itself as the
+        // closeable and does not restore ours on close (see
+        // ConceptTutorialUI's pause-ownership note).
+        PlayerInteractor.RegisterCloseable(this);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        Time.timeScale = 0f;
     }
 
     // ICloseable

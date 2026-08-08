@@ -23,8 +23,14 @@
 // has caption text ready -- it will just be skipped (falls straight through
 // to onDone) until a diagram child is added to the prefab for that tag.
 //
-// Usage (see PuzzleProp.OpenPuzzle):
+// Usage -- single concept (see StackPuzzleProp.OpenPuzzle, ComputerScreenProp.ShowLinkedListPuzzle):
 //   ConceptTutorials.ShowIfUnseenThenContinue(conceptTag, OpenPuzzleUI);
+//
+// Usage -- multiple concepts in one session, shown back-to-back as a queue
+// (see PuzzleProp.OpenPuzzle, needed because one quiz session can mix
+// questions from more than one concept tag, e.g. the first session mixes
+// arrays_and_lists + complexity_big_o):
+//   ConceptTutorials.ShowAllUnseenThenContinue(sessionConceptTags, OpenPuzzleUI);
 
 using System;
 using System.Collections.Generic;
@@ -82,6 +88,49 @@ public static class ConceptTutorials
 
         _shown.Add(conceptTag);
         ConceptTutorialUI.Instance.Show(conceptTag, caption, onDone);
+    }
+
+    /// <summary>
+    /// Shows a tutorial panel for each unseen concept tag in conceptTags, one
+    /// after another (a simple queue), then invokes onDone once every tag in
+    /// the list has either shown its tutorial and been closed, or been
+    /// skipped (already seen / no caption / no diagram). Duplicate tags are
+    /// only shown once, first occurrence wins. An empty or all-skipped list
+    /// invokes onDone immediately, same as ShowIfUnseenThenContinue would for
+    /// a single skipped tag.
+    ///
+    /// Each tag in the queue reuses ShowIfUnseenThenContinue -- this method
+    /// is purely a sequencing wrapper, all the "should this even show" logic
+    /// stays in one place.
+    /// </summary>
+    public static void ShowAllUnseenThenContinue(IEnumerable<string> conceptTags, Action onDone)
+    {
+        var queue = new Queue<string>();
+        var seenThisCall = new HashSet<string>();
+
+        if (conceptTags != null)
+        {
+            foreach (string tag in conceptTags)
+            {
+                if (string.IsNullOrEmpty(tag)) continue;
+                if (!seenThisCall.Add(tag)) continue; // de-dupe, keep first occurrence order
+                queue.Enqueue(tag);
+            }
+        }
+
+        ShowNextInQueue(queue, onDone);
+    }
+
+    private static void ShowNextInQueue(Queue<string> queue, Action onDone)
+    {
+        if (queue.Count == 0)
+        {
+            onDone?.Invoke();
+            return;
+        }
+
+        string tag = queue.Dequeue();
+        ShowIfUnseenThenContinue(tag, () => ShowNextInQueue(queue, onDone));
     }
 
     /// <summary>

@@ -51,6 +51,16 @@ public class StackPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         if (interactBase?.promptPanel != null)
             interactBase.promptPanel.SetActive(false);
 
+        // First time the player sees this concept, a graphical tutorial panel
+        // explains it before the puzzle opens. Every subsequent time (or if no
+        // tutorial exists yet for this tag) the puzzle opens immediately, same
+        // as before. OpenStackUI is always eventually called either way.
+        // Mirrors PuzzleProp.OpenPuzzle -- see ConceptTutorials.cs.
+        ConceptTutorials.ShowIfUnseenThenContinue("stacks_and_queues", OpenStackUI);
+    }
+
+    private void OpenStackUI()
+    {
         if (stackOverlay != null)
         {
             stackOverlay.SetActive(true);

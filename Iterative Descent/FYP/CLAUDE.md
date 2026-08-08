@@ -26,6 +26,8 @@ Ammo for various guns
 Player Health
 
 ## Common Tasks
+When user mentioned verified and working or something with similar meaning, update memory files.
+
 Update memory whenever you make any changes or the user have a new idea in mind
 
 ## What NOT to DO

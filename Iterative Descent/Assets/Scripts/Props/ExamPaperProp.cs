@@ -1,7 +1,9 @@
 // ExamPaperProp.cs
 // IInteractable prop that opens the exam-paper styled quiz overlay.
-// Mirrors PuzzleProp exactly -- same BKT question selection, same DDA hooks.
-// Use this on any desk / clipboard prop you want to trigger Quiz 2.
+// Mirrors PuzzleProp exactly -- same BKT question selection, same DDA hooks,
+// and (as of 2026-08-08) the same concept-tutorial wiring. Use this on any
+// desk / clipboard prop you want to trigger Quiz 2.
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -60,6 +62,11 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         }
     }
 
+    // Holds the selected questions between OpenPuzzle() and OpenExamPaperUI()
+    // when a concept tutorial plays in between. See PuzzleProp.cs for the
+    // same pattern.
+    private QuestionData[] _pendingSessionQuestions;
+
     public void OpenPuzzle()
     {
         _open = true;
@@ -69,17 +76,35 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         if (interactBase != null && interactBase.promptPanel != null)
             interactBase.promptPanel.SetActive(false);
 
+        bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
+        _pendingSessionQuestions = QuestionSelector.SelectQuestions(
+            _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
+
+        // Same multi-concept tutorial handling as PuzzleProp.OpenPuzzle() --
+        // collect every distinct concept tag in this session (not just the
+        // first question's), show a tutorial for each one the player hasn't
+        // seen yet, then open the exam paper overlay once the queue is empty.
+        var sessionConcepts = new List<string>();
+        if (_pendingSessionQuestions != null)
+        {
+            foreach (QuestionData q in _pendingSessionQuestions)
+            {
+                if (!string.IsNullOrEmpty(q.conceptTag) && !sessionConcepts.Contains(q.conceptTag))
+                    sessionConcepts.Add(q.conceptTag);
+            }
+        }
+        ConceptTutorials.ShowAllUnseenThenContinue(sessionConcepts, OpenExamPaperUI);
+    }
+
+    private void OpenExamPaperUI()
+    {
         if (examPaperOverlay != null)
         {
             examPaperOverlay.SetActive(true);
 
-            bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
-            QuestionData[] sessionQuestions = QuestionSelector.SelectQuestions(
-                _resolvedQuestions, isFirst, questionsPerSession, pinnedConceptTag);
-
             // NotifyQuizStarted() is called inside ExamPaperPuzzleUI.Setup()
             // Do NOT call it here -- same rule as PuzzleProp.
-            examPaperOverlay.GetComponent<ExamPaperPuzzleUI>().Setup(sessionQuestions, ClosePuzzle);
+            examPaperOverlay.GetComponent<ExamPaperPuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle);
         }
 
         PlayerInteractor.RegisterCloseable(this);

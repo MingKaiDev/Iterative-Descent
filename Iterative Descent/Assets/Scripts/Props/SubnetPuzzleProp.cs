@@ -52,6 +52,13 @@ public class SubnetPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         if (interactBase?.promptPanel != null)
             interactBase.promptPanel.SetActive(false);
 
+        // First time the player sees this concept, show the tutorial panel
+        // before the puzzle overlay opens. See ConceptTutorials.cs.
+        ConceptTutorials.ShowIfUnseenThenContinue("computer_networks", OpenSubnetUI);
+    }
+
+    private void OpenSubnetUI()
+    {
         if (subnetOverlay != null)
         {
             subnetOverlay.SetActive(true);
