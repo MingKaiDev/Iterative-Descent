@@ -1,7 +1,9 @@
 ﻿// SelectionPromptUI.cs
 // Attach to a Screen Space Canvas in the scene (one instance only).
-// Shows "◄ ►  Cycling X objects" hint whenever multiple interactables are in range.
+// Shows "< >  Cycling X objects" hint whenever multiple interactables are in range.
 // Wire up in the Inspector: assign the hint panel + its TMP_Text label.
+// Text is ASCII-only by project convention (no Unicode arrows/dashes -- TMP font
+// compatibility, see CLAUDE.md and Story 28 notes).
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -49,7 +51,7 @@ public class SelectionPromptUI : MonoBehaviour
         if (showHint && cycleHintLabel != null)
         {
             string name = inRange[selectedIndex].Handler?.InteractLabel ?? inRange[selectedIndex].gameObject.name;
-            cycleHintLabel.text = $"◄ ►  {selectedIndex + 1} / {inRange.Count}  —  {name}";
+            cycleHintLabel.text = $"< >  {selectedIndex + 1} / {inRange.Count}  -  {name}";
         }
     }
 }

@@ -108,6 +108,12 @@ public class EncounterTrigger : MonoBehaviour
             activated++;
         }
 
+        // First scripted encounter the player reaches (in any room) shows a one-shot
+        // combat control hint. Safe to call on every encounter -- OnboardingHintUI
+        // only actually displays it the first time. See Story 31 / OnboardingHintUI.cs.
+        if (activated > 0)
+            OnboardingHintUI.Instance?.ShowCombatHintOnce();
+
         int tier = CombatDDAController.Instance != null
             ? CombatDDAController.Instance.CurrentTier
             : -1;

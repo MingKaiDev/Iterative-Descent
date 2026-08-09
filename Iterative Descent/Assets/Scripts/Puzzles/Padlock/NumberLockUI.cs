@@ -20,6 +20,10 @@ public class NumberLockUI : MonoBehaviour
     [Header("Feedback")]
     [SerializeField] private TextMeshProUGUI feedbackText;       // "ACCESS DENIED" / "UNLOCKED"
 
+    [Header("Hint (optional)")]
+    [Tooltip("Shown only when Open() is called with showHint = true. Leave unassigned if no hint display is wanted.")]
+    [SerializeField] private TextMeshProUGUI hintCodeText;
+
     [Header("Colours")]
     [SerializeField] private Color normalColour    = new Color(0.25f, 0.22f, 0.18f, 1f);
     [SerializeField] private Color selectedColour  = new Color(0.80f, 0.65f, 0.20f, 1f);
@@ -71,7 +75,8 @@ public class NumberLockUI : MonoBehaviour
 
     /// <summary>Called by PadlockProp to open the lock UI.</summary>
     /// <param name="correctCode">The code that unlocks (null = always deny).</param>
-    public void Open(string correctCode = null)
+    /// <param name="showHint">If true and correctCode is set, displays the code on screen.</param>
+    public void Open(string correctCode = null, bool showHint = false)
     {
         _correctCode   = correctCode;
         selectedIndex  = 0;
@@ -80,6 +85,19 @@ public class NumberLockUI : MonoBehaviour
         ClearFeedback();
         RefreshAll();
         isOpen = true;
+
+        if (hintCodeText != null)
+        {
+            if (showHint && !string.IsNullOrEmpty(correctCode))
+            {
+                hintCodeText.text = "Hint: " + correctCode;
+                hintCodeText.gameObject.SetActive(true);
+            }
+            else
+            {
+                hintCodeText.gameObject.SetActive(false);
+            }
+        }
     }
 
     public void Close()

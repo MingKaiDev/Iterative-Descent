@@ -9,7 +9,14 @@ public class DoorController : MonoBehaviour
     public Transform doorMesh;
 
     [Header("Open Rotation")]
-    [Tooltip("Degrees to rotate open on local Y. Negative = inward.")]
+    [Tooltip("Degrees to rotate open on local X. Was hardcoded to 1 before this field existed -- " +
+             "defaults to 1 so every existing door in the project keeps its current behaviour untouched.")]
+    public float openAngleX = 1f;
+    [Tooltip("Degrees to rotate open on local Y. Was hardcoded to 1 before this field existed -- " +
+             "defaults to 1 so every existing door in the project keeps its current behaviour untouched.")]
+    public float openAngleY = 1f;
+    [Tooltip("Degrees to rotate open on local Z. Negative = inward. This is the field every " +
+             "existing door already uses -- unchanged, still serializes under the same name.")]
     public float openAngle = -90f;
 
     [Header("Open Position Offset")]
@@ -52,7 +59,7 @@ public class DoorController : MonoBehaviour
         _closedLocalPos = doorMesh.localPosition;
 
         // Derive open state
-        _openLocalRot = _closedLocalRot * Quaternion.Euler(1f, 1f, openAngle);
+        _openLocalRot = _closedLocalRot * Quaternion.Euler(openAngleX, openAngleY, openAngle);
         _openLocalPos = _closedLocalPos + openPositionOffset;
     }
 

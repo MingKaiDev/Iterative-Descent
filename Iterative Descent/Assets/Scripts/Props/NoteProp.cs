@@ -31,6 +31,11 @@ public class NoteProp : MonoBehaviour, IInteractable, ICloseable
     [Tooltip("Label shown on the interact prompt.")]
     public string interactLabel = "Read Note";
 
+    /// <summary>Fired every time this note is closed (after being read). Generic hook
+    /// for any downstream reaction (e.g. revealing a code elsewhere) -- not specific
+    /// to any one use case.</summary>
+    public event System.Action OnClosed;
+
     // ── IInteractable ─────────────────────────────────────────────────────────
 
     public string InteractLabel => interactLabel;
@@ -107,5 +112,7 @@ public class NoteProp : MonoBehaviour, IInteractable, ICloseable
             if (ir != null) ir.enabled = false;
             this.enabled = false;
         }
+
+        OnClosed?.Invoke();
     }
 }

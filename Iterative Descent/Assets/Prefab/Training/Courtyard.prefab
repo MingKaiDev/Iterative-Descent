@@ -2133,7 +2133,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1560743255695025514}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53e58632114d522449ac9f5926ce2222, type: 3}
+  m_Script: {fileID: 11500000, guid: c6892e935cab441aad08e66003894cd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossEncounterTrigger
   aresGameObject: {fileID: 0}

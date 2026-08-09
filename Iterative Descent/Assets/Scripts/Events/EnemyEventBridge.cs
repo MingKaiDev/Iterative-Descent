@@ -81,6 +81,14 @@ public class EnemyEventBridge : MonoBehaviour
 
         enemy.Activate(playerTransform);
         Debug.Log("[EnemyEventBridge] Enemy activated — the chase begins.");
+
+        // This is Combat 1 -- the Main Hall door breach -- and chronologically
+        // the FIRST enemy encounter any player reaches (before Classroom 1 /
+        // Hallway 1, which use EncounterTrigger.cs). ShowCombatHintOnce() is
+        // idempotent, so it's safe that EncounterTrigger also calls it for the
+        // later encounters -- whichever fires first wins, which is now correctly
+        // this one. See Story 31 / OnboardingHintUI.cs.
+        OnboardingHintUI.Instance?.ShowCombatHintOnce();
     }
 
     // ─── Editor helper: visualise who we're wired to ─────────────────────────

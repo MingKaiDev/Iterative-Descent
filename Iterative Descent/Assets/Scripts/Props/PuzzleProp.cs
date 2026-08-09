@@ -50,7 +50,7 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
     [SerializeField] private UnityEvent onCompleted;
 
     // IInteractable
-    public string InteractLabel => "Read Note";
+    public string InteractLabel => "Take Quiz";
 
     public void Interact(GameObject interactor)
     {

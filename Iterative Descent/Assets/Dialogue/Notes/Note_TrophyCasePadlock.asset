@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77ef10872cccf5d48bc747366f93dc18, type: 3}
+  m_Name: Note_TrophyCasePadlock
+  m_EditorClassIdentifier: Assembly-CSharp::NoteData
+  title: Trophy Case
+  author:
+  body: 'Heard someone''s been eyeing the trophies in the case again. Not sure
+
+    who''d actually want those old things, but management wants it locked up
+
+    now anyway.
+
+
+    Set it to 1234, real original I know, but nobody around here''s
+
+    going to guess it.
+
+
+    Also stuffed some ammo in there while I was at it, since
+
+    management''s been talking about banning weaponry on site. Figured better
+
+    safe than sorry.'
+  noteType: 2

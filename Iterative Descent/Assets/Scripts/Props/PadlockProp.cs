@@ -22,6 +22,29 @@ public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
     [Header("Optional: object to enable on unlock")]
     [SerializeField] private GameObject unlockedObject;
 
+    [Header("Trophy Case (physical unlock feedback)")]
+    [Tooltip("Door(s) on the trophy case that should swing open on unlock. Reuses the " +
+             "existing DoorController -- it captures whatever rotation the mesh starts at " +
+             "as \"closed\" and rotates by openAngle from there, so it does not matter that " +
+             "the case geometry came out of Blender with an odd base rotation. Assign one " +
+             "DoorController per door (e.g. two for a double door) and tune openAngle / " +
+             "openPositionOffset per instance in the Inspector -- exact values need to be " +
+             "eyeballed in Editor, not guessed blind.")]
+    [SerializeField] private DoorController[] caseDoors;
+
+    [Tooltip("The physical lock mesh/prop to hide once the padlock is solved. Separate from " +
+             "unlockedObject above (that one is for the ammo reward, this one just disappears).")]
+    [SerializeField] private GameObject lockVisual;
+
+    /// <summary>Set true once a hint source (e.g. a readable note) has revealed this
+    /// padlock's code. NumberLockUI shows the code on-screen while this is true.
+    /// Static: there is currently only one padlock in the project. If a second one is
+    /// ever added, this needs to become per-instance instead.</summary>
+    public static bool CodeRevealed = false;
+
+    /// <summary>Call from a hint source (e.g. PadlockCodeHintHandler) to reveal the code.</summary>
+    public void RevealCode() => CodeRevealed = true;
+
     // IInteractable
     public string InteractLabel => "Examine Padlock";
 
@@ -44,7 +67,7 @@ public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
         numberLockPanel.SetActive(true);
 
         string code = string.IsNullOrEmpty(correctCode) ? null : correctCode;
-        numberLockUI.Open(code);
+        numberLockUI.Open(code, CodeRevealed);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -68,6 +91,19 @@ public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
 
         if (unlockedObject != null)
             unlockedObject.SetActive(true);
+
+        if (lockVisual != null)
+            lockVisual.SetActive(false);
+
+        if (caseDoors != null)
+        {
+            foreach (var door in caseDoors)
+            {
+                if (door == null) continue;
+                door.isLocked = false; // these doors are gated by the padlock, not their own lock state
+                door.Open();
+            }
+        }
 
         // Disable this prop so the player cannot interact with it again
         enabled = false;

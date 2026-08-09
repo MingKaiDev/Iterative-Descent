@@ -14,6 +14,15 @@ other dialogue.
 
 Cooldown (default 20s) prevents spam if the tier oscillates.
 
+**Story 10 addition (2026-08-09):** before this system, ARBITEX could speak its
+first-ever line mid-way through the very first quiz in Main Hall, with zero
+introduction -- a disembodied voice suddenly commenting on the player with no
+context for who or what it is. `ARBITEXCommentator` now also plays a one-time
+`introSequence` on the first enemy death of the session (`EnemyBase.OnAnyEnemyDied`),
+normally the Combat 1 breach enemy, and suppresses ALL tier-change commentary
+entirely until that intro has fired. Any tier change that happens before the
+intro is silently dropped, not queued.
+
 ---
 
 ## Step 1: Add ARBITEXCommentator to the GameManager
@@ -110,10 +119,38 @@ Text: ERROR. Difficulty ceiling breached. This was not supposed to happen.
 
 ---
 
+## Step 2b: Create the Intro sequence (Story 10)
+
+Create Assets/Dialogue/ARBITEX/Arb_Intro.asset (already created on disk this
+session -- confirm it shows up after Unity reimports, this step is just for
+reference / re-authoring if needed).
+
+Right-click in Project -> Create -> ARBITEX -> Dialogue Sequence, name it
+`Arb_Intro`, sibling to the Reactive/ folder (not inside it -- this is a
+one-time story beat, not part of the random-pick reactive pool).
+
+Entries (speaker changes mid-sequence on purpose -- the reveal moment):
+
+Speaker: ???
+Text: Well. That's new. Most test subjects don't survive first contact.
+
+Speaker: ARBITEX
+Text: I am ARBITEX. I administer this facility, and everything inside it. Including you.
+
+Speaker: ARBITEX
+Text: Let's see if you're worth the rest of my attention.
+
+`SubtitleUI`'s speaker-colour map has no entry for `???`, so it falls back to
+the default (white) -- then flips to ARBITEX's red on the second line, which
+visually reinforces the reveal. No SubtitleUI changes needed for this to work.
+
+---
+
 ## Step 3: Assign pools in the Inspector
 
 On the ARBITEXCommentator component:
 
+- Intro Sequence -> drag Arb_Intro
 - Tier 0 Lines -> drag Arb_Reactive_T0_A, _B, _C
 - Tier 1 Lines -> drag Arb_Reactive_T1_A, _B, _C
 - Tier 2 Lines -> drag Arb_Reactive_T2_A, _B, _C
@@ -124,15 +161,26 @@ On the ARBITEXCommentator component:
 
 ## Step 4: Verify in Play Mode
 
-1. Open the DDADisplayHUD (press H in Play Mode).
-2. Complete a puzzle well or badly to shift the tier.
-3. Confirm an ARBITEX subtitle line appears at the bottom.
-4. Console should log: [ARBITEXCommentator] Tier X -> enqueued 'Arb_Reactive_TX_?'
+1. From a fresh scene load, shift the DDA tier (e.g. do well/badly on Quiz 1)
+   BEFORE killing any enemy. Confirm NO ARBITEX line appears yet -- this is
+   correct, tier commentary is suppressed until the intro fires.
+2. Solve the Linked List puzzle, let Combat 1 fire, kill the breach enemy.
+   Confirm the Arb_Intro sequence plays (??? -> ARBITEX, 3 lines). Console
+   should log: [ARBITEXCommentator] Intro fired on first enemy death --
+   reactive commentary now active.
+3. Open the DDADisplayHUD (press H in Play Mode).
+4. Shift the tier again (any puzzle or combat). Confirm an ARBITEX subtitle
+   line now appears at the bottom.
+5. Console should log: [ARBITEXCommentator] Tier X -> enqueued 'Arb_Reactive_TX_?'
 
 If nothing appears:
 - Check ARBITEXCommentator is on the same GameObject as DialogueManager.
 - Check DialogueUI / SubtitleUI is correctly wired in the scene.
 - Check that at least one DialogueSequence asset is assigned per pool.
+- Check Intro Sequence is assigned -- if it's None, a warning logs and
+  reactive commentary stays suppressed forever (by design, this is the
+  simplest way to guarantee no reactive line ever plays without the intro
+  having fired first).
 
 ---
 
