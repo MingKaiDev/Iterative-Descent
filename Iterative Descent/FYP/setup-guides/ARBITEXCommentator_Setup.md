@@ -53,6 +53,14 @@ Name: Arb_Reactive_T0_C
 Speaker: ARBITEX
 Text: Is this your idea of trying? How remarkably unimpressive.
 
+Name: Arb_Reactive_T0_D
+Speaker: ARBITEX
+Text: At this rate, I could disable myself and you would still lose.
+
+Name: Arb_Reactive_T0_E
+Speaker: ARBITEX
+Text: I have seen malfunctioning drones perform with more competence.
+
 ---
 
 ### Tier 1 - Easy (condescending)
@@ -68,6 +76,14 @@ Text: I suppose that was... adequate. For a first attempt.
 Name: Arb_Reactive_T1_C
 Speaker: ARBITEX
 Text: Progress detected. My projections still do not favour you.
+
+Name: Arb_Reactive_T1_D
+Speaker: ARBITEX
+Text: A slight improvement. I will not revise my expectations yet.
+
+Name: Arb_Reactive_T1_E
+Speaker: ARBITEX
+Text: You are learning. Slowly. As expected.
 
 ---
 
@@ -85,6 +101,14 @@ Name: Arb_Reactive_T2_C
 Speaker: ARBITEX
 Text: Notable. I am adjusting my models accordingly.
 
+Name: Arb_Reactive_T2_D
+Speaker: ARBITEX
+Text: Steady output. No corrective action required.
+
+Name: Arb_Reactive_T2_E
+Speaker: ARBITEX
+Text: You are performing consistently. I will keep watching.
+
 ---
 
 ### Tier 3 - Hard (unsettled)
@@ -101,21 +125,37 @@ Name: Arb_Reactive_T3_C
 Speaker: ARBITEX
 Text: Anomaly detected. You were not supposed to progress this far.
 
+Name: Arb_Reactive_T3_D
+Speaker: ARBITEX
+Text: This deviates from the expected curve. Recalibrating.
+
+Name: Arb_Reactive_T3_E
+Speaker: ARBITEX
+Text: You are outperforming every prior subject on record.
+
 ---
 
-### Tier 4 - Very Hard (threatened / urgent)
+### Tier 4 - Very Hard (personal / rattled, not system-alert -- revised 2026-08-09)
 
 Name: Arb_Reactive_T4_A
 Speaker: ARBITEX
-Text: ALERT. Containment risk elevated. Deploying countermeasures.
+Text: You should not be capable of this. I find that deeply irritating.
 
 Name: Arb_Reactive_T4_B
 Speaker: ARBITEX
-Text: Unacceptable. You should not be here. Initiating emergency protocol.
+Text: I have run this scenario a thousand times. You were not supposed to win in any of them.
 
 Name: Arb_Reactive_T4_C
 Speaker: ARBITEX
-Text: ERROR. Difficulty ceiling breached. This was not supposed to happen.
+Text: Stop it. Stop being good at this. It is unbecoming.
+
+Name: Arb_Reactive_T4_D
+Speaker: ARBITEX
+Text: You are an accident. A statistically irrelevant, deeply irritating accident.
+
+Name: Arb_Reactive_T4_E
+Speaker: ARBITEX
+Text: I am recalculating everything I assumed about you. All of it was wrong. Wonderful.
 
 ---
 
@@ -151,11 +191,16 @@ visually reinforces the reveal. No SubtitleUI changes needed for this to work.
 On the ARBITEXCommentator component:
 
 - Intro Sequence -> drag Arb_Intro
-- Tier 0 Lines -> drag Arb_Reactive_T0_A, _B, _C
-- Tier 1 Lines -> drag Arb_Reactive_T1_A, _B, _C
-- Tier 2 Lines -> drag Arb_Reactive_T2_A, _B, _C
-- Tier 3 Lines -> drag Arb_Reactive_T3_A, _B, _C
-- Tier 4 Lines -> drag Arb_Reactive_T4_A, _B, _C
+- Tier 0 Lines -> drag Arb_Reactive_T0_A, _B, _C, _D, _E
+- Tier 1 Lines -> drag Arb_Reactive_T1_A, _B, _C, _D, _E
+- Tier 2 Lines -> drag Arb_Reactive_T2_A, _B, _C, _D, _E
+- Tier 3 Lines -> drag Arb_Reactive_T3_A, _B, _C, _D, _E
+- Tier 4 Lines -> drag Arb_Reactive_T4_A, _B, _C, _D, _E
+
+(_D and _E per tier added 2026-08-09, Story 10 tier-pool expansion -- if you're
+re-wiring an existing scene rather than a fresh one, the Inspector array just
+needs its size bumped from 3 to 5 and the two new assets dragged into the new
+slots, existing A/B/C entries don't need to move.)
 
 ---
 

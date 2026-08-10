@@ -15,6 +15,17 @@ using System.Collections;
 /// OverlapBox is a one-shot check that runs at exactly the hitboxDelay
 /// offset, so damage only registers at the right animation frame.
 ///
+/// ─── hitboxDelay is still a guess unless you add an Animation Event ──────
+/// The one-shot check removes the "missed physics tick" failure mode, but
+/// hitboxDelay itself is only as accurate as the value it's tuned to -- if
+/// it doesn't match the real windup in the clip, hits will still feel off.
+/// For frame-accurate hits, add an Animation Event on each swipe clip's
+/// impact frame. Animator events can't pass a bool parameter, so there are
+/// two receivers instead of one: OnRightHitFrame() on the Right Swipe clip,
+/// OnLeftHitFrame() on the Left Swipe clip. Watch the "[RusherAttack] HIT
+/// CHECK ACTIVE" log against the swing in Play mode to tune hitboxDelay if
+/// you are not using events.
+///
 /// ─── Hitbox setup ─────────────────────────────────────────────────────────
 ///   Root (EnemyRusher + RusherAttack + NavMeshAgent)
 ///   └── CharacterRig (Animator)
@@ -33,8 +44,11 @@ using System.Collections;
 ///   Trigger  "Left Swipe"   -- fired on even swings (2nd, 4th, ...)
 ///
 /// ─── Animation Events (optional) ─────────────────────────────────────────
-///   Place OnAttackEnd() on the last frame of each swipe clip to reset state
-///   early. The coroutine handles it regardless, so this is optional.
+///   Impact frame of Right Swipe clip → OnRightHitFrame()  (frame-accurate hit)
+///   Impact frame of Left Swipe clip  → OnLeftHitFrame()   (frame-accurate hit)
+///   Last frame of either clip        → OnAttackEnd()      (resets state early)
+///   All three are optional -- the coroutine fallback (hitboxDelay) handles
+///   hit detection and state reset regardless of whether events are wired.
 /// </summary>
 public class RusherAttack : MonoBehaviour
 {
@@ -78,6 +92,7 @@ public class RusherAttack : MonoBehaviour
     private float     _cooldownTimer;
     private bool      _isAttacking;
     private bool      _nextSwipeRight = true;
+    private bool      _hitCheckDone;     // guards against double-check (event fired + coroutine fallback)
     private Coroutine _attackRoutine;
 
     // ─── Unity lifecycle ──────────────────────────────────────────────────────
@@ -140,6 +155,7 @@ public class RusherAttack : MonoBehaviour
     private void StartSwipe()
     {
         _isAttacking   = true;
+        _hitCheckDone  = false;
         _cooldownTimer = attackCooldown;
 
         bool isRight    = _nextSwipeRight;
@@ -155,62 +171,42 @@ public class RusherAttack : MonoBehaviour
     }
 
     /// <summary>
-    /// Waits for the animation windup then does a one-shot OverlapBox check
-    /// at the hand bone's current world position. Damage only registers at the
-    /// exact frame the check runs, so there is no "already overlapping" problem.
+    /// Fallback timing: waits hitboxDelay then runs the hit check if no
+    /// Animation Event (OnRightHitFrame/OnLeftHitFrame) called it first.
     /// </summary>
     private IEnumerator SwipeSequence(bool isRight)
     {
         yield return new WaitForSeconds(hitboxDelay);
 
-        BoxCollider box  = isRight ? rightFistBox : leftFistBox;
-        string      side = isRight ? "right" : "left";
-
-        // Tuning log -- shows which hand fired and at what timestamp.
-        // Adjust hitboxDelay until this appears in sync with the visual impact frame.
-        Debug.Log($"[RusherAttack] HIT CHECK ACTIVE -- {side} hand | " +
-                  $"delay={hitboxDelay:F2}s | time={Time.time:F2}");
-
-        if (box == null)
-        {
-            Debug.Log($"[RusherAttack] STUB -- {side}FistBox not assigned yet.");
-            _isAttacking   = false;
-            _attackRoutine = null;
-            yield break;
-        }
-
-        // Compute world-space centre and half-extents from the BoxCollider.
-        // lossyScale accounts for any scaling on the bone or its parents.
-        Vector3 worldCenter  = box.transform.TransformPoint(box.center);
-        Vector3 halfExtents  = Vector3.Scale(box.size * 0.5f, AbsScale(box.transform.lossyScale));
-
-        Collider[] hits = Physics.OverlapBox(
-            worldCenter, halfExtents, box.transform.rotation,
-            hitableLayers, QueryTriggerInteraction.Ignore);
-
-        bool landed = false;
-        foreach (Collider hit in hits)
-        {
-            if (hit.transform.IsChildOf(transform)) continue;     // skip own colliders
-
-            IDamageable target = hit.GetComponentInParent<IDamageable>();
-            if (target == null) continue;
-
-            Vector3 hitPoint = hit.ClosestPoint(worldCenter);
-            target.TakeDamage(meleeDamage, hitPoint);
-            Debug.Log($"[RusherAttack] {side} swipe hit '{hit.name}' for {meleeDamage} dmg.");
-            landed = true;
-            break;  // one target per swing
-        }
-
-        if (!landed)
-            Debug.Log($"[RusherAttack] {side} swipe missed.");
+        if (!_hitCheckDone)
+            RunHitCheck(isRight);
 
         _isAttacking   = false;
         _attackRoutine = null;
     }
 
-    // ─── Animation Event receiver (optional) ─────────────────────────────────
+    // ─── Animation Event receivers ─────────────────────────────────────────────
+
+    /// <summary>
+    /// [Animation Event] -- place on the impact frame of the Right Swipe clip
+    /// for a frame-accurate hit check instead of relying on the guessed
+    /// hitboxDelay. Safe to skip; the coroutine fallback covers it.
+    /// </summary>
+    public void OnRightHitFrame()
+    {
+        if (_hitCheckDone) return;
+        RunHitCheck(true);
+    }
+
+    /// <summary>
+    /// [Animation Event] -- place on the impact frame of the Left Swipe clip.
+    /// See OnRightHitFrame().
+    /// </summary>
+    public void OnLeftHitFrame()
+    {
+        if (_hitCheckDone) return;
+        RunHitCheck(false);
+    }
 
     /// <summary>
     /// [Optional Animation Event] -- place on the last frame of each swipe clip.
@@ -224,6 +220,66 @@ public class RusherAttack : MonoBehaviour
             StopCoroutine(_attackRoutine);
             _attackRoutine = null;
         }
+    }
+
+    // ─── Hit check ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// One-shot OverlapBox check at the given hand's current world position.
+    /// Damage only registers at the exact moment this runs, so there is no
+    /// "already overlapping" problem.
+    /// </summary>
+    private void RunHitCheck(bool isRight)
+    {
+        _hitCheckDone = true;
+
+        BoxCollider box  = isRight ? rightFistBox : leftFistBox;
+        string      side = isRight ? "right" : "left";
+
+        // Tuning log -- shows which hand fired and at what timestamp.
+        // Adjust hitboxDelay until this appears in sync with the visual impact frame
+        // (only relevant if you are not using OnRightHitFrame/OnLeftHitFrame events).
+        Debug.Log($"[RusherAttack] HIT CHECK ACTIVE -- {side} hand | " +
+                  $"delay={hitboxDelay:F2}s | time={Time.time:F2}");
+
+        if (box == null)
+        {
+            Debug.Log($"[RusherAttack] STUB -- {side}FistBox not assigned yet.");
+            return;
+        }
+
+        // Compute world-space centre and half-extents from the BoxCollider.
+        // lossyScale accounts for any scaling on the bone or its parents.
+        Vector3 worldCenter  = box.transform.TransformPoint(box.center);
+        Vector3 halfExtents  = Vector3.Scale(box.size * 0.5f, AbsScale(box.transform.lossyScale));
+
+        // Collide (not Ignore) -- the player hurtbox is expected to be a trigger
+        // collider (enlarged, non-blocking) rather than the CharacterController's
+        // own solid capsule. hitableLayers already restricts this to the Player
+        // layer, so this doesn't start picking up unrelated scene triggers.
+        Collider[] hits = Physics.OverlapBox(
+            worldCenter, halfExtents, box.transform.rotation,
+            hitableLayers, QueryTriggerInteraction.Collide);
+
+        foreach (Collider hit in hits)
+        {
+            if (hit.transform.IsChildOf(transform)) continue;     // skip own colliders
+
+            // Require specifically the player, not "anything IDamageable" --
+            // EnemyBase also implements IDamageable (so player bullets can hit
+            // enemies via the same interface), so a generic IDamageable lookup
+            // here can resolve to a neighbouring enemy instead of the player
+            // when enemies are clustered. See project-enemy-system.md 2026-08-10.
+            PlayerHealth target = hit.GetComponentInParent<PlayerHealth>();
+            if (target == null) continue;
+
+            Vector3 hitPoint = hit.ClosestPoint(worldCenter);
+            target.TakeDamage(meleeDamage, hitPoint);
+            Debug.Log($"[RusherAttack] {side} swipe hit '{hit.name}' for {meleeDamage} dmg.");
+            return;  // one target per swing
+        }
+
+        Debug.Log($"[RusherAttack] {side} swipe missed.");
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────

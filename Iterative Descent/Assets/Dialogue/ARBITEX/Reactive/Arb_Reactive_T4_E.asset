@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9674574299bbcbd419550892c492773f, type: 3}
-  m_Name: Arb_Reactive_T4_A
+  m_Name: Arb_Reactive_T4_E
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: ARBITEX
-    text: You should not be capable of this. I find that deeply irritating.
+    text: I am recalculating everything I assumed about you. All of it was wrong. Wonderful.
     displayDuration: 0
     choices: []

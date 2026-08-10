@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8876757163205192509}
   - component: {fileID: 8198646688390042695}
-  - component: {fileID: 8302423409506076995}
   m_Layer: 7
   m_Name: FistHitBox (1)
   m_TagString: Untagged
@@ -54,19 +53,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.13798454, y: 0.21630302, z: 0.21696185}
   m_Center: {x: -0.00010742468, y: 0.13343245, z: -0.02762094}
---- !u!114 &8302423409506076995
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1164178396415265452}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bbe89c3fb3b32d46819fcfc6440ebe2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FistHitboxRelay
-  parentAttack: {fileID: 0}
 --- !u!1 &6287845600428683195
 GameObject:
   m_ObjectHideFlags: 0
@@ -77,7 +63,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7981604527626177306}
   - component: {fileID: 5665018690309549604}
-  - component: {fileID: 3857630478570329547}
   m_Layer: 7
   m_Name: FistHitBox
   m_TagString: Untagged
@@ -94,8 +79,8 @@ Transform:
   m_GameObject: {fileID: 6287845600428683195}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0, y: -0.45, z: 0.045}
+  m_LocalScale: {x: 2.012, y: 4.0348306, z: 1.2708}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4407843886773946211}
@@ -121,19 +106,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.13798454, y: 0.21630302, z: 0.21696185}
   m_Center: {x: -0.00010742468, y: 0.13343245, z: -0.02762094}
---- !u!114 &3857630478570329547
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6287845600428683195}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bbe89c3fb3b32d46819fcfc6440ebe2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FistHitboxRelay
-  parentAttack: {fileID: 0}
 --- !u!1001 &4407843886774345209
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -336,15 +308,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.9260006
+      value: -0.959
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.081
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalRotation.w
@@ -390,13 +362,13 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 7425711050433433688}
+    - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 4887279213927914859}
     - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7174989271154257111}
-    - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7908074536468758205}
     - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1520434401005107368}
@@ -422,47 +394,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
   m_PrefabInstance: {fileID: 4407843886774345209}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &4887279213927914859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4407843886774246237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feb4e946dd611934c96dcd01dbca31ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttack
-  attackCooldown: 1.8
-  meleeDamage: 20
-  hitboxActiveWindow: 0.12
-  hitboxDelay: 0.4
-  fistHitbox: {fileID: 5665018690309549604}
-  animator: {fileID: 0}
---- !u!195 &7174989271154257111
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4407843886774246237}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.5
-  m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 0
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 2
---- !u!114 &7908074536468758205
+--- !u!114 &7425711050433433688
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -475,11 +407,62 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
   maxHealth: 100
-  chaseSpeed: 6
-  attackRange: 4.5
+  deathGroundSnapOffset: 0.3
+  chaseSpeed: 2
+  attackRange: 0.85
   pathUpdateRate: 0.2
   speedParamName: Speed
   deadParamName: IsDead
+  punch1TriggerName: Punch1
+  punch2TriggerName: Punch2
+  punch1HitboxDelay: 1.4
+  punch2HitboxDelay: 0.2
+  windupRotationDegrees: 0
+  autoActivateRadius: 3
+  autoActivateCheckInterval: 0.25
+  playerTag: Player
+--- !u!114 &4887279213927914859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4407843886774246237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feb4e946dd611934c96dcd01dbca31ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAttack
+  attackCooldown: 1
+  meleeDamage: 20
+  hitboxDelay: 1
+  fistHitbox: {fileID: 8198646688390042695}
+  hitableLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  animator: {fileID: 0}
+--- !u!195 &7174989271154257111
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4407843886774246237}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.3
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 0.3
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 2
 --- !u!136 &1520434401005107368
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -499,7 +482,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.4
   m_Height: 1.811731
   m_Direction: 1
   m_Center: {x: 0, y: 0.93629074, z: 0}
@@ -613,6 +596,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaserAudio
   walkStepClip: {fileID: 8300000, guid: 01141ce541ebcc04aad76382d40978df, type: 3}
+  hitClip: {fileID: 8300000, guid: 35406f37bb91b5544b9891d383406ca5, type: 3}
+  preDeathClip: {fileID: 8300000, guid: 9d058b0fea6db8140a6af3a534513336, type: 3}
   deathClip: {fileID: 8300000, guid: 828f0a26f3af63b428e406afce4cd509, type: 3}
   walkStepVolume: 0.7
+  hitVolume: 0.8
+  preDeathVolume: 1
   deathVolume: 1

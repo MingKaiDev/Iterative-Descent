@@ -22,6 +22,9 @@ public class PlayerMovement : MonoBehaviour
     public float walkSpeed   = 3f;
     public float sprintSpeed = 6f;
     public float gravity     = -9.81f;
+    [Tooltip("Multiplier applied to walkSpeed when moving backward. Also prevents sprinting.")]
+    [Range(0.1f, 1f)]
+    public float backwardSpeedMultiplier = 0.7f;
 
     [Header("FPS Camera")]
     [Tooltip("Assign the Camera child GameObject parented to the Player at head height.")]
@@ -150,13 +153,16 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current.aKey.isPressed) input.x -= 1f;
         if (Keyboard.current.dKey.isPressed) input.x += 1f;
 
-        bool isMoving  = input.magnitude >= 0.1f;
-        bool isRunning = isMoving && Keyboard.current.leftShiftKey.isPressed;
+        bool isMoving   = input.magnitude >= 0.1f;
+        bool isBackward = input.y < 0f;
+        bool isRunning  = isMoving && !isBackward && Keyboard.current.leftShiftKey.isPressed;
 
         IsRunning = isRunning;
         IsWalking = isMoving && !isRunning;
 
-        float speed = isRunning ? sprintSpeed : walkSpeed;
+        float speed = isRunning ? sprintSpeed
+                    : isBackward ? walkSpeed * backwardSpeedMultiplier
+                    : walkSpeed;
 
         _animator.SetBool(IsWalkingHash, isMoving);
         _animator.SetBool(IsRunningHash, isRunning);

@@ -25,6 +25,14 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
     [Header("Health")]
     [SerializeField] protected float maxHealth = 100f;
 
+    [Header("Death")]
+    [Tooltip("Small upward nudge applied after the death-time NavMesh ground-snap. " +
+             "NavMesh height data is voxelized (a simplified approximation of the real " +
+             "floor mesh), so a raw snap can land a few cm below the visible floor and " +
+             "read as the corpse clipping into the ground. Increase if it still clips, " +
+             "decrease (or set to 0) if it now floats instead.")]
+    [SerializeField] protected float deathGroundSnapOffset = 0.03f;
+
     // ─── Protected state (accessible to all subclasses) ───────────────────────
 
     protected float      _currentHealth;
@@ -72,6 +80,20 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
         _isDead = true;
         if (_agent.isOnNavMesh)
             _agent.isStopped = true;
+
+        // Safety net against corpses freezing at the wrong height (e.g. an
+        // agent that ended up slightly off-height, a bad death-animation
+        // import setting, or any other cause) -- snap to the nearest real
+        // NavMesh surface point before the agent stops correcting position.
+        // 2f search radius is generous enough to find the floor under normal
+        // circumstances without snapping to an unrelated NavMesh area.
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit groundHit, 2f, NavMesh.AllAreas))
+        {
+            Vector3 snapped = groundHit.position;
+            snapped.y += deathGroundSnapOffset;
+            transform.position = snapped;
+        }
+
         _agent.enabled = false;         // prevents NavMesh errors after death
         enabled = false;
         OnDie();

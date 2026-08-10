@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: ARBITEX
-    text: ' I am beginning to question whether you were ever a real threat.'
+    text: I am beginning to question whether you were ever a real threat.
     displayDuration: 0
     choices: []

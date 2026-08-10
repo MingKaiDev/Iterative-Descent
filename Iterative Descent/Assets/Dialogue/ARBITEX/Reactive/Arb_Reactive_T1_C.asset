@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: ARBITEX
-    text: ' Progress detected. My projections still do not favour you.'
+    text: Progress detected. My projections still do not favour you.
     displayDuration: 0
     choices: []
