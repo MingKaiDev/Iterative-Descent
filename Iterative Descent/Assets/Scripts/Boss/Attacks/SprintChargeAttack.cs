@@ -136,6 +136,7 @@ public class SprintChargeAttack : BossAttackBase
                 if (hits.Length > 0)
                 {
                     hitPlayer = true;
+                    PlaySound(hitboxOpenClip);
                     var damageable = hits[0].GetComponent<IDamageable>();
                     if (damageable != null)
                     {
@@ -167,5 +168,7 @@ public class SprintChargeAttack : BossAttackBase
     }
 
     // ─── Override to prevent accidental broadcast damage ─────────────────────────
+    // Suppressed for damage reasons only -- hitboxOpenClip is played from
+    // ChargeRoutine's hitPlayer branch above instead, at the actual contact frame.
     public override void OnHitboxOpen() { }
 }

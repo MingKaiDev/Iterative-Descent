@@ -16,6 +16,14 @@
 //      disabled for pacing/performance reasons). Leave it unassigned if the
 //      boss is already active in the scene and just relying on its own
 //      detectionRadius.
+//   4. bossAudio is optional -- the BossAudio component on the boss root.
+//      Leave unassigned to skip the encounter stinger.
+//   5. bossIntroDialogue is optional -- assign Arb_BossIntro (Assets/Dialogue/
+//      ARBITEX/Arb_BossIntro.asset) to have ARBITEX speak the moment the
+//      player commits to the arena. Uses DialogueManager.Interrupt() so it
+//      cuts off any straggling reactive commentary and plays immediately.
+//      Does not pause the player -- the line has no choices, so it plays
+//      over the top as combat begins.
 //
 // One-shot: fires once per scene load, re-entering the trigger does nothing.
 // No arena gate / lock logic yet -- not part of this pass.
@@ -30,6 +38,15 @@ public class BossEncounterTrigger : MonoBehaviour
     [Header("Boss HUD")]
     [Tooltip("BossHUD starts inactive by design -- this trigger shows it when the player enters the arena.")]
     [SerializeField] private BossHUD bossHUD;
+
+    [Header("Boss Audio (optional)")]
+    [Tooltip("BossAudio component on the boss root. Leave unassigned to skip the encounter stinger.")]
+    [SerializeField] private BossAudio bossAudio;
+
+    [Header("Boss Intro Dialogue (optional)")]
+    [Tooltip("Assign Arb_BossIntro.asset. Plays through DialogueManager.Interrupt() -- cuts off " +
+             "any other dialogue and plays immediately, without pausing the player.")]
+    [SerializeField] private DialogueSequence bossIntroDialogue;
 
     [Header("Trigger")]
     [SerializeField] private string playerTag = "Player";
@@ -50,6 +67,17 @@ public class BossEncounterTrigger : MonoBehaviour
             bossHUD.ShowHUD();
         else
             Debug.LogWarning("[BossEncounterTrigger] bossHUD not assigned -- HUD will not appear.");
+
+        if (bossAudio != null)
+            bossAudio.PlayEncounterStinger();
+
+        if (bossIntroDialogue != null)
+        {
+            if (DialogueManager.Instance != null)
+                DialogueManager.Instance.Interrupt(bossIntroDialogue);
+            else
+                Debug.LogWarning("[BossEncounterTrigger] DialogueManager.Instance is null -- intro line will not play.");
+        }
     }
 
     private void OnDrawGizmos()

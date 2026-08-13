@@ -136,6 +136,7 @@ public class GroundSlamAttack : BossAttackBase
     public override void OnHitboxOpen()
     {
         if (!IsActive) return;
+        PlaySound(hitboxOpenClip);
 
         _hasLanded = true; // stops LeapRoutine if still running
 

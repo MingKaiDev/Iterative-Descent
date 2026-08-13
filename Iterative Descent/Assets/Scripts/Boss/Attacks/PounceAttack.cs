@@ -161,6 +161,7 @@ public class PounceAttack : BossAttackBase
     public override void OnHitboxOpen()
     {
         if (!IsActive) return;
+        PlaySound(hitboxOpenClip);
 
         var hits = Physics.OverlapSphere(transform.position, hitRadius, playerLayer,
                                           QueryTriggerInteraction.Ignore);

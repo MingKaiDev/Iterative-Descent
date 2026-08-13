@@ -26,7 +26,7 @@ public class SchedulingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
     public GameObject schedulingOverlay;
 
     // IInteractable
-    public string InteractLabel => "Examine Whiteboard";
+    public string InteractLabel => "Examine Interface";
 
     private bool _puzzleOpen;
 

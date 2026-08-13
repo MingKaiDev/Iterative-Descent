@@ -56,6 +56,17 @@ public class CoreOverloadAttack : BossAttackBase
     [Tooltip("Particle burst prefab spawned at the hit point.")]
     public GameObject hitBurstPrefab;
 
+    [Header("Laser Loop Sound")]
+    [Tooltip("Looping hum played on LaserOrigin's AudioSource for the whole time the beam is out " +
+             "(from the moment it starts extending until it hides after beamHoldDuration). Stops " +
+             "explicitly when the beam ends -- unlike hitboxOpenClip (a one-shot fire cue via the " +
+             "shared boss AudioSource), this needs its own AudioSource on LaserOrigin because it " +
+             "must be stoppable independently of every other boss sound.")]
+    public AudioClip laserLoopClip;
+
+    [Range(0f, 1f)]
+    public float laserLoopVolume = 0.8f;
+
     // ─── Animator Parameter ──────────────────────────────────────────────────────
     private static readonly int TriggerCoreOverload = Animator.StringToHash("triggerCoreOverload");
 
@@ -63,6 +74,7 @@ public class CoreOverloadAttack : BossAttackBase
     private Animator     _animator;
     private LineRenderer _lineRenderer;
     private Transform    _player;
+    private AudioSource  _laserAudioSource;
 
     // ─── Private ────────────────────────────────────────────────────────────────
     private bool _isTelegraphing;
@@ -74,10 +86,23 @@ public class CoreOverloadAttack : BossAttackBase
         _wallLayer = LayerMask.GetMask("Level 1 Obstacle", "Layer 1 Floor");
 
         if (laserOrigin != null)
-            _lineRenderer = laserOrigin.GetComponent<LineRenderer>();
+        {
+            _lineRenderer     = laserOrigin.GetComponent<LineRenderer>();
+            _laserAudioSource = laserOrigin.GetComponent<AudioSource>();
+        }
 
         if (_lineRenderer == null)
             Debug.LogError("[CoreOverloadAttack] No LineRenderer on LaserOrigin.");
+
+        if (_laserAudioSource == null)
+            Debug.LogWarning("[CoreOverloadAttack] No AudioSource on LaserOrigin -- laserLoopClip " +
+                              "will not play. Add an AudioSource there if you want the beam to hum.");
+        else
+        {
+            _laserAudioSource.playOnAwake  = false;
+            _laserAudioSource.loop         = true;
+            _laserAudioSource.spatialBlend = 1f;
+        }
 
         var ph = FindObjectOfType<PlayerHealth>();
         if (ph != null) _player = ph.transform;
@@ -119,6 +144,8 @@ public class CoreOverloadAttack : BossAttackBase
     public override void OnHitboxOpen()
     {
         if (!IsActive) return;
+        PlaySound(hitboxOpenClip);
+        StartLaserLoop();
 
         _isTelegraphing = false;
 
@@ -190,6 +217,7 @@ public class CoreOverloadAttack : BossAttackBase
         yield return new WaitForSeconds(beamHoldDuration);
         _lineRenderer.enabled = false;
 
+        StopLaserLoop();
         EndAttack();
     }
 
@@ -197,5 +225,27 @@ public class CoreOverloadAttack : BossAttackBase
     {
         if (hitBurstPrefab != null)
             Instantiate(hitBurstPrefab, position, Quaternion.identity);
+    }
+
+    // ─── Laser Loop Helpers ─────────────────────────────────────────────────────
+
+    /// <summary>Starts the sustained beam hum. Called once, when the beam begins extending.</summary>
+    void StartLaserLoop()
+    {
+        if (_laserAudioSource == null || laserLoopClip == null) return;
+        _laserAudioSource.clip   = laserLoopClip;
+        _laserAudioSource.volume = laserLoopVolume;
+        _laserAudioSource.Play();
+    }
+
+    /// <summary>
+    /// Stops the beam hum the instant the attack is over -- called from the end of
+    /// ExtendBeamRoutine, right after the line renderer hides and before EndAttack().
+    /// Safe to call even if StartLaserLoop() was never called (e.g. no clip assigned).
+    /// </summary>
+    void StopLaserLoop()
+    {
+        if (_laserAudioSource == null) return;
+        _laserAudioSource.Stop();
     }
 }

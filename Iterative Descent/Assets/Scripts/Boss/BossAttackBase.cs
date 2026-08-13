@@ -39,6 +39,21 @@ public abstract class BossAttackBase : MonoBehaviour
              "is missing from the clip, this will end the attack instead.")]
     public float attackTimeoutDuration = 5f;
 
+    [Header("Audio")]
+    [Tooltip("Plays automatically the instant this attack starts (Execute()). " +
+             "Optional -- leave null for a silent windup.")]
+    public AudioClip windupClip;
+
+    [Tooltip("Plays at the moment this attack becomes dangerous. Subclasses that override " +
+             "OnHitboxOpen() call PlaySound(hitboxOpenClip) themselves -- see SlashAttack for " +
+             "the pattern. SprintChargeAttack plays it from its charge coroutine instead, since " +
+             "its OnHitboxOpen() is deliberately suppressed for damage reasons.")]
+    public AudioClip hitboxOpenClip;
+
+    [Range(0f, 1f)]
+    [Tooltip("Shared volume for both attack SFX fields above.")]
+    public float sfxVolume = 1f;
+
     // ─── Public Read-Only State ─────────────────────────────────────────────────
     public bool IsOnCooldown => _cooldownTimer > 0f;
     public bool IsActive     => _isActive;
@@ -47,8 +62,19 @@ public abstract class BossAttackBase : MonoBehaviour
     private float   _cooldownTimer;
     private bool    _isActive;
     private Coroutine _timeoutRoutine;
+    private AudioSource _sfxSource;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Fetches the shared AudioSource on the boss root GameObject (the same one
+    /// BossAudio uses). Subclasses do not currently override Awake, so this is
+    /// safe to add without a base.Awake() call anywhere else in the hierarchy.
+    /// </summary>
+    protected virtual void Awake()
+    {
+        _sfxSource = GetComponent<AudioSource>();
+    }
 
     protected virtual void Update()
     {
@@ -67,8 +93,21 @@ public abstract class BossAttackBase : MonoBehaviour
         if (_isActive || IsOnCooldown) return;
 
         _isActive = true;
+        PlaySound(windupClip);
         _timeoutRoutine = StartCoroutine(AttackTimeoutRoutine());
         PerformAttack();
+    }
+
+    // ─── Audio Helper ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Plays a one-shot clip on the shared boss AudioSource. Safe to call with a
+    /// null clip (does nothing) so subclasses don't need their own null checks.
+    /// </summary>
+    protected void PlaySound(AudioClip clip)
+    {
+        if (clip == null || _sfxSource == null) return;
+        _sfxSource.PlayOneShot(clip, sfxVolume);
     }
 
     // ─── Animation Event Receivers ───────────────────────────────────────────────

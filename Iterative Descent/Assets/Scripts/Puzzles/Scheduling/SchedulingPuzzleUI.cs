@@ -37,7 +37,10 @@ using System.Text;
 ///   cardPrefab        Prefab with SchedulingProcessCard + CanvasGroup
 ///   slotPrefab        Prefab with SchedulingSlot
 ///   ganttBarPrefab    Not used in RR; field kept to avoid missing-reference warnings
-///   cardPool          RectTransform — MUST use Grid Layout Group (4 cols) instead of VLG
+///   cardPool          RectTransform — Grid Layout Group, fixed 10 cols (matches maxSlots
+///                     in GenerateRRParameters so the pool is always exactly one row,
+///                     regardless of DDA tier). ContentSizeFitter (vertical) kept on so the
+///                     box height tracks the grid if cell size/columns ever change.
 ///   slotRow           RectTransform — Horizontal Layout Group, spacing 8
 ///   feedbackPopup     SchedulingFeedbackPopup child panel (starts inactive)
 ///   instructionText   TMP for Q + process table header
@@ -68,7 +71,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
     [SerializeField] private GameObject ganttBarPrefab; // unused in RR; kept to avoid null warnings
 
     [Header("References")]
-    [SerializeField] private RectTransform          cardPool;       // Grid Layout Group (4 cols)
+    [SerializeField] private RectTransform          cardPool;       // Grid Layout Group (10 cols, single row)
     [SerializeField] private RectTransform          slotRow;        // Horizontal Layout Group, spacing 8
     [SerializeField] private SchedulingFeedbackPopup feedbackPopup;
     [SerializeField] private TextMeshProUGUI         instructionText;
