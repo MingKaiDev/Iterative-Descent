@@ -26,8 +26,11 @@ using Random = UnityEngine.Random;
 ///     False positives (denying legitimate traffic) are tracked.
 ///
 ///   Phase 3 -- Firewall Rule Commit
-///     Player writes rules in a simplified terminal syntax:
-///       [ALLOW|DENY] [proto:TCP|UDP|ICMP] [src:IP] [dst:IP] [dst_port:N] [payload:KEYWORD]
+///     Player writes rules in a simplified terminal syntax (bare tokens,
+///     no tag names -- shape is auto-detected):
+///       [ALLOW|DENY] [TCP|UDP|ICMP] [port] [src_ip]
+///     A "View Capture Log" toggle re-shows the read-only Phase 1 log so
+///     players are not forced to memorise it before reaching Phase 3.
 ///     Rules evaluate top-down, first match wins.
 ///     Validation shows: which C2 channels are still leaking, which
 ///     legitimate services would be collaterally blocked.
@@ -35,10 +38,12 @@ using Random = UnityEngine.Random;
 ///
 /// CORE DIFFICULTY (always active, not DDA-gated)
 /// -----------------------------------------------
-///   - All C2 src IPs spoof legitimate client IPs: DENY src:... rules fail.
-///     Players must use payload keyword + port combinations.
-///   - Legitimate services share ports with C2 channels. Broad port-only rules
-///     trigger collateral damage and fail validation.
+///   - C2 traffic shares ports with legitimate services, so broad port-only
+///     rules trigger collateral damage and fail validation.
+///   - Each C2 channel's source IP is only separable from the collateral
+///     service it shares a port with by src IP/subnet -- players must read
+///     the Phase 1 log (or the Phase 3 log overlay) to find that IP, a
+///     port-only guess is not enough.
 ///   - Phase 2 payloads are encrypted. Classification requires pattern memory
 ///     from Phase 1.
 ///   - Rules evaluate first-match-wins. Order matters.
@@ -158,6 +163,10 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     [Tooltip("Runs final validation. Succeeds only if all C2 blocked AND no collateral.")]
     [SerializeField] private Button          commitButton;
 
+    [Tooltip("Toggles a read-only overlay of the Phase 1 capture log. Reuses logPanel " +
+             "so players are not forced to memorise traffic patterns before Phase 3.")]
+    [SerializeField] private Button          viewLogButton;
+
     [Tooltip("Always visible. Closes the puzzle overlay.")]
     [SerializeField] private Button          closeButton;
 
@@ -189,6 +198,9 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     private PacketFilterScenario     _scenario;
     private int                      _tier;
     private Action                   _onClose;
+
+    // Phase 3 -- Phase 1 log reference overlay
+    private bool                     _logOverlayOpen;
 
     // Phase 2
     private int              _falsePositives;
@@ -227,6 +239,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         initiateButton?.onClick.AddListener(OnInitiateScan);
         addRuleButton ?.onClick.AddListener(OnAddRule);
         commitButton  ?.onClick.AddListener(OnCommitRules);
+        viewLogButton ?.onClick.AddListener(OnToggleLogOverlay);
         closeButton   ?.onClick.AddListener(OnClose);
     }
 
@@ -235,6 +248,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         initiateButton?.onClick.RemoveListener(OnInitiateScan);
         addRuleButton ?.onClick.RemoveListener(OnAddRule);
         commitButton  ?.onClick.RemoveListener(OnCommitRules);
+        viewLogButton ?.onClick.RemoveListener(OnToggleLogOverlay);
         closeButton   ?.onClick.RemoveListener(OnClose);
     }
 
@@ -291,9 +305,17 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     private void SetPhase(Phase p)
     {
         _phase = p;
+        _logOverlayOpen = false;
         logPanel ?.SetActive(p == Phase.LogAnalysis);
         livePanel?.SetActive(p == Phase.LiveClassification);
         rulePanel?.SetActive(p == Phase.RuleCommit || p == Phase.Solved);
+
+        // initiateButton lives inside logPanel and doubles as the close control
+        // for the Phase 3 log overlay (see OnToggleLogOverlay) -- always restore
+        // it on a real phase transition so it isn't left hidden.
+        if (initiateButton != null) initiateButton.gameObject.SetActive(true);
+
+        UpdateViewLogButtonLabel();
     }
 
     // =========================================================================
@@ -538,9 +560,12 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         if (collateralWarningText != null) collateralWarningText.gameObject.SetActive(false);
 
         // Tier 4: inject a pre-filled trap rule player must notice and delete
+        // NOTE: previously used tagged syntax ("proto:TCP dst_port:22") which the
+        // parser cannot parse -- Parse() only accepts bare tokens. That meant this
+        // trap silently failed to add for the entire lifetime of the puzzle.
         if (_tier >= 4 && _scenario.HasDecoyRules)
         {
-            var trap = FirewallRuleParser.Parse("DENY proto:TCP dst_port:22");
+            var trap = FirewallRuleParser.Parse("DENY TCP 22");
             if (trap.Success) _rules.Add(trap.Rule);
         }
 
@@ -744,6 +769,40 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     }
 
     // =========================================================================
+    // Phase 3 -- Log reference overlay
+    // =========================================================================
+
+    /// <summary>
+    /// Shows/hides the Phase 1 log (logPanel) on top of the rule panel so players
+    /// can re-check traffic patterns while writing rules, instead of having to
+    /// memorise the whole log before leaving Phase 1.
+    /// </summary>
+    private void OnToggleLogOverlay()
+    {
+        if (_phase != Phase.RuleCommit && _phase != Phase.Solved) return;
+        if (logPanel == null) return;
+
+        _logOverlayOpen = !_logOverlayOpen;
+
+        logPanel.SetActive(_logOverlayOpen);
+        if (_logOverlayOpen) logPanel.transform.SetAsLastSibling();
+
+        // logPanel is also the Phase 1 screen and still has "Initiate Scan" wired
+        // to advance to Phase 2 -- hide it while viewing the log as a read-only
+        // reference from Phase 3, or clicking it would wrongly restart Phase 2.
+        if (initiateButton != null) initiateButton.gameObject.SetActive(!_logOverlayOpen);
+
+        UpdateViewLogButtonLabel();
+    }
+
+    private void UpdateViewLogButtonLabel()
+    {
+        if (viewLogButton == null) return;
+        var label = viewLogButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null) label.text = _logOverlayOpen ? "Back to Rules" : "View Capture Log";
+    }
+
+    // =========================================================================
     // Close
     // =========================================================================
 
@@ -763,7 +822,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         // The Network Monitor lives at 10.0.2.1 -- a different subnet -- so in Phase 2
         // the player CAN distinguish Monitor (10.0.2.1:4444) from C2 (10.0.1.x:4444)
         // by IP subnet, even without payload. However they must have noticed this
-        // in Phase 1. A broad "DENY dst_port:4444" would still kill the Monitor.
+        // in Phase 1. A broad "DENY TCP 4444" would still kill the Monitor.
 
         var s = new PacketFilterScenario();
 

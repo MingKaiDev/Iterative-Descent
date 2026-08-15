@@ -15,7 +15,6 @@ public class FirewallRule
     public string SrcIp;          // null = any; "10.0.x.x" wildcard supported
     public string DstIp;          // null = any
     public int?   DstPort;        // null = any
-    public string PayloadKeyword; // null = any; substring match, case-insensitive
     public string OriginalText;   // raw player input, stored for display
 }
 
@@ -39,20 +38,19 @@ public class EvaluationResult
 /// Parses and evaluates player-written firewall rules.
 ///
 /// Simplified positional syntax -- no tag names needed:
-///   [ALLOW|DENY] [TCP|UDP|ICMP] [port] [src_ip] [KEYWORD]
+///   [ALLOW|DENY] [TCP|UDP|ICMP] [port] [src_ip]
 ///
 /// Each token after the action is auto-detected by shape:
 ///   TCP / UDP / ICMP  ->  protocol filter
 ///   integer (1-65535) ->  destination port filter
 ///   contains a dot    ->  source IP filter (supports x wildcard, e.g. 10.0.x.x)
-///   anything else     ->  payload keyword filter (substring match)
 ///
 /// All tokens except the action are optional and order does not matter.
 ///
 /// Examples:
-///   DENY TCP 4444 ARBITEX_CMD
-///   DENY UDP 53 ARBITEX_CMD
-///   DENY TCP 8080 ARBITEX_CMD
+///   DENY TCP 4444 10.0.1.x
+///   DENY UDP 53 10.0.1.2
+///   DENY TCP 8080
 ///   ALLOW TCP 4444 10.0.2.x
 /// </summary>
 public static class FirewallRuleParser
@@ -107,9 +105,7 @@ public static class FirewallRuleParser
             }
             else
             {
-                if (rule.PayloadKeyword != null)
-                    return Fail($"Keyword specified twice ('{rule.PayloadKeyword}' and '{tok}').");
-                rule.PayloadKeyword = tok;
+                return Fail($"'{tok}' is not a valid protocol, port, or IP.");
             }
         }
 
@@ -133,13 +129,6 @@ public static class FirewallRuleParser
 
         if (rule.DstPort.HasValue && rule.DstPort.Value != packet.DstPort)
             return false;
-
-        if (rule.PayloadKeyword != null)
-        {
-            if (string.IsNullOrEmpty(packet.Payload)) return false;
-            if (packet.Payload.IndexOf(rule.PayloadKeyword, StringComparison.OrdinalIgnoreCase) < 0)
-                return false;
-        }
 
         return true;
     }

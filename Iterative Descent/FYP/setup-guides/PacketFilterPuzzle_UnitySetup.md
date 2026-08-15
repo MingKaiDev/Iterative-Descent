@@ -21,6 +21,12 @@ Modified:
 - PlayerMetricsTracker.cs -- added PacketFilter API + event subscription
 - quiz_bank.json -- 5 MCQs tagged `network_security`
 
+> **Not yet updated:** 3 of the 5 `network_security` MCQs in quiz_bank.json state that
+> payload-keyword matching is required to block spoofed-source C2 traffic (correct
+> answers reference `payload:<keyword>`). Now that PayloadKeyword has been removed
+> from FirewallRuleParser, those "correct" answers teach a strategy the puzzle no
+> longer uses. Left untouched pending a decision on how to rewrite them.
+
 ---
 
 ## Prefabs to Create (Before Building Canvas)
@@ -118,6 +124,7 @@ Modified:
           [Viewport]
             [RuleListParent]
       [CollateralWarningText] -- starts INACTIVE
+      [ViewLogButton]         -- toggles LogPanel as a read-only overlay
       [CommitButton]
     [RightPanel]
       [ChannelHeader]
@@ -341,7 +348,7 @@ Modified:
 | Component | Setting |
 |-----------|---------|
 | RectTransform | Height 18 (Layout Element) |
-| TextMeshProUGUI | Text: "[ALLOW/DENY] [proto:TCP/UDP/ICMP] [src:IP] [dst:IP] [dst_port:N] [payload:KEYWORD]", Size 9, color #336633, Middle Left |
+| TextMeshProUGUI | Text: "[ALLOW/DENY] [TCP/UDP/ICMP] [PORT] [SRC IP]", Size 9, color #336633, Middle Left |
 
 ### InputRow
 | Component | Setting |
@@ -355,7 +362,7 @@ Modified:
 | RectTransform | Flexible Width 1 (Layout Element), Height 32 |
 | TMP_InputField | Font size 11, color #CCCCCC |
 | Background Image | Color: #0A1A0A |
-| Placeholder TMP | Text: "DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD", Size 10, color #334433 |
+| Placeholder TMP | Text: "DENY TCP 4444 10.0.1.x", Size 10, color #334433 |
 | Text TMP | Size 11, color #00FF88 |
 
 ### AddRuleButton (wire to addRuleButton)
@@ -399,6 +406,23 @@ Modified:
 | RectTransform | Height 32 (Layout Element) |
 | TextMeshProUGUI | Text: "", Size 10, color #FFCC00, Middle Left, word wrap ON |
 | Active in scene | OFF |
+
+### ViewLogButton (wire to viewLogButton)
+| Component | Setting |
+|-----------|---------|
+| RectTransform | Height 32 (Layout Element) |
+| Image | Color: #0A1A0A |
+| Button | Highlighted: #142A14 |
+| Child TMP | Text: "View Capture Log", Size 11, color #558855, Middle Center |
+
+> Script toggles this GO's own TMP child between "View Capture Log" and "Back to Rules" --
+> don't rename the child TMP or `GetComponentInChildren<TextMeshProUGUI>()` grabs the wrong one
+> if you add other text children to this button.
+>
+> Behaviour: clicking this re-shows LogPanel (the Phase 1 screen) on top of RulePanel as a
+> read-only reference. It automatically hides InitiateButton while doing so, so the player
+> can't accidentally click back into Phase 2 from inside Phase 3. Clicking again (now labelled
+> "Back to Rules") hides it. Only wired to do anything while in Phase 3 or Solved.
 
 ### CommitButton (wire to commitButton)
 | Component | Setting |
@@ -531,6 +555,7 @@ Select PacketFilterPanel. Drag into each slot on the PacketFilterPuzzleUI compon
 | Channel List Parent | ChannelListParent RectTransform |
 | Channel Row Prefab | ChannelRow prefab (Project window) |
 | Collateral Warning Text | CollateralWarningText TMP |
+| View Log Button | ViewLogButton Button (new -- see RulePanel section above) |
 | Commit Button | CommitButton Button |
 | Close Button | CloseButton Button |
 
@@ -605,37 +630,43 @@ if (!PacketFilterEventHandler.ServerNodeDisabled)
 | Collateral services | 1 (Monitor :4444) | 2 (+DNS Resolver :53) | 3 (+HTTPS Gateway :443) |
 | Packet spawn rate | 2s | 1.5s | 1s |
 | Expiry timer (Phase 2) | none | none | 4s per card |
-| Decoy trap rule (Phase 3) | no | no | yes (DENY proto:TCP dst_port:22) |
+| Decoy trap rule (Phase 3) | no | no | yes (DENY TCP 22) |
 
 ---
 
 ## Correct Rule Set (Reference)
 
+Payload keyword matching was removed from FirewallRuleParser (it was never actually
+required to win -- every C2 channel's source IP is separable from the collateral
+service sharing its port by subnet/exact IP alone). Syntax is now bare positional
+tokens, no tags: `[ALLOW|DENY] [TCP|UDP|ICMP] [PORT] [SRC IP]`.
+
 Tier 2 (3 channels):
 ```
-ALLOW proto:TCP dst_port:4444 src:10.0.2.x
-DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD
-DENY proto:TCP dst_port:8080 payload:ARBITEX_CMD
+DENY TCP 4444 10.0.1.x
+DENY TCP 8080
 ```
 
 Tier 3 (adds C2-04 DNS beacon):
 ```
-ALLOW proto:TCP dst_port:4444 src:10.0.2.x
-DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD
-DENY proto:TCP dst_port:8080 payload:ARBITEX_CMD
-DENY proto:UDP dst_port:53 payload:ARBITEX_CMD
+DENY TCP 4444 10.0.1.x
+DENY TCP 8080
+DENY UDP 53 10.0.1.2
 ```
 
 Tier 4 (adds C2-05 TLS tunnel):
 ```
-ALLOW proto:TCP dst_port:4444 src:10.0.2.x
-DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD
-DENY proto:TCP dst_port:8080 payload:ARBITEX_CMD
-DENY proto:UDP dst_port:53 payload:ARBITEX_CMD
-DENY proto:TCP dst_port:443 payload:ARBITEX_CMD
+DENY TCP 4444 10.0.1.x
+DENY TCP 8080
+DENY UDP 53 10.0.1.2
+DENY TCP 443 10.0.1.3
 ```
 
-Note: Tier 4 pre-fills a decoy `DENY proto:TCP dst_port:22`. It causes no collateral damage (SSH is not flagged collateral) so the player can leave it or delete it -- it does not affect the win condition. It exists to waste the player's attention.
+Note: Tier 4 pre-fills a decoy `DENY TCP 22`. It causes no collateral damage (SSH is not
+flagged collateral) so the player can leave it or delete it -- it does not affect the win
+condition. It exists to waste the player's attention. (This trap previously used tagged
+syntax the parser couldn't parse, so it silently failed to get added at all -- fixed
+alongside this change.)
 
 ---
 
@@ -648,8 +679,10 @@ Note: Tier 4 pre-fills a decoy `DENY proto:TCP dst_port:22`. It causes no collat
 - [ ] Phase 2: false positive bar increments on denying a legit packet
 - [ ] Phase 2: after all packets spawn + 1.5s, advances to Phase 3 automatically
 - [ ] Phase 3: rule input parses correctly; syntax errors show RuleParseErrorText
-- [ ] Phase 3: adding DENY proto:TCP dst_port:4444 payload:ARBITEX_CMD shows "OK" icon on that rule row
-- [ ] Phase 3: adding DENY proto:TCP dst_port:4444 (no payload) shows "!" icon and CollateralWarningText
+- [ ] Phase 3: adding DENY TCP 4444 10.0.1.x shows "OK" icon on that rule row
+- [ ] Phase 3: adding DENY TCP 4444 (no src filter) shows "!" icon and CollateralWarningText
+- [ ] Phase 3: View Capture Log button shows the Phase 1 log read-only, hides InitiateButton while open, and toggles label to "Back to Rules"
+- [ ] Phase 3: clicking View Capture Log then Back to Rules does not advance/reset the phase
 - [ ] Phase 3: C2 channel status updates live as rules are added/deleted
 - [ ] Phase 3: Commit with all channels blocked and no collateral shows win popup
 - [ ] Phase 3: Commit with leaking channel shows fail popup with channel names

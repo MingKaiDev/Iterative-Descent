@@ -6,9 +6,8 @@ using UnityEngine;
 /// Immutable data record for one network packet in the Packet Filter puzzle.
 ///
 /// Payload is always stored in full internally. The UI controls whether to
-/// display it (Phase 1) or show "[TLS ENCRYPTED]" (Phase 2). Phase 3 rule
-/// evaluation always matches against the real payload, so "payload:ARBITEX_CMD"
-/// works even though the player never saw the payload in Phase 2.
+/// display it (Phase 1) or show "[TLS ENCRYPTED]" (Phase 2). It is display-only --
+/// Phase 3 firewall rules match on proto/port/src IP only, not on payload content.
 /// </summary>
 [Serializable]
 public class PacketData

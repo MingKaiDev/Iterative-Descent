@@ -230,7 +230,7 @@ public class PuzzleUI : MonoBehaviour
 
         if (passed && !string.IsNullOrEmpty(_passwordToReveal))
         {
-            questionText.text = $"Access granted. Password: {_passwordToReveal}";
+            questionText.text = $"Computer Password is {_passwordToReveal}";
         }
         else
         {

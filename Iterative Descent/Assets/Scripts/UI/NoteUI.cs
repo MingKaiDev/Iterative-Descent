@@ -10,6 +10,7 @@
 // Time is paused while the note is open (handled by NoteProp -- do NOT touch timeScale here).
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using TMPro;
 
 // Run before any prop script so Instance is set before NoteProp.Awake() deactivates the panel.
@@ -32,6 +33,9 @@ public class NoteUI : MonoBehaviour
 
     [Tooltip("TMP text for the note body. Should be inside a ScrollRect for long notes.")]
     [SerializeField] private TextMeshProUGUI _bodyText;
+
+    [Tooltip("ScrollRect wrapping _bodyText. Optional -- if assigned, resets to top on every Show().")]
+    [SerializeField] private ScrollRect _bodyScrollRect;
 
     [Header("Close Hint")]
     [Tooltip("Optional label telling the player how to close. E.g. 'Press Esc to close'")]
@@ -88,6 +92,15 @@ public class NoteUI : MonoBehaviour
         if (_closeHintText != null) _closeHintText.text = "[Esc] Close";
 
         gameObject.SetActive(true);
+
+        // Reset scroll to top. Content height depends on the new text, which hasn't
+        // been laid out yet this frame -- force the rebuild first or normalizedPosition
+        // gets set against stale (previous note's) content size.
+        if (_bodyScrollRect != null)
+        {
+            Canvas.ForceUpdateCanvases();
+            _bodyScrollRect.verticalNormalizedPosition = 1f;
+        }
     }
 
     /// <summary>

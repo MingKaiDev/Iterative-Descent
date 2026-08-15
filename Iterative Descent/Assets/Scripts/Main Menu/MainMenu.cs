@@ -25,10 +25,9 @@ public class MainMenu : MonoBehaviour
         Debug.Log("Load pressed - not implemented");
     }
 
-    // Stub - no functionality yet
     public void OpenOptions()
     {
-        Debug.Log("Options pressed - not implemented");
+        SettingsPanelUI.Instance?.Show();
     }
 
     // Quits the game (works in build, not in editor)

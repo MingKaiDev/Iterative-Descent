@@ -37,6 +37,7 @@ public class PauseMenuUI : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button howToPlayButton;   // stub until Story 28
+    [SerializeField] private Button settingsButton;
     [SerializeField] private Button quitButton;
 
     [Header("Scene Names")]
@@ -66,6 +67,9 @@ public class PauseMenuUI : MonoBehaviour
 
         if (howToPlayButton != null)
             howToPlayButton.onClick.AddListener(() => HelpPanelUI.Instance?.Show());
+
+        if (settingsButton != null)
+            settingsButton.onClick.AddListener(() => SettingsPanelUI.Instance?.Show());
     }
 
     void Update()

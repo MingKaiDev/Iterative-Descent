@@ -29,7 +29,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("FPS Camera")]
     [Tooltip("Assign the Camera child GameObject parented to the Player at head height.")]
     public Transform cameraTransform;
-    public float mouseSensitivity = 3f;
+    [Tooltip("Editor-only fallback. Overwritten in Start() by SettingsManager.MouseSensitivity (player's saved slider value), and live-updated by SettingsPanelUI while the settings panel is open.")]
+    public float mouseSensitivity = SettingsManager.DefaultMouseSensitivity;
     public float pitchMin         = -80f;
     public float pitchMax         = 80f;
 
@@ -73,6 +74,11 @@ public class PlayerMovement : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         _animator   = GetComponent<Animator>();
+
+        // Pull the player's saved sensitivity (or the default, if none saved yet).
+        // Runs after any manual Inspector value, so it always wins at runtime --
+        // SettingsPanelUI then live-updates this field while the panel is open.
+        mouseSensitivity = SettingsManager.MouseSensitivity;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
