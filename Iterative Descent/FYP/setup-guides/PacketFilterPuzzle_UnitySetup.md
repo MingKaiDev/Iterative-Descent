@@ -104,6 +104,7 @@ Modified:
         [FalsePositiveCountText]
         [FalsePositiveFill]
       [PacketsRemainingText]
+    [ClassifyHintText]       -- static instruction row, no script wiring needed
     [MainArea]
       [PacketScrollRect]
         [Viewport]
@@ -124,13 +125,13 @@ Modified:
           [Viewport]
             [RuleListParent]
       [CollateralWarningText] -- starts INACTIVE
-      [ViewLogButton]         -- toggles LogPanel as a read-only overlay
       [CommitButton]
     [RightPanel]
       [ChannelHeader]
       [ChannelScrollRect]
         [Viewport]
           [ChannelListParent]
+      [View Logs Button]     -- wired to viewLogButton; opens LogPanel as a full replacement for RulePanel
       [CloseButton]
   [FeedbackPopup]           -- PacketFilterFeedbackPopup, starts INACTIVE
     [Blocker]
@@ -169,13 +170,22 @@ Modified:
 | RectTransform | Anchor: left/stretch, Width 400, Left 16 |
 | TextMeshProUGUI | Text: "ARBITEX -- PACKET FILTER", Size 14, color #00FF88, Middle Left, Bold |
 
-### PhaseText
+### PhaseText (wire to phaseText)
 | Component | Setting |
 |-----------|---------|
 | RectTransform | Anchor: right/stretch, Width 240, Right 16 |
 | TextMeshProUGUI | Text: "PHASE 1 -- LOG ANALYSIS", Size 11, color #558855, Middle Right |
 
-> PhaseText is decorative only -- the script does not update it. Set it to Phase 1 label and leave it.
+> **2026-08-15:** now wired and updated live by `SetPhase()` -- "PHASE 1 -- LOG ANALYSIS" /
+> "PHASE 2 -- LIVE CLASSIFICATION" / "PHASE 3 -- RULE COMMIT" / "SERVER NODE OFFLINE" on solve.
+> Previously decorative-only and permanently stuck on the Phase 1 label; that's what the
+> screenshots in this session's playtesting showed. Set the starting text to the Phase 1
+> label in the Inspector as before -- the script only overwrites it once a phase change fires.
+>
+> **Follow-up fix (same day):** `OnCommitRules()` was setting `_phase = Phase.Solved` as a
+> direct field assignment on win, bypassing `SetPhase()` entirely -- so despite the switch
+> statement above handling `Phase.Solved`, the "SERVER NODE OFFLINE" label never actually
+> fired. Changed to call `SetPhase(Phase.Solved)` instead.
 
 ---
 
@@ -198,7 +208,14 @@ Modified:
 |-----------|---------|
 | RectTransform | Anchor: stretch/stretch, all offsets 0 |
 | Image | any color, Raycast Target OFF |
-| Mask | Show Mask Graphic: OFF |
+| Mask | Enabled ON, Show Mask Graphic: OFF |
+
+> **2026-08-15:** this Viewport's Mask *component* was disabled (unticked in the Inspector,
+> not just "Show Mask Graphic" off), so log rows weren't clipped at all and bled through/behind
+> InitiateButton at the bottom of the panel -- that's what the bleed-through screenshot in this
+> session's playtesting showed. Fixed directly in the prefab. If you ever recreate this Viewport
+> from scratch, make sure the Mask checkbox itself is ticked, not just its Show Mask Graphic
+> option.
 
 ### LogTableParent (wire to logTableParent)
 | Component | Setting |
@@ -220,6 +237,12 @@ Modified:
 | Image | Color: #0D260D |
 | Button | Highlighted Color: #1A4A1A, Pressed: #071007 |
 | Child TMP | Text: "INITIATE LIVE SCAN", Size 13, color #00FF88, Middle Center, Bold |
+
+> Dual-purpose: during real Phase 1 it advances to Phase 2 as normal. When LogPanel is
+> shown as the Phase 3 log overlay (via ViewLogButton), this same button is relabelled
+> "BACK TO RULES" and closes the overlay instead -- see `OnInitiateScan()` in
+> PacketFilterPuzzleUI.cs. Don't rename its child TMP; `GetComponentInChildren<TextMeshProUGUI>()`
+> is what swaps the label.
 
 ---
 
@@ -267,11 +290,25 @@ Modified:
 | RectTransform | Flexible Width 1, Height 24 (Layout Element) |
 | TextMeshProUGUI | Text: "-- remaining", Size 10, color #558855, Middle Right |
 
+### ClassifyHintText
+| Component | Setting |
+|-----------|---------|
+| RectTransform | Anchor: top/stretch, Pivot (0.5,1), Height 20, Left 16, Right 16, Top 44 |
+| TextMeshProUGUI | Text: "DENY suspected ARBITEX C2 traffic using the patterns from Phase 1. ALLOW everything else.", Size 10, color #558855, Middle Left, word wrap OFF |
+
+> Static, not wired to any script field -- purely a fixed instruction line addressing "what do
+> I do in Phase 2" (2026-08-15). If it ever needs to be dynamic (e.g. per-tier wording), add a
+> `classifyHintText` SerializeField and set it in `SetPhase()` alongside `phaseText`.
+
 ### MainArea
 | Component | Setting |
 |-----------|---------|
-| RectTransform | Anchor: stretch/stretch, Top 44, Bottom 0, Left 0, Right 0 |
+| RectTransform | Anchor: stretch/stretch, Top 64, Bottom 0, Left 0, Right 0 |
 | Horizontal Layout Group | Spacing 8, Padding 16, Child Force Expand Width ON |
+
+> **Top changed from 44 to 64** to make room for the new ClassifyHintText row (Top 44, Height 20
+> -- so MainArea now starts right below it at 44+20=64). If you already had MainArea wired at
+> Top 44, update it or ClassifyHintText will overlap the packet card list.
 
 ### PacketScrollRect
 | Component | Setting |
@@ -407,7 +444,7 @@ Modified:
 | TextMeshProUGUI | Text: "", Size 10, color #FFCC00, Middle Left, word wrap ON |
 | Active in scene | OFF |
 
-### ViewLogButton (wire to viewLogButton)
+### View Logs Button (wire to viewLogButton, lives under RightPanel next to CloseButton)
 | Component | Setting |
 |-----------|---------|
 | RectTransform | Height 32 (Layout Element) |
@@ -415,14 +452,19 @@ Modified:
 | Button | Highlighted: #142A14 |
 | Child TMP | Text: "View Capture Log", Size 11, color #558855, Middle Center |
 
-> Script toggles this GO's own TMP child between "View Capture Log" and "Back to Rules" --
-> don't rename the child TMP or `GetComponentInChildren<TextMeshProUGUI>()` grabs the wrong one
-> if you add other text children to this button.
+> Label is static -- this button only ever opens the overlay, so it never needs to say
+> "Back to Rules" itself.
 >
-> Behaviour: clicking this re-shows LogPanel (the Phase 1 screen) on top of RulePanel as a
-> read-only reference. It automatically hides InitiateButton while doing so, so the player
-> can't accidentally click back into Phase 2 from inside Phase 3. Clicking again (now labelled
-> "Back to Rules") hides it. Only wired to do anything while in Phase 3 or Solved.
+> Behaviour: clicking this **fully hides RulePanel and shows LogPanel** (the Phase 1 screen)
+> in its place -- not just visually on top of it. LogPanel has no opaque background of its
+> own (it was only ever designed to be the sole panel on screen during real Phase 1), so if
+> RulePanel were left active underneath, its Commit/Close buttons would show through the
+> gaps and stay clickable. Fully hiding RulePanel avoids that.
+>
+> Because RulePanel (and therefore this ViewLogButton, its child) disappears while the
+> overlay is open, closing the overlay can't be done from this button. That's done through
+> **InitiateButton inside LogPanel**, which is repurposed while the overlay is open -- see
+> the InitiateButton entry above. Only wired to do anything while in Phase 3 or Solved.
 
 ### CommitButton (wire to commitButton)
 | Component | Setting |
@@ -521,6 +563,11 @@ Modified:
 ## Inspector Wiring -- PacketFilterPuzzleUI
 
 Select PacketFilterPanel. Drag into each slot on the PacketFilterPuzzleUI component:
+
+**Header**
+| Field | Drag in |
+|-------|---------|
+| Phase Text | PhaseText TMP |
 
 **Phase 1 -- Log Analysis**
 | Field | Drag in |
@@ -673,7 +720,10 @@ alongside this change.)
 ## Testing Checklist
 
 - [ ] Phase 1: log rows appear, C2 rows tinted red, Monitor row tinted amber
+- [ ] Phase 1: scrolling the log does not show rows bleeding through/behind InitiateButton -- root cause found: `PopulateLogTable()` never called `Canvas.ForceUpdateCanvases()` after instantiating rows (unlike `SpawnCard()` for Phase 2 cards), so VLG/ContentSizeFitter hadn't settled before the Mask's first clip pass. Fixed by adding the same call + scroll-to-top.
 - [ ] Phase 1: Initiate button advances to Phase 2
+- [ ] Header: PhaseText updates to the correct label on every phase change (1/2/3/solved)
+- [ ] Phase 2: ClassifyHintText is visible and does not overlap the packet card list (MainArea Top must be 64, not 44)
 - [ ] Phase 2: packet cards spawn at correct interval per tier
 - [ ] Phase 2: ALLOW/DENY buttons disable after click
 - [ ] Phase 2: false positive bar increments on denying a legit packet
@@ -681,8 +731,9 @@ alongside this change.)
 - [ ] Phase 3: rule input parses correctly; syntax errors show RuleParseErrorText
 - [ ] Phase 3: adding DENY TCP 4444 10.0.1.x shows "OK" icon on that rule row
 - [ ] Phase 3: adding DENY TCP 4444 (no src filter) shows "!" icon and CollateralWarningText
-- [ ] Phase 3: View Capture Log button shows the Phase 1 log read-only, hides InitiateButton while open, and toggles label to "Back to Rules"
-- [ ] Phase 3: clicking View Capture Log then Back to Rules does not advance/reset the phase
+- [ ] Phase 3: View Capture Log button fully replaces RulePanel with LogPanel (Commit/Close buttons not visible AND not clickable underneath)
+- [ ] Phase 3: while log overlay is open, InitiateButton reads "BACK TO RULES" and clicking it returns to RulePanel with all written rules intact
+- [ ] Phase 3: opening/closing the log overlay does not advance to Phase 2 or reset the phase
 - [ ] Phase 3: C2 channel status updates live as rules are added/deleted
 - [ ] Phase 3: Commit with all channels blocked and no collateral shows win popup
 - [ ] Phase 3: Commit with leaking channel shows fail popup with channel names

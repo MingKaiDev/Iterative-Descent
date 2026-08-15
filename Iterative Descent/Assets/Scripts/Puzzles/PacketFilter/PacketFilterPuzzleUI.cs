@@ -83,6 +83,10 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     // Inspector: Phase 1
     // =========================================================================
 
+    [Header("Header")]
+    [Tooltip("Top-right label, e.g. 'PHASE 1 -- LOG ANALYSIS'. Updated on every phase change.")]
+    [SerializeField] private TextMeshProUGUI phaseText;
+
     [Header("Phase 1 -- Log Analysis")]
     [Tooltip("Root GO shown only during Phase 1.")]
     [SerializeField] private GameObject      logPanel;
@@ -163,8 +167,9 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     [Tooltip("Runs final validation. Succeeds only if all C2 blocked AND no collateral.")]
     [SerializeField] private Button          commitButton;
 
-    [Tooltip("Toggles a read-only overlay of the Phase 1 capture log. Reuses logPanel " +
-             "so players are not forced to memorise traffic patterns before Phase 3.")]
+    [Tooltip("Opens a read-only overlay of the Phase 1 capture log (reuses logPanel, " +
+             "which fully replaces rulePanel while open). Player closes it again via " +
+             "logPanel's own Initiate button, relabeled 'BACK TO RULES' while open.")]
     [SerializeField] private Button          viewLogButton;
 
     [Tooltip("Always visible. Closes the puzzle overlay.")]
@@ -311,11 +316,22 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         rulePanel?.SetActive(p == Phase.RuleCommit || p == Phase.Solved);
 
         // initiateButton lives inside logPanel and doubles as the close control
-        // for the Phase 3 log overlay (see OnToggleLogOverlay) -- always restore
-        // it on a real phase transition so it isn't left hidden.
+        // for the Phase 3 log overlay (see OpenLogOverlay/CloseLogOverlay) --
+        // always restore it to its default state on a real phase transition.
         if (initiateButton != null) initiateButton.gameObject.SetActive(true);
+        UpdateInitiateButtonLabel();
 
-        UpdateViewLogButtonLabel();
+        if (phaseText != null)
+        {
+            phaseText.text = p switch
+            {
+                Phase.LogAnalysis        => "PHASE 1 -- LOG ANALYSIS",
+                Phase.LiveClassification => "PHASE 2 -- LIVE CLASSIFICATION",
+                Phase.RuleCommit         => "PHASE 3 -- RULE COMMIT",
+                Phase.Solved             => "SERVER NODE OFFLINE",
+                _                        => phaseText.text,
+            };
+        }
     }
 
     // =========================================================================
@@ -354,10 +370,28 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         if (logStatsText != null)
             logStatsText.text =
                 $"{_scenario.LogPackets.Count} captured  |  {c2Count} malicious  |  {riskCount} at-risk services";
+
+        // Without this, the VerticalLayoutGroup/ContentSizeFitter on logTableParent
+        // hasn't finished recalculating by the time this frame renders, so the
+        // Mask on LogScrollRect's Viewport clips against stale (pre-populate)
+        // geometry and rows visually spill out past the panel. SpawnCard() already
+        // does this for Phase 2's packet cards; PopulateLogTable() never did.
+        Canvas.ForceUpdateCanvases();
+        var logScroll = logTableParent != null ? logTableParent.GetComponentInParent<ScrollRect>() : null;
+        if (logScroll != null) logScroll.verticalNormalizedPosition = 1f; // 1 = scrolled to top
     }
 
     private void OnInitiateScan()
     {
+        // This button is repurposed as the Phase 3 log overlay's "Back to Rules"
+        // control (see OpenLogOverlay/CloseLogOverlay) -- when the overlay is open,
+        // a click here means "close the overlay", not "start Phase 2".
+        if (_logOverlayOpen)
+        {
+            CloseLogOverlay();
+            return;
+        }
+
         _pendingLive      = new List<PacketData>(_scenario.LivePackets);
         _totalCards       = _scenario.LivePackets.Count;
         _classifiedCards  = 0;
@@ -640,7 +674,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
         if (allBlocked && noCollateral)
         {
-            _phase = Phase.Solved;
+            SetPhase(Phase.Solved);
             OnPacketFilterSolved?.Invoke(_wrongSubmits);
             PlayerMetricsTracker.Instance?.NotifyPacketFilterSolved(_wrongSubmits);
 
@@ -772,34 +806,53 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     // Phase 3 -- Log reference overlay
     // =========================================================================
 
-    /// <summary>
-    /// Shows/hides the Phase 1 log (logPanel) on top of the rule panel so players
-    /// can re-check traffic patterns while writing rules, instead of having to
-    /// memorise the whole log before leaving Phase 1.
-    /// </summary>
+    /// <summary>Opens the read-only Phase 1 log overlay. Bound to viewLogButton.</summary>
     private void OnToggleLogOverlay()
     {
         if (_phase != Phase.RuleCommit && _phase != Phase.Solved) return;
-        if (logPanel == null) return;
-
-        _logOverlayOpen = !_logOverlayOpen;
-
-        logPanel.SetActive(_logOverlayOpen);
-        if (_logOverlayOpen) logPanel.transform.SetAsLastSibling();
-
-        // logPanel is also the Phase 1 screen and still has "Initiate Scan" wired
-        // to advance to Phase 2 -- hide it while viewing the log as a read-only
-        // reference from Phase 3, or clicking it would wrongly restart Phase 2.
-        if (initiateButton != null) initiateButton.gameObject.SetActive(!_logOverlayOpen);
-
-        UpdateViewLogButtonLabel();
+        if (_logOverlayOpen) return; // closing goes through CloseLogOverlay (initiateButton)
+        OpenLogOverlay();
     }
 
-    private void UpdateViewLogButtonLabel()
+    /// <summary>
+    /// Shows the Phase 1 log (logPanel) and fully hides rulePanel underneath it, so
+    /// players can re-check traffic patterns while writing rules without having to
+    /// memorise the whole log before leaving Phase 1.
+    ///
+    /// rulePanel must be hidden, not just visually covered: logPanel has no opaque
+    /// background of its own (it was only ever designed to be the sole panel on
+    /// screen during real Phase 1), so leaving rulePanel active let its Commit/Close
+    /// buttons show through -- and remain clickable -- in the gaps underneath.
+    /// </summary>
+    private void OpenLogOverlay()
     {
-        if (viewLogButton == null) return;
-        var label = viewLogButton.GetComponentInChildren<TextMeshProUGUI>();
-        if (label != null) label.text = _logOverlayOpen ? "Back to Rules" : "View Capture Log";
+        if (logPanel == null || rulePanel == null) return;
+
+        _logOverlayOpen = true;
+        rulePanel.SetActive(false);
+        logPanel.SetActive(true);
+
+        // initiateButton is repurposed as this overlay's "Back to Rules" control
+        // (see OnInitiateScan) since it's already wired, visible, and positioned
+        // at the bottom of logPanel.
+        UpdateInitiateButtonLabel();
+    }
+
+    private void CloseLogOverlay()
+    {
+        if (logPanel == null || rulePanel == null) return;
+
+        _logOverlayOpen = false;
+        logPanel.SetActive(false);
+        rulePanel.SetActive(true);
+        UpdateInitiateButtonLabel();
+    }
+
+    private void UpdateInitiateButtonLabel()
+    {
+        if (initiateButton == null) return;
+        var label = initiateButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null) label.text = _logOverlayOpen ? "BACK TO RULES" : "INITIATE LIVE SCAN";
     }
 
     // =========================================================================

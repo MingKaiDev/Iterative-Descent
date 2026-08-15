@@ -24,6 +24,12 @@ public class PlayerAudioController : MonoBehaviour
              "Match this to your pistol walk animation's step cadence.")]
     public float pistolWalkStepInterval = 0.5f;
 
+    [Header("Hurt SFX")]
+    [Tooltip("Drag the player grunt/hurt clip here. Plays on damage that does not kill " +
+             "the player (suppressed on the killing hit, same pattern as EnemyChaserAudio).")]
+    public AudioClip hurtClip;
+    [Range(0f, 1f)] public float hurtVolume = 0.8f;
+
     // --- Private ------------------------------------------------------------
 
     private AudioSource     _audioSource;
@@ -63,6 +69,22 @@ public class PlayerAudioController : MonoBehaviour
     {
         if (runStepClip == null) return;
         _audioSource.PlayOneShot(runStepClip, footstepVolume);
+    }
+
+    // --- Hurt -----------------------------------------------------------------
+
+    /// <summary>
+    /// Called from PlayerHealth.TakeDamage(), only when the hit does not kill
+    /// the player (PlayerHealth checks _currentHealth before calling this).
+    /// </summary>
+    public void PlayHurt()
+    {
+        if (hurtClip == null)
+        {
+            Debug.LogWarning("[PlayerAudioController] No hurt clip assigned.");
+            return;
+        }
+        _audioSource.PlayOneShot(hurtClip, hurtVolume);
     }
 
     // --- Pistol Walk --------------------------------------------------------

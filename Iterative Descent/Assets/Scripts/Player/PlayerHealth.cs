@@ -27,12 +27,14 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     // ─── Private ────────────────────────────────────────────────────────────────
     private float _currentHealth;
     private bool  _isDead;
+    private PlayerAudioController _audio;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
     void Awake()
     {
         _currentHealth = maxHealth;
+        _audio = GetComponent<PlayerAudioController>();
     }
 
     void Start()
@@ -52,6 +54,8 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         if (_currentHealth <= 0f)
             Die();
+        else
+            _audio?.PlayHurt();
     }
 
     // ─── Public API ─────────────────────────────────────────────────────────────
