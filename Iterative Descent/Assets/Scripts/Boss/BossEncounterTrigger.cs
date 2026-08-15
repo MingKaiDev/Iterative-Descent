@@ -17,7 +17,10 @@
 //      boss is already active in the scene and just relying on its own
 //      detectionRadius.
 //   4. bossAudio is optional -- the BossAudio component on the boss root.
-//      Leave unassigned to skip the encounter stinger.
+//      Leave unassigned to skip the encounter stinger and boss music. When
+//      assigned, this trigger also starts BossAudio's looping boss music
+//      (BossAudio.bossMusicClip), which hard-swaps with GameAudioManager's
+//      ambient loop and stops automatically when the boss dies.
 //   5. bossIntroDialogue is optional -- assign Arb_BossIntro (Assets/Dialogue/
 //      ARBITEX/Arb_BossIntro.asset) to have ARBITEX speak the moment the
 //      player commits to the arena. Uses DialogueManager.Interrupt() so it
@@ -69,7 +72,10 @@ public class BossEncounterTrigger : MonoBehaviour
             Debug.LogWarning("[BossEncounterTrigger] bossHUD not assigned -- HUD will not appear.");
 
         if (bossAudio != null)
+        {
             bossAudio.PlayEncounterStinger();
+            bossAudio.PlayBossMusic();
+        }
 
         if (bossIntroDialogue != null)
         {

@@ -39,7 +39,39 @@ Suggested folder: `Assets/Audio/Boss/`
    - `Footstep Clip` (see step 5 for wiring this one up)
    - `Phase Two Clip`
    - `Death Clip`
-4. Tune the four volume sliders if needed (all default to sensible levels).
+   - `Boss Music Clip` (looping fight music - see step 2b)
+4. Tune the five volume sliders if needed (all default to sensible levels).
+
+## 2b. Boss music (new)
+
+`BossAudio` now has a `Boss Music Clip` field. It does NOT get its own
+AudioSource for this - boss music is just a different track on the scene's
+existing BGM source, owned by `GameAudioManager` (the same component that
+plays ambient noise). `BossAudio` only holds the clip reference and forwards
+to `GameAudioManager.PlayBossMusic()` / `StopBossMusic()`.
+
+1. Nothing extra to add on the DROID-7 root for this - no second AudioSource
+   component needed.
+2. Assign `Boss Music Clip` on `BossAudio` (same Inspector panel as the other
+   boss clips) and tune `Music Volume` (default 0.6) if needed.
+3. Make sure a `GameAudioManager` exists in the scene (it already should, for
+   ambient noise) - if `GameAudioManager.Instance` is null, boss music logs a
+   warning and silently does nothing, same as `bossAudio` being unassigned.
+
+Behavior:
+
+- `BossEncounterTrigger` calls `bossAudio.PlayBossMusic()` at the same moment
+  it plays the encounter stinger. If `bossAudio` isn't assigned on the
+  trigger, or `Boss Music Clip` isn't assigned on `BossAudio`, this is a no-op
+  (logs a warning) - same "silent until you assign a clip" pattern as
+  everything else in this file.
+- Boss music hard-swaps `GameAudioManager`'s single BGM AudioSource (no
+  crossfade): the ambient clip stops and the boss clip plays in its place
+  immediately, and it swaps back to the ambient clip automatically when the
+  boss dies (`HandleBossDeath()` calls `StopBossMusic()`).
+- No Phase 2 music swap yet - single track for the whole fight.
+- No boss music asset exists yet - same as the SFX clips, you need to source
+  or import one into `Assets/Audio/Boss/` and drag it in.
 
 ## 3. Per-attack windup / hitbox-open clips
 
@@ -153,6 +185,8 @@ death reveals the gate" beat.
 ## 7. Playtest checklist
 
 - [ ] Enter the boss arena - HUD appears, ARBITEX line plays, stinger plays (if assigned).
+- [ ] Boss music starts on arena entry (if assigned) and the ambient loop cuts out.
+- [ ] Boss death: ambient loop resumes once boss music stops.
 - [ ] Each attack's windup/impact sounds play (if clips assigned) and don't cut
       each other off oddly.
 - [ ] Phase 2 transition plays its sound at the HP threshold.

@@ -2080,7 +2080,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7875218001083158284}
   - component: {fileID: 5247967630525220868}
-  - component: {fileID: 8424025208596184437}
   m_Layer: 0
   m_Name: AresEncounterTrigger
   m_TagString: Untagged
@@ -2124,20 +2123,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.072841, y: 1, z: 1}
   m_Center: {x: -0.13475156, y: 0, z: 0}
---- !u!114 &8424025208596184437
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1560743255695025514}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6892e935cab441aad08e66003894cd7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossEncounterTrigger
-  aresGameObject: {fileID: 0}
-  bossHUD: {fileID: 0}
 --- !u!1 &1562725024710916682
 GameObject:
   m_ObjectHideFlags: 0

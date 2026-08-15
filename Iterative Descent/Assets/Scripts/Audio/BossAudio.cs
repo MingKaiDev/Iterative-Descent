@@ -19,8 +19,16 @@ using UnityEngine;
 /// PlayEncounterStinger() directly via a serialized reference, the same way it
 /// already calls bossHUD.ShowHUD().
 ///
-/// All AudioClip fields are optional and default to null. No boss SFX assets
-/// exist in Assets/Audio yet -- see FYP/setup-guides/BossPolish_UnitySetup.md.
+/// Boss music is owned by GameAudioManager, not a separate AudioSource here --
+/// it's still just "the BGM," a different track during the fight. BossAudio only
+/// holds the clip reference and forwards to GameAudioManager.PlayBossMusic() /
+/// StopBossMusic(), which hard-swaps its single background-music AudioSource
+/// (ambient stops when boss music starts, resumes when the boss dies) rather
+/// than crossfading. BossEncounterTrigger calls PlayBossMusic() at the same time
+/// as PlayEncounterStinger(); HandleBossDeath() stops the music automatically.
+///
+/// All AudioClip fields are optional and default to null. No boss SFX or music
+/// assets exist in Assets/Audio yet -- see FYP/setup-guides/BossPolish_UnitySetup.md.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class BossAudio : MonoBehaviour
@@ -41,10 +49,17 @@ public class BossAudio : MonoBehaviour
     [Tooltip("Plays once when the boss dies (BossHealth.OnBossDeath).")]
     public AudioClip deathClip;
 
+    [Header("Boss Music")]
+    [Tooltip("Looping music clip for the fight. Starts when BossEncounterTrigger fires, " +
+             "stops when the boss dies. Stops GameAudioManager's ambient loop while playing " +
+             "and resumes it on death/stop.")]
+    public AudioClip bossMusicClip;
+
     [Range(0f, 1f)] public float encounterVolume = 1f;
     [Range(0f, 1f)] public float footstepVolume  = 0.7f;
     [Range(0f, 1f)] public float phaseTwoVolume  = 1f;
     [Range(0f, 1f)] public float deathVolume     = 1f;
+    [Range(0f, 1f)] public float musicVolume     = 0.6f;
 
     // ─── Private ────────────────────────────────────────────────────────────────
     private AudioSource _audioSource;
@@ -79,6 +94,32 @@ public class BossAudio : MonoBehaviour
         _audioSource.PlayOneShot(encounterStingerClip, encounterVolume);
     }
 
+    /// <summary>Forwards to GameAudioManager, which hard-swaps its single BGM
+    /// AudioSource from ambient to the boss track.</summary>
+    public void PlayBossMusic()
+    {
+        if (bossMusicClip == null)
+        {
+            Debug.LogWarning("[BossAudio] No boss music clip assigned.");
+            return;
+        }
+        if (GameAudioManager.Instance == null)
+        {
+            Debug.LogWarning("[BossAudio] GameAudioManager.Instance is null -- boss music will not play.");
+            return;
+        }
+        GameAudioManager.Instance.PlayBossMusic(bossMusicClip, musicVolume);
+    }
+
+    /// <summary>Forwards to GameAudioManager, which swaps its BGM AudioSource back
+    /// to the scene's ambient clip. Safe to call even if boss music was never
+    /// started -- GameAudioManager no-ops in that case.</summary>
+    public void StopBossMusic()
+    {
+        if (GameAudioManager.Instance != null)
+            GameAudioManager.Instance.StopBossMusic();
+    }
+
     // ─── Animation Event Target ───────────────────────────────────────────────────
 
     /// <summary>Called by an Animation Event on the boss walk/run clip at each footfall frame.</summary>
@@ -102,6 +143,8 @@ public class BossAudio : MonoBehaviour
 
     void HandleBossDeath()
     {
+        StopBossMusic();
+
         if (deathClip == null)
         {
             Debug.LogWarning("[BossAudio] No death clip assigned.");

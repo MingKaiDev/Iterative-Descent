@@ -58143,6 +58143,28 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 467817461}
   m_Mesh: {fileID: -8569326859393033105, guid: 2637a37890f8aa84593b4203a24d5ca5, type: 3}
+--- !u!1 &468071696 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1560743255695025514, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
+  m_PrefabInstance: {fileID: 2438722871678336666}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &468071699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 468071696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6892e935cab441aad08e66003894cd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossEncounterTrigger
+  aresGameObject: {fileID: 1039256810}
+  bossHUD: {fileID: 2107872675}
+  bossAudio: {fileID: 1039256827}
+  bossIntroDialogue: {fileID: 0}
+  playerTag: Player
 --- !u!65 &468468099
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -68918,7 +68940,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.827
+      value: 0.18
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.y
@@ -68926,7 +68948,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -20.474
+      value: 0.82
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e921fc170fe83fc4fa0a8e7f9712d1b6, type: 3}
       propertyPath: m_LocalRotation.w
@@ -74167,7 +74189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &594208784
 Transform:
   m_ObjectHideFlags: 0
@@ -122618,7 +122640,7 @@ MonoBehaviour:
   magazineSize: 12
   startingSpareAmmo: 36
   fireInterval: 0.5
-  damage: 100
+  damage: 20
   bulletPrefab: {fileID: 3671237405859864938, guid: 4d2b4bd804f1cdf43bd8cd7be74f934d, type: 3}
   bulletSpeed: 200
   muzzlePoint: {fileID: 0}
@@ -131772,10 +131794,12 @@ MonoBehaviour:
   footstepClip: {fileID: 8300000, guid: 494880f93edf7754faf181e053b1a53d, type: 3}
   phaseTwoClip: {fileID: 8300000, guid: 7ca5d1239612a0f40b2cd1db6479fd14, type: 3}
   deathClip: {fileID: 8300000, guid: d0ba5ad9c16234a42828b52774c37dc9, type: 3}
+  bossMusicClip: {fileID: 8300000, guid: ba60816dc66dbe5418855ede189b434f, type: 3}
   encounterVolume: 1
   footstepVolume: 0.7
   phaseTwoVolume: 1
   deathVolume: 1
+  musicVolume: 0.553
 --- !u!114 &1039256828
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -349666,6 +349690,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 7875218001083158284, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -17.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 7875218001083158284, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -15.1
+      objectReference: {fileID: 0}
     - target: {fileID: 7878418470574178577, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
       propertyPath: m_Layer
       value: 11
@@ -349754,8 +349786,7 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 8424025208596184437, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -349795,6 +349826,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5857962591847019606, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 761187533}
+    - targetCorrespondingSourceObject: {fileID: 1560743255695025514, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 468071699}
   m_SourcePrefab: {fileID: 100100000, guid: d3b41c26980ac944ab0e989972174faf, type: 3}
 --- !u!1 &2439053243823891558
 GameObject:
