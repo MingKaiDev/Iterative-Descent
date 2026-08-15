@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Scene-level audio manager. Handles looping BGM -- ambient background noise by
@@ -12,6 +13,13 @@ using UnityEngine;
 /// the fight. BossAudio (Assets/Scripts/Audio/BossAudio.cs) owns the boss music
 /// clip reference and calls PlayBossMusic()/StopBossMusic() here; it does not
 /// keep its own AudioSource for it.
+///
+/// AudioSource.volume here (ambientVolume) is the per-clip design volume, same
+/// as every other audio script in the project (e.g. footstepVolume). The
+/// player's Music slider in Settings is a separate multiplier applied via the
+/// AudioMixer this source's Output is routed to, not by touching this field --
+/// see SettingsManager.ApplyVolumeToMixer() and
+/// FYP/setup-guides/VolumeSettings_UnitySetup.md.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class GameAudioManager : MonoBehaviour
@@ -24,6 +32,12 @@ public class GameAudioManager : MonoBehaviour
 
     [Range(0f, 1f)]
     public float ambientVolume = 0.4f;
+
+    [Header("Volume Settings")]
+    [Tooltip("Project AudioMixer asset (Music/SFX groups). Assign so the saved " +
+             "Settings volume is applied on scene load even if the player never " +
+             "opens the Settings panel. Safe to leave empty during early setup.")]
+    [SerializeField] private AudioMixer audioMixer;
 
     // ─── Private ────────────────────────────────────────────────────────────────
     private AudioSource _ambientSource;
@@ -42,6 +56,8 @@ public class GameAudioManager : MonoBehaviour
 
         _ambientSource = GetComponent<AudioSource>();
         ConfigureAmbientSource();
+
+        SettingsManager.ApplyVolumeToMixer(audioMixer);
     }
 
     void Start()

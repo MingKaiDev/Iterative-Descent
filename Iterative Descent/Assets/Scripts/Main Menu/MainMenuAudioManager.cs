@@ -1,5 +1,12 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
+// bgmVolume/sfxVolume below are per-clip design volumes (same role as every
+// other *Volume field in the project's audio scripts), not the player's
+// Settings sliders. The Settings Music/SFX sliders are a separate multiplier
+// applied via the AudioMixer bgmSource/sfxSource are routed to -- see
+// SettingsManager.ApplyVolumeToMixer() and
+// FYP/setup-guides/VolumeSettings_UnitySetup.md.
 public class MainMenuAudioManager : MonoBehaviour
 {
     public static MainMenuAudioManager Instance { get; private set; }
@@ -17,6 +24,12 @@ public class MainMenuAudioManager : MonoBehaviour
     [Range(0f, 1f)] public float bgmVolume = 0.5f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
 
+    [Header("Volume Settings (player-facing)")]
+    [Tooltip("Project AudioMixer asset (Music/SFX groups). Assign so the saved " +
+             "Settings volume is applied on scene load even if the player never " +
+             "opens the Settings panel. Safe to leave empty during early setup.")]
+    [SerializeField] private AudioMixer audioMixer;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -25,6 +38,8 @@ public class MainMenuAudioManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        SettingsManager.ApplyVolumeToMixer(audioMixer);
     }
 
     void Start()
