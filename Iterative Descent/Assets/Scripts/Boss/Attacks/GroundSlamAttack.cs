@@ -70,7 +70,7 @@ public class GroundSlamAttack : BossAttackBase
         _animator = GetComponent<Animator>();
         _agent    = GetComponent<NavMeshAgent>();
 
-        var ph = FindObjectOfType<PlayerHealth>();
+        var ph = FindFirstObjectByType<PlayerHealth>();
         if (ph != null) _player = ph.transform;
 
         if (_animator == null) Debug.LogError("[GroundSlamAttack] No Animator found.");

@@ -42,7 +42,7 @@ public class BossAttackRegistry : MonoBehaviour
         if (_attacks.Length == 0)
             Debug.LogWarning("[BossAttackRegistry] No BossAttackBase components found on this GameObject.");
 
-        var playerHealth = FindObjectOfType<PlayerHealth>();
+        var playerHealth = FindFirstObjectByType<PlayerHealth>();
         if (playerHealth != null)
             _player = playerHealth.transform;
         else
@@ -90,6 +90,13 @@ public class BossAttackRegistry : MonoBehaviour
         _stateMachine.EnterAttacking();
         chosen.Execute();
     }
+
+    // ─── Public API (RL/training only, called by BossTrainingEnv) ───────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Mirrors BossStateMachine.SetTarget -- kept independent since this class caches its
+    /// own _player reference separately. Never called in the live game.</summary>
+    public void SetTarget(Transform target) => _player = target;
 
     void HandleAttackEnded()
     {

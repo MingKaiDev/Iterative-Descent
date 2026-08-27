@@ -69,7 +69,7 @@ public class SprintChargeAttack : BossAttackBase
         _animator = GetComponent<Animator>();
         _wallLayer = LayerMask.GetMask("Level 1 Obstacle");
 
-        var playerHealth = FindObjectOfType<PlayerHealth>();
+        var playerHealth = FindFirstObjectByType<PlayerHealth>();
         if (playerHealth != null)
             _player = playerHealth.transform;
 

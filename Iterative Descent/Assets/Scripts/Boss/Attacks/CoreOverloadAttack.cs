@@ -104,7 +104,7 @@ public class CoreOverloadAttack : BossAttackBase
             _laserAudioSource.spatialBlend = 1f;
         }
 
-        var ph = FindObjectOfType<PlayerHealth>();
+        var ph = FindFirstObjectByType<PlayerHealth>();
         if (ph != null) _player = ph.transform;
 
         if (_lineRenderer != null)

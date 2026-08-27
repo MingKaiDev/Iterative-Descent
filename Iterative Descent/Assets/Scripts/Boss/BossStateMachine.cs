@@ -74,7 +74,7 @@ public class BossStateMachine : MonoBehaviour
 
     void Start()
     {
-        var playerHealth = FindObjectOfType<PlayerHealth>();
+        var playerHealth = FindFirstObjectByType<PlayerHealth>();
         if (playerHealth != null)
             _player = playerHealth.transform;
         else
@@ -168,6 +168,25 @@ public class BossStateMachine : MonoBehaviour
 
     public void EnterAttacking() => EnterState(BossState.Attacking);
     public void ExitAttacking()  => EnterState(BossState.Combat);
+
+    // ─── Public API (RL/training only, called by BossTrainingEnv) ───────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Called once per episode by BossTrainingEnv (Training.unity) to point the boss at
+    /// whichever scripted opponent is active this episode. Never called in the live game.</summary>
+    public void SetTarget(Transform target) => _player = target;
+
+    /// <summary>Re-arms the state machine for a new training episode after a boss death:
+    /// re-enables the NavMeshAgent, clears the isDead/isPhase2 animator flags, and re-enters
+    /// Combat immediately (skips Idle's proximity wait -- the training opponent's position is
+    /// already known). Call AFTER BossHealth.ResetHealth(). Never called in the live game.</summary>
+    public void ResetForNewEpisode()
+    {
+        _agent.enabled = true;
+        _animator.SetBool(IsDeadHash, false);
+        _animator.SetBool(IsPhase2Hash, false);
+        EnterState(BossState.Combat);
+    }
 
     // ─── Event Handlers ──────────────────────────────────────────────────────────
 

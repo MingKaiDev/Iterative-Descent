@@ -84,7 +84,7 @@ public class PounceAttack : BossAttackBase
         _agent     = GetComponent<NavMeshAgent>();
         _renderers = GetComponentsInChildren<SkinnedMeshRenderer>();
 
-        var ph = FindObjectOfType<PlayerHealth>();
+        var ph = FindFirstObjectByType<PlayerHealth>();
         if (ph != null) _player = ph.transform;
 
         if (_animator  == null) Debug.LogError("[PounceAttack] No Animator found.");

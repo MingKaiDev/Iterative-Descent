@@ -39,6 +39,13 @@ public abstract class BossAttackBase : MonoBehaviour
              "is missing from the clip, this will end the attack instead.")]
     public float attackTimeoutDuration = 5f;
 
+    [Header("Variety (RL-only)")]
+    [Tooltip("Additional cooldown used ONLY by BossAgent's action masking during training/inference -- " +
+             "ignored by the existing random-heuristic fallback (BossAttackRegistry.TryExecuteRandomAttack), " +
+             "so this has zero effect on current gameplay until BossAgent exists and reads it. Independent " +
+             "from 'cooldown' above -- an attack is only variety-eligible once BOTH have cleared.")]
+    public float varietyCooldown = 3f;
+
     [Header("Audio")]
     [Tooltip("Plays automatically the instant this attack starts (Execute()). " +
              "Optional -- leave null for a silent windup.")]
@@ -58,8 +65,21 @@ public abstract class BossAttackBase : MonoBehaviour
     public bool IsOnCooldown => _cooldownTimer > 0f;
     public bool IsActive     => _isActive;
 
+    /// <summary>RL-only. True while this attack is still within its varietyCooldown window
+    /// after last being used. Unread by the existing random-heuristic path.</summary>
+    public bool IsOnVarietyCooldown => _varietyTimer > 0f;
+
+    /// <summary>RL-only. 0 immediately after use, ramping linearly to 1 once varietyCooldown
+    /// has fully elapsed, then holding at 1. Feeds BossAgent's "time since last used" observation
+    /// -- same underlying timer as IsOnVarietyCooldown, just exposed as a continuous 0-1 value
+    /// instead of a bool.</summary>
+    public float TimeSinceUsedNormalized => varietyCooldown > 0f
+        ? Mathf.Clamp01((varietyCooldown - _varietyTimer) / varietyCooldown)
+        : 1f;
+
     // ─── Private ────────────────────────────────────────────────────────────────
     private float   _cooldownTimer;
+    private float   _varietyTimer;
     private bool    _isActive;
     private Coroutine _timeoutRoutine;
     private AudioSource _sfxSource;
@@ -80,6 +100,9 @@ public abstract class BossAttackBase : MonoBehaviour
     {
         if (_cooldownTimer > 0f)
             _cooldownTimer -= Time.deltaTime;
+
+        if (_varietyTimer > 0f)
+            _varietyTimer -= Time.deltaTime;
     }
 
     // ─── Public API ─────────────────────────────────────────────────────────────
@@ -154,6 +177,7 @@ public abstract class BossAttackBase : MonoBehaviour
 
         _isActive      = false;
         _cooldownTimer = cooldown;
+        _varietyTimer  = varietyCooldown;
 
         OnAttackEnded?.Invoke();
     }
