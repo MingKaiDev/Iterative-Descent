@@ -111,6 +111,17 @@ public class DoorController : MonoBehaviour
         else Open();
     }
 
+    /// <summary>
+    /// Re-locks the door and shuts it if currently open. Used for arena gates
+    /// (e.g. boss fights) that must seal once triggered, even if the door was
+    /// already opened earlier by a puzzle. Safe to call on an already-closed door.
+    /// </summary>
+    public void CloseAndLock()
+    {
+        isLocked = true;
+        if (isOpen) Close();
+    }
+
     private IEnumerator AnimateDoor(
         Vector3 fromPos, Vector3 toPos,
         Quaternion fromRot, Quaternion toRot)
@@ -133,8 +144,12 @@ public class DoorController : MonoBehaviour
         doorMesh.localPosition = toPos;
         doorMesh.localRotation = toRot;
 
-        // Disable the collider once the door is fully open
-        if (isOpen && _boxCollider != null)
-            _boxCollider.enabled = false;
+        // Collider must be off while open (so the player can walk through the
+        // frame) and back on once closed (so a re-closed door actually blocks
+        // the player again). Previously only the "just opened" case was
+        // handled, so a door that closed after being opened stayed
+        // walk-through-able -- fixed here.
+        if (_boxCollider != null)
+            _boxCollider.enabled = !isOpen;
     }
 }

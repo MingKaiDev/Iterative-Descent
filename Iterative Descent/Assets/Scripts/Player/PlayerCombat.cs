@@ -73,6 +73,11 @@ public class PlayerCombat : MonoBehaviour
     public bool  IsReloading => _isReloading;
     public bool  IsAiming    => _isAiming;
     /// <summary>0 = fresh aim (inaccurate), 1 = fully settled (accurate).</summary>
+    // TODO (deferred, discussed for the Reagent Routing barrel attachment reward):
+    // tie AccuracyT to bonus damage on FireBullet(), so a tighter/more-settled
+    // shot also hits harder, not just more accurately. Explicitly put on hold --
+    // not implemented. If picked back up, the natural hook is in FireBullet()
+    // right where `damage` is assigned onto the bullet, scaling it by AccuracyT.
     public float AccuracyT   => settleTime > 0f ? Mathf.Clamp01(_aimTimer / settleTime) : 1f;
     public int  CurrentMag  => _currentMag;
     public int  SpareAmmo   => _spareAmmo;
@@ -340,5 +345,22 @@ public class PlayerCombat : MonoBehaviour
     {
         _spareAmmo += amount;
         BroadcastAmmo();
+    }
+
+    /// <summary>
+    /// Permanently reduces settleTime by the given amount (floored at 0.1s so
+    /// aiming never becomes instant), making the reticle reach full accuracy
+    /// faster while aiming. Intended for one-time permanent upgrade sources
+    /// (e.g. the Reagent Routing puzzle's barrel attachment reward) -- unlike
+    /// AddAmmo()/Heal(), this is a permanent stat change, not a consumable, so
+    /// callers should guard against granting it more than once per session
+    /// (see ReagentRoutingEventHandler's _rewardGranted flag for an example).
+    /// </summary>
+    public void ReduceSettleTime(float amount)
+    {
+        if (amount <= 0f) return;
+        float oldValue = settleTime;
+        settleTime = Mathf.Max(0.1f, settleTime - amount);
+        Debug.Log($"[PlayerCombat] Barrel attachment applied. Settle time: {oldValue:F2}s -> {settleTime:F2}s.");
     }
 }

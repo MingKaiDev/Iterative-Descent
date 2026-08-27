@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b296171ed0f50f34295b416e95e2bcf3
+guid: fca744d2f4117184091fedf70e1f616e
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Courier Prime
+  - Creepster
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

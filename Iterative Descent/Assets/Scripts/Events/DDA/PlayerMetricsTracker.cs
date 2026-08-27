@@ -234,6 +234,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         SubnetPuzzleUI.OnSubnetSolved           += HandleSubnetSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved += HandlePacketFilterSolved;
         PaintingPuzzleManager.OnPaintingSolved    += HandlePaintingSolved;
+        ReagentRoutingUI.OnReagentRoutingSolved   += HandleReagentRoutingSolved;
     }
 
     private void OnDisable()
@@ -250,6 +251,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         SubnetPuzzleUI.OnSubnetSolved           -= HandleSubnetSolved;
         PacketFilterPuzzleUI.OnPacketFilterSolved -= HandlePacketFilterSolved;
         PaintingPuzzleManager.OnPaintingSolved    -= HandlePaintingSolved;
+        ReagentRoutingUI.OnReagentRoutingSolved   -= HandleReagentRoutingSolved;
     }
 
     private void Update()
@@ -465,6 +467,61 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Drain puzzle solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageDrainWrongAttempts:F1}");
+    }
+
+    // ── Reagent Routing Puzzle API ─────────────────────────────────────────
+
+    /// <summary>Last Reagent Routing puzzle wrong attempts this session.</summary>
+    public int   LastReagentRoutingWrongAttempts  { get; private set; }
+    /// <summary>Last Reagent Routing puzzle solve time in seconds.</summary>
+    public float LastReagentRoutingTime           { get; private set; }
+    /// <summary>Total Reagent Routing puzzles solved this session.</summary>
+    public int   TotalReagentRoutingSolved        { get; private set; }
+    /// <summary>Running average wrong attempts per Reagent Routing puzzle.</summary>
+    public float AverageReagentRoutingWrongAttempts { get; private set; }
+    /// <summary>Running average solve time per Reagent Routing puzzle.</summary>
+    public float AverageReagentRoutingTime        { get; private set; }
+
+    private float _reagentRoutingStartTime;
+    private bool  _reagentRoutingInProgress;
+
+    /// <summary>Call from ReagentRoutingUI.InitPuzzle() -- do NOT call from the prop too.</summary>
+    public void NotifyReagentRoutingStarted()
+    {
+        _reagentRoutingStartTime   = Time.realtimeSinceStartup;
+        _reagentRoutingInProgress  = true;
+        Debug.Log("[Metrics] Reagent Routing puzzle started.");
+    }
+
+    private void HandleReagentRoutingSolved(int wrongAttempts)
+    {
+        float timeTaken = _reagentRoutingInProgress
+            ? Time.realtimeSinceStartup - _reagentRoutingStartTime
+            : 0f;
+
+        LastReagentRoutingWrongAttempts = wrongAttempts;
+        LastReagentRoutingTime          = timeTaken;
+        _reagentRoutingInProgress       = false;
+        TotalReagentRoutingSolved++;
+
+        AverageReagentRoutingWrongAttempts = TotalReagentRoutingSolved <= 1
+            ? wrongAttempts
+            : (AverageReagentRoutingWrongAttempts * (TotalReagentRoutingSolved - 1) + wrongAttempts)
+              / TotalReagentRoutingSolved;
+
+        AverageReagentRoutingTime = TotalReagentRoutingSolved <= 1
+            ? timeTaken
+            : (AverageReagentRoutingTime * (TotalReagentRoutingSolved - 1) + timeTaken)
+              / TotalReagentRoutingSolved;
+
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.Dijkstra, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.Dijkstra, true);
+
+        UpdateGeneralPool(wrongAttempts, timeTaken);
+
+        Debug.Log($"[Metrics] Reagent Routing puzzle solved | Wrong attempts: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s | Avg attempts: {AverageReagentRoutingWrongAttempts:F1}");
     }
 
     // ── Linked List API ────────────────────────────────────────────────────
@@ -862,6 +919,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageDrainWrongAttempts = 0f;
         AverageDrainTime          = 0f;
         _drainInProgress          = false;
+
+        // Reagent Routing
+        LastReagentRoutingWrongAttempts    = 0;
+        LastReagentRoutingTime             = 0f;
+        TotalReagentRoutingSolved          = 0;
+        AverageReagentRoutingWrongAttempts = 0f;
+        AverageReagentRoutingTime          = 0f;
+        _reagentRoutingInProgress          = false;
 
         // Packet filter
         LastPacketFilterWrongSubmissions    = 0;

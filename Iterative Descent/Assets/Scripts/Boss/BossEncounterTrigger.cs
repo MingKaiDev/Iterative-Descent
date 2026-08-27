@@ -28,8 +28,14 @@
 //      Does not pause the player -- the line has no choices, so it plays
 //      over the top as combat begins.
 //
+//   6. arenaDoor is optional -- assign the DoorController on Door_South (the
+//      arena entrance). When assigned, this trigger calls CloseAndLock() on
+//      it the moment the player commits, sealing the door shut (and
+//      re-enabling its collider) even if a puzzle had already opened it
+//      earlier. This is permanent for the rest of the fight -- the door does
+//      not reopen when the boss dies.
+//
 // One-shot: fires once per scene load, re-entering the trigger does nothing.
-// No arena gate / lock logic yet -- not part of this pass.
 using UnityEngine;
 
 public class BossEncounterTrigger : MonoBehaviour
@@ -51,6 +57,11 @@ public class BossEncounterTrigger : MonoBehaviour
              "any other dialogue and plays immediately, without pausing the player.")]
     [SerializeField] private DialogueSequence bossIntroDialogue;
 
+    [Header("Arena Gate (optional)")]
+    [Tooltip("DoorController on Door_South (the arena entrance). Leave unassigned to skip sealing the arena. " +
+             "Sealed permanently -- does not reopen when the boss dies.")]
+    [SerializeField] private DoorController arenaDoor;
+
     [Header("Trigger")]
     [SerializeField] private string playerTag = "Player";
 
@@ -65,6 +76,11 @@ public class BossEncounterTrigger : MonoBehaviour
 
         if (aresGameObject != null && !aresGameObject.activeSelf)
             aresGameObject.SetActive(true);
+
+        if (arenaDoor != null)
+            arenaDoor.CloseAndLock();
+        else
+            Debug.LogWarning("[BossEncounterTrigger] arenaDoor not assigned -- player can still walk back out of the arena.");
 
         if (bossHUD != null)
             bossHUD.ShowHUD();

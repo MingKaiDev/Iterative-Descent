@@ -19,7 +19,7 @@ Entry-point category. No category-level prerequisites. All other advanced catego
 | Heaps | Trees |
 | Graphs | Trees |
 | BFS / DFS | Graphs |
-| Dijkstra's Algorithm | BFS / DFS |
+| Dijkstra's Algorithm ✓ (already in game) | BFS / DFS |
 | Dynamic Programming | Graphs |
 | Greedy Algorithms | Arrays & Lists |
 | Basic Sorts (Bubble/Insertion/Selection) | Arrays & Lists |

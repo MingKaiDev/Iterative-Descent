@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6d8b7b71479fa3643a589bf8758b9276
+guid: ff7fe1fa77f115c47ba49a2464774405
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Courier Prime
+  - JetBrains Mono
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

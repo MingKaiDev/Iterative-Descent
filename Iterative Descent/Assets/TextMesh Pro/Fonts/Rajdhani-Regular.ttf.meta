@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 80a11cfc85aa0ae4f905eb455cd1ccec
+guid: 5de47b8da21d4f04dac06ebeccd4d731
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Courier Prime
+  - Rajdhani
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

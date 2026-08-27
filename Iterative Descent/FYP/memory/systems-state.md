@@ -102,6 +102,46 @@ Node (root) — LLNodeBlock
 
 ---
 
+## Reagent Routing Puzzle (Chemistry Lab) — COMPLETE, playtested tiers 0-4
+
+**Concept:** Player routes a chemical reagent through a weighted pipe network from INTAKE to CHAMBER by clicking adjacent junctions, then commits. All edge costs (flow-resistance) are visible up front — no fog-of-war, unlike Drain. The route only passes if its cost exactly equals the true Dijkstra-optimal cost. Teaches Dijkstra's algorithm (weighted shortest path), deliberately distinct from Drain's BFS/DFS (unweighted traversal order). BKT concept key: `BayesianKnowledgeTracker.Dijkstra`, prerequisite `BfsDfs`.
+
+Core graph-generation + Dijkstra + path-reconstruction logic was prototyped in HTML/JS first (user playtested and approved), then ported to C# and independently re-verified via a reflection-based test harness: 2500 randomised trials per version against a brute-force search, zero mismatches both times.
+
+### Scripts
+
+| Script | Location | Role |
+|---|---|---|
+| `ReagentRoutingUI.cs` | `Scripts/Puzzles/ReagentRouting/` | Master controller. Procedural layered directed graph (5 tiers, node counts 5-9, 0-3 skip-edges, widening cost ranges), Dijkstra's algorithm, node/edge spawning (NormPos 0-1 convention, same as DrainPuzzleUI), click-to-build-path, undo/reset/commit, win/fail flow. Fires `OnReagentRoutingSolved(int attempts)`. |
+| `ReagentFeedbackPopup.cs` | `Scripts/Puzzles/ReagentRouting/` | Thin `PuzzleFeedbackPopup` subclass, same pattern as `DrainFeedbackPopup`. |
+| `ReagentRoutingProp.cs` | `Scripts/Props/` | `IInteractable, ICloseable` for the terminal prop. Mirrors `DrainPuzzleProp` exactly (Pause/Resume, cursor, timeScale). Calls `ConceptTutorials.ShowIfUnseenThenContinue("dijkstra", ...)`. |
+| `ReagentRoutingEventHandler.cs` | `Scripts/Events/` | Listens to `OnReagentRoutingSolved`. Grants a **permanent barrel attachment** on solve — see "Reward" below. |
+
+### Amber/copper industrial visual identity
+8 Python/Pillow-generated sprites under `Sprites/UI/ReagentRouting/` — deliberately distinct from Drain's green CRT, Stack's charcoal PDU, PacketFilter's green terminal. Node/pipe sprites are near-white so the existing runtime `Image.color` tinting technique works unchanged. 3 hand-authored, verified prefabs under `Prefab/ReagentRouting/` (node, pipe edge, cost chip) — built from real GUIDs read out of `Tree Search`'s existing prefabs, verified with the same fileID/back-reference/YAML-parse technique used on `Concept Tutorial Panel.prefab`.
+
+### Reward — a permanent pistol barrel attachment (not a door, not a consumable)
+Went through two design rounds: first a guaranteed ammo+health drop (mirroring `MatchingEventHandler` + `ItemSpawner`), then upgraded per request to a bigger reward. Final: `ReagentRoutingEventHandler` calls `PlayerCombat.ReduceSettleTime(settleTimeReduction)` on solve — a new method on `PlayerCombat.cs` that permanently shaves time off `settleTime` (floored at 0.1s), so the aim reticle reaches full accuracy faster. Inspector-tunable, default reduction 0.5s. Guarded by a `_rewardGranted` flag so it can only apply once per session (see Pending below for why this guard exists).
+
+A related idea — scaling bullet damage by `AccuracyT` (reticle settle-ness) — was raised and explicitly put on hold. Not implemented. A `TODO` comment sits next to `AccuracyT` in `PlayerCombat.cs` noting the hook point (`FireBullet()`) if it's picked back up.
+
+### Gameplay tuning added after first playtest
+- `attemptsBeforeReveal` (Inspector field on `ReagentRoutingUI`, default 3): the optimal path only reveals after this many failed commits on the same graph — below that, the popup shows the cost delta but keeps the answer hidden.
+- Undo is now allowed immediately after a failed/non-optimal commit (previously only Reset Route worked) — removes just the last step and reopens editing without a full walk back to INTAKE.
+- Fixed: non-adjacent nodes had their Button disabled entirely, so the "no pipe connects there" warning could never fire. Nodes now stay clickable regardless of adjacency; the warning path in `OnNodeClicked` is reachable. Visual dimming for non-adjacent junctions is unchanged.
+
+### DDA / BKT wiring
+`PlayerMetricsTracker.cs` and `PuzzleDDAController.cs` patched, mirroring the Drain block exactly (names + BKT concept swapped): subscribes to `OnReagentRoutingSolved`, new API block (`LastReagentRoutingWrongAttempts`, `TotalReagentRoutingSolved`, etc.), calls `UpdateGeneralPool()` and `BKT.UpdateAfterAttempt(BayesianKnowledgeTracker.Dijkstra, ...)`. Joins the existing general-puzzle signal pool — no new observation-vector indices added.
+
+### Pending
+- **No physical Chemistry Lab room exists yet** in the level (not present in Level Design's Room Status table at all — see `level-design.md`). The puzzle terminal/UI is built and tested, but where it physically lives in the level (Blender geometry, door openings, grid placement) hasn't been designed.
+- **Room-level "already solved" gate not built.** The terminal is currently re-enterable/re-solvable (intentional for testing). `_rewardGranted` on the event handler stops the barrel attachment from re-applying every session, but there's no persistent flag preventing the puzzle itself from being re-solved across sessions the way `FolderPuzzleSolved` gates the password puzzle.
+- **Optional "dijkstra" tutorial content not added.** `ConceptTutorials.ShowIfUnseenThenContinue("dijkstra", ...)` gracefully no-ops today (no caption text or diagram registered). Puzzle works without it.
+- **Deferred:** `AccuracyT`-scaled bullet damage (see Reward section above) — explicitly on hold, not built.
+- No real Unity Editor compile pass yet from this side — all verification so far (algorithm test harness, mcs stub compilation, brace-balance checks on the two edited DDA files + `PlayerCombat.cs`) was done without a real Unity/dotnet compiler available. User's own in-Editor playtesting across tiers 0-4 is the strongest signal so far that it's solid.
+
+---
+
 ## Enemy System — COMPLETE (Sprint 2 partial)
 
 ### Architecture
