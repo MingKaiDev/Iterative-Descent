@@ -133,12 +133,19 @@ A related idea — scaling bullet damage by `AccuracyT` (reticle settle-ness) �
 ### DDA / BKT wiring
 `PlayerMetricsTracker.cs` and `PuzzleDDAController.cs` patched, mirroring the Drain block exactly (names + BKT concept swapped): subscribes to `OnReagentRoutingSolved`, new API block (`LastReagentRoutingWrongAttempts`, `TotalReagentRoutingSolved`, etc.), calls `UpdateGeneralPool()` and `BKT.UpdateAfterAttempt(BayesianKnowledgeTracker.Dijkstra, ...)`. Joins the existing general-puzzle signal pool — no new observation-vector indices added.
 
-### Pending
-- **No physical Chemistry Lab room exists yet** in the level (not present in Level Design's Room Status table at all — see `level-design.md`). The puzzle terminal/UI is built and tested, but where it physically lives in the level (Blender geometry, door openings, grid placement) hasn't been designed.
-- **Room-level "already solved" gate not built.** The terminal is currently re-enterable/re-solvable (intentional for testing). `_rewardGranted` on the event handler stops the barrel attachment from re-applying every session, but there's no persistent flag preventing the puzzle itself from being re-solved across sessions the way `FolderPuzzleSolved` gates the password puzzle.
-- **Optional "dijkstra" tutorial content not added.** `ConceptTutorials.ShowIfUnseenThenContinue("dijkstra", ...)` gracefully no-ops today (no caption text or diagram registered). Puzzle works without it.
-- **Deferred:** `AccuracyT`-scaled bullet damage (see Reward section above) — explicitly on hold, not built.
-- No real Unity Editor compile pass yet from this side — all verification so far (algorithm test harness, mcs stub compilation, brace-balance checks on the two edited DDA files + `PlayerCombat.cs`) was done without a real Unity/dotnet compiler available. User's own in-Editor playtesting across tiers 0-4 is the strongest signal so far that it's solid.
+### Correction
+The room DOES already exist — it was missed in the first pass because
+`level-design.md`'s Room Status table and the actual `Level 1 Blueprint.png`
+don't list it at all, but the GameObject `Chemistry Labortary` (note: typo
+in the actual scene name) is present in `Assets/Scenes/Level 1.unity`. Now
+added to `level-design.md`'s Room Status table for tracking.
+
+### Pending — tracked as Story 19 (see `setup-guides/Story19_ChemistryLabFollowUps.md`)
+- Already-solved gate (terminal is currently re-enterable/re-solvable indefinitely — session-lifetime only, no save system exists in this project yet for anything)
+- Dijkstra tutorial caption + diagram (`ConceptTutorials.ShowIfUnseenThenContinue("dijkstra", ...)` currently no-ops — no caption text registered, and no concept in the game has a diagram yet except `arrays_and_lists`)
+- Deferred: `AccuracyT`-scaled bullet damage (see Reward section above) — explicitly on hold, not built
+
+No real Unity Editor compile pass yet from this side — all verification so far (algorithm test harness, mcs stub compilation, brace-balance checks on the two edited DDA files + `PlayerCombat.cs`) was done without a real Unity/dotnet compiler available. User's own in-Editor playtesting across tiers 0-4 is the strongest signal so far that it's solid.
 
 ---
 

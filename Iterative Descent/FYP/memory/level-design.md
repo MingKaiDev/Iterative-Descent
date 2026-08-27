@@ -21,6 +21,7 @@
 | Hallway 1 Segment | 4m × 16m | DONE | SW/SE singles; boarded window, collapsed shelf, 1 corpse — see detail below |
 | Washroom | 12m × 8m | DONE | NW female, NE male; sinks, cubicles, urinals, horror props — see detail below |
 | Stairs 1 | 4m × 8m | DONE | Scissors staircase — see detail below |
+| Chemistry Lab | — | DONE | Houses the Reagent Routing (Dijkstra's Algorithm) puzzle terminal. Not in the original `Level 1 Blueprint.png` layout or previously tracked here — found as the GameObject `Chemistry Labortary` (typo) in `Level 1.unity`. Worth renaming to `Chemistry Lab` in the Hierarchy when convenient; not renamed here since it's a live scene object. |
 | Classroom 2 | — | PENDING | — |
 | Computer Lab | — | PENDING | — |
 | Classroom 3 | — | PENDING | — |
