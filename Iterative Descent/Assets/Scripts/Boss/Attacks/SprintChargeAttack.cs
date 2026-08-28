@@ -171,4 +171,38 @@ public class SprintChargeAttack : BossAttackBase
     // Suppressed for damage reasons only -- hitboxOpenClip is played from
     // ChargeRoutine's hitPlayer branch above instead, at the actual contact frame.
     public override void OnHitboxOpen() { }
+
+    // ─── RL-only target override ──────────────────────────────────────────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Added 2026-08-27: Training.unity's opponents use TrainingDummyHealth instead of
+    /// PlayerHealth, so the automatic lookup in Start() always found nothing there, and every
+    /// charge fell back to transform.forward -- the boss just charged in whatever direction it
+    /// happened to be facing instead of toward the actual opponent. Called by BossTrainingEnv
+    /// each episode, mirroring BossStateMachine.SetTarget()/BossAttackRegistry.SetTarget(). Never
+    /// called in the live game.</summary>
+    public void SetTarget(Transform target) => _player = target;
+
+    // ─── RL-only cancellation override ────────────────────────────────────────────
+
+    /// <summary>See BossAttackBase.CancelAttack() for the full story. If a charge is cut short
+    /// mid-flight (StopAllCoroutines() in the base call above already killed ChargeRoutine),
+    /// this restores the NavMeshAgent handoff StopCharge() would otherwise have done, so the
+    /// agent isn't left permanently disconnected (updatePosition/updateRotation stuck false).
+    /// Does NOT Warp() -- BossTrainingEnv.ResetEpisode() does that itself right after cancelling
+    /// every attack, so this just needs to stop fighting that Warp, not pre-empt it.</summary>
+    public override void CancelAttack()
+    {
+        bool wasActive = IsActive;
+        base.CancelAttack();
+        if (!wasActive) return;
+
+        if (_agent != null)
+        {
+            _agent.updatePosition = true;
+            _agent.updateRotation = true;
+        }
+        if (_animator != null)
+            _animator.SetBool(isChargingHash, false);
+    }
 }

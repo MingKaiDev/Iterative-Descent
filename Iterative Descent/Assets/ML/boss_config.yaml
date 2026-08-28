@@ -1,10 +1,17 @@
 behaviors:
+  # Key below MUST match BehaviorParameters.BehaviorName on the DROID_Boss GameObject
+  # in Training.unity (set to "BossAgent" in Step 5, 2026-08-27) -- currently correct.
   BossAgent:
     trainer_type: ppo
 
     hyperparameters:
       # Batch size: number of experiences per gradient update.
-      # 512 is a reasonable starting point for a discrete action boss with 18 obs.
+      # 512 is a reasonable starting point for a discrete action boss with 16 obs
+      # (updated 2026-08-27 for the v2 9-action/16-obs shape -- was 18 obs/~11 actions
+      # under the discarded BossAgent_v1 checkpoint). Left unchanged from v1's value:
+      # the obs/action count shrank only modestly, not by an order of magnitude, so
+      # there's no specific reason to believe 512 is now wrong -- revisit if training
+      # is unstable or converges suspiciously fast.
       batch_size: 512
 
       # Buffer: how many steps to collect before any update.
@@ -60,3 +67,11 @@ behaviors:
     # Keep checkpoints every 200k steps so you can roll back if policy collapses.
     keep_checkpoints: 5
     checkpoint_interval: 200000
+
+# NOTE (2026-08-27): the old BossAgent_v1 checkpoint at results/BossAgent_v1/ is
+# discarded per the v2 design decision -- its action space (11 actions/18 obs) no
+# longer matches BossAgent.cs's 9-action/16-obs shape. Launch fresh training with a
+# NEW --run-id (e.g. BossAgent_v2), not "BossAgent_v1" and not a bare "BossAgent"
+# that could collide with a future run -- mlagents-learn only resumes from an
+# existing run-id's folder when --resume is passed, so this is a naming-hygiene
+# note rather than a hard requirement, but avoids confusion down the line.

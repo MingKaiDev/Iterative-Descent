@@ -48,6 +48,9 @@ public abstract class PlayerAgentBase : MonoBehaviour
     public float TimeSinceLastFired => Time.time - _lastFireTime;
     /// <summary>Seconds since this opponent was last moving (NavMeshAgent velocity above threshold).</summary>
     public float TimeSinceLastMoved => Time.time - _lastMoveTime;
+    /// <summary>Current NavMeshAgent velocity (world space). Zero if the agent isn't ready yet.
+    /// Exposed for BossAgent's observation vector (Step 5) -- relative velocity / angular velocity around the boss.</summary>
+    public Vector3 Velocity => Agent != null ? Agent.velocity : Vector3.zero;
 
     // ─── Protected (available to subclasses) ────────────────────────────────────
     protected NavMeshAgent        Agent  { get; private set; }

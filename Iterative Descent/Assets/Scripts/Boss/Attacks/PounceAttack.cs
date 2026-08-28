@@ -183,6 +183,34 @@ public class PounceAttack : BossAttackBase
         EndAttack();
     }
 
+    // ─── RL-only target override ──────────────────────────────────────────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Added 2026-08-27: Training.unity's opponents use TrainingDummyHealth instead of
+    /// PlayerHealth, so the automatic lookup in Start() always found nothing there -- PerformAttack
+    /// early-returns on a null _player, so this attack could never actually fire in Training.unity
+    /// until this override is used. Called by BossTrainingEnv each episode, mirroring
+    /// BossStateMachine.SetTarget()/BossAttackRegistry.SetTarget(). Never called in the live game.
+    /// </summary>
+    public void SetTarget(Transform target) => _player = target;
+
+    // ─── RL-only cancellation override ────────────────────────────────────────────
+
+    /// <summary>See BossAttackBase.CancelAttack() for the full story. If the boss dies mid-teleport
+    /// (StopAllCoroutines() in the base call above already killed TeleportRoutine, possibly while
+    /// the renderers are mid-hidden for the "vanish" window), this guarantees the boss is visible
+    /// again -- same safety this class already does in OnAttackAnimEnd() for the normal-completion
+    /// case, just also covering the cancelled-mid-attack case that StopAllCoroutines() bypasses.
+    /// </summary>
+    public override void CancelAttack()
+    {
+        bool wasActive = IsActive;
+        base.CancelAttack();
+        if (!wasActive) return;
+
+        SetRenderersEnabled(true);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────────
 
     void SetRenderersEnabled(bool state)

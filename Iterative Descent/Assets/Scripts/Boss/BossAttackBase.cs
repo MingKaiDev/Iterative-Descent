@@ -182,6 +182,38 @@ public abstract class BossAttackBase : MonoBehaviour
         OnAttackEnded?.Invoke();
     }
 
+    /// <summary>
+    /// Forcibly aborts this attack if it is currently active. Stops ALL of this component's
+    /// coroutines in one call -- the timeout watchdog AND any subclass movement/VFX coroutine --
+    /// then clears cooldown/variety timers so the attack is immediately available again next
+    /// episode. Deliberately does NOT invoke OnAttackEnded: the caller (BossTrainingEnv.
+    /// ResetEpisode(), Training.unity only) is already about to force BossStateMachine back to
+    /// Combat itself via ResetForNewEpisode(), so firing that event here would be redundant --
+    /// and, worse, would fire BEFORE the boss's position/health have actually been reset.
+    ///
+    /// Added 2026-08-27: attacks that seize manual control mid-coroutine (e.g. SprintChargeAttack/
+    /// GroundSlamAttack disconnecting the NavMeshAgent, or PounceAttack hiding renderers) had no
+    /// way to know the boss died mid-attack. Their coroutines kept running to completion using
+    /// stale pre-death data, silently overwriting BossTrainingEnv's fresh episode reset -- for the
+    /// NavMeshAgent case this could drag the boss off the baked NavMesh, which then made
+    /// NavMeshAgent.Warp()/SetDestination() fail silently for the rest of the session. Subclasses
+    /// that take manual control of the agent, renderers, or other lingering visual/physical state
+    /// MUST override this and restore it -- see SprintChargeAttack/GroundSlamAttack/PounceAttack/
+    /// CoreOverloadAttack for the pattern. Base implementation is safe as-is for attacks with no
+    /// such state (SlashAttack, LeftPunchAttack, StabAttack, BladeSweepAttack -- none of these
+    /// touch the NavMeshAgent or hold any state beyond the base class's own).
+    /// </summary>
+    public virtual void CancelAttack()
+    {
+        if (!_isActive) return;
+
+        StopAllCoroutines();
+        _timeoutRoutine = null;
+        _isActive       = false;
+        _cooldownTimer  = 0f;
+        _varietyTimer   = 0f;
+    }
+
     IEnumerator AttackTimeoutRoutine()
     {
         yield return new WaitForSeconds(attackTimeoutDuration);

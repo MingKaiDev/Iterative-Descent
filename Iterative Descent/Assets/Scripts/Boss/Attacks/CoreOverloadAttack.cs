@@ -163,6 +163,38 @@ public class CoreOverloadAttack : BossAttackBase
     /// <summary>Suppressed -- the beam coroutine controls when this attack ends.</summary>
     public override void OnAttackAnimEnd() { }
 
+    // ─── RL-only target override ──────────────────────────────────────────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Added 2026-08-27: Training.unity's opponents use TrainingDummyHealth instead of
+    /// PlayerHealth, so the automatic lookup in Start() always found nothing there -- the
+    /// telegraph/beam fell back to laserOrigin.forward instead of tracking the opponent. Called
+    /// by BossTrainingEnv each episode, mirroring BossStateMachine.SetTarget()/
+    /// BossAttackRegistry.SetTarget(). Never called in the live game.</summary>
+    public void SetTarget(Transform target) => _player = target;
+
+    // ─── RL-only cancellation override ────────────────────────────────────────────
+
+    /// <summary>See BossAttackBase.CancelAttack() for the full story. Unlike the other three
+    /// RL-affected attacks this one doesn't touch the NavMeshAgent, but it has its own lingering
+    /// state that StopAllCoroutines() alone won't clean up: _isTelegraphing stays true forever
+    /// (Update() would keep redrawing a dim tracking line at the opponent indefinitely, cancelled
+    /// attack or not, since that check doesn't look at IsActive), the beam/telegraph LineRenderer
+    /// can be left enabled showing a frozen orphaned line, and the looping laser hum (if it had
+    /// already started via OnHitboxOpen -> StartLaserLoop) would never stop. All three are cleaned
+    /// up here.</summary>
+    public override void CancelAttack()
+    {
+        bool wasActive = IsActive;
+        base.CancelAttack();
+        if (!wasActive) return;
+
+        _isTelegraphing = false;
+        if (_lineRenderer != null)
+            _lineRenderer.enabled = false;
+        StopLaserLoop();
+    }
+
     // ─── Beam Coroutine ──────────────────────────────────────────────────────────
 
     IEnumerator ExtendBeamRoutine(Vector3 origin, Vector3 direction)

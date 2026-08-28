@@ -116,7 +116,22 @@ public class BossStateMachine : MonoBehaviour
     void UpdateCombat()
     {
         if (_player == null) return;
-        _agent.SetDestination(_player.position);
+
+        // 2026-08-28 fix: the scripted opponents' capsule pivot sits ~1 unit above the actual
+        // walkable NavMesh surface (their transform.position.y is the capsule center, not
+        // ground contact). Feeding that raw, elevated position straight into SetDestination()
+        // silently fails every time -- NavMeshAgent.SetDestination() has a much stricter
+        // internal tolerance for how far off-mesh a target can be than NavMesh.SamplePosition()
+        // does, and a full 1-unit vertical gap exceeds it. Confirmed via direct testing: the
+        // raw call returned false with hasPath staying false forever (the boss never chased at
+        // all, only gap-closer attacks that move it manually ever looked like movement), while
+        // ground-projecting the exact same target first made it succeed immediately. So: always
+        // sample the nearest point on the NavMesh before handing it to SetDestination().
+        Vector3 destination = _player.position;
+        if (NavMesh.SamplePosition(_player.position, out NavMeshHit hit, 3f, NavMesh.AllAreas))
+            destination = hit.position;
+
+        _agent.SetDestination(destination);
     }
 
     // ─── State Transitions ───────────────────────────────────────────────────────

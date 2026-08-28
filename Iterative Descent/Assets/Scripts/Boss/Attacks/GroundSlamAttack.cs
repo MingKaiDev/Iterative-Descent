@@ -177,6 +177,38 @@ public class GroundSlamAttack : BossAttackBase
         EndAttack();
     }
 
+    // ─── RL-only target override ──────────────────────────────────────────────────
+
+    /// <summary>Overrides the auto-found FindFirstObjectByType&lt;PlayerHealth&gt;() target.
+    /// Added 2026-08-27: Training.unity's opponents use TrainingDummyHealth instead of
+    /// PlayerHealth, so the automatic lookup in Start() always found nothing there -- PerformAttack
+    /// early-returns on a null _player, so this attack could never actually fire in Training.unity
+    /// until this override is used. Called by BossTrainingEnv each episode, mirroring
+    /// BossStateMachine.SetTarget()/BossAttackRegistry.SetTarget(). Never called in the live game.
+    /// </summary>
+    public void SetTarget(Transform target) => _player = target;
+
+    // ─── RL-only cancellation override ────────────────────────────────────────────
+
+    /// <summary>See BossAttackBase.CancelAttack() for the full story. If a leap is cut short
+    /// mid-flight (StopAllCoroutines() in the base call above already killed LeapRoutine before it
+    /// reached OnHitboxOpen/OnAttackAnimEnd), this restores the NavMeshAgent handoff those
+    /// callbacks would otherwise have done, so the agent isn't left permanently disconnected
+    /// (updatePosition/updateRotation stuck false). Does NOT Warp() -- BossTrainingEnv.
+    /// ResetEpisode() does that itself right after cancelling every attack.</summary>
+    public override void CancelAttack()
+    {
+        bool wasActive = IsActive;
+        base.CancelAttack();
+        if (!wasActive) return;
+
+        if (_agent != null)
+        {
+            _agent.updatePosition = true;
+            _agent.updateRotation = true;
+        }
+    }
+
     // ─── Editor Gizmos ───────────────────────────────────────────────────────────
 
     void OnDrawGizmosSelected()
