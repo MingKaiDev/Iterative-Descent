@@ -12,8 +12,12 @@ using UnityEngine;
 /// (Combat state's NavMeshAgent chase logic is untouched; this Agent only decides
 /// WHICH attack fires, never where the boss moves).
 ///
-/// NOT wired into Level 1.unity -- Training.unity only. Deploying a trained model onto
-/// the live boss is Step 7, deliberately deferred until training converges.
+/// Step 7 (2026-08-28): now also deployable onto Level 1.unity's live boss (DROID_Boss.prefab)
+/// in Inference Only mode. When trainingEnv is unassigned (as on Level 1.unity), the opponent/
+/// velocity/timing observations fall back to the real player via a cached FindFirstObjectByType
+/// PlayerHealth lookup and frame-to-frame position deltas -- see ResolveOpponentTransform() /
+/// ComputeFallbackVelocity() below. Training.unity is unaffected: trainingEnv != null there, so
+/// the original BossTrainingEnv.ActiveOpponent path still runs exactly as before.
 ///
 /// Unity Setup (Training.unity, DROID_Boss GameObject):
 ///   - BehaviorParameters: Behavior Name "BossAgent" (must match Assets/ML/boss_config.yaml's
@@ -104,6 +108,13 @@ public class BossAgent : Agent
     private int   _lastExecutedAttackIndex = -1;
     private bool  _lastExecutedWasFresh;
 
+    // Level 1.unity fallback (Step 7) -- only used when trainingEnv is unassigned. See
+    // ResolveOpponentTransform() / ComputeFallbackVelocity().
+    private PlayerHealth _fallbackOpponent;
+    private Vector3 _lastFallbackSamplePosition;
+    private float   _lastFallbackSampleTime;
+    private bool    _hasFallbackSample;
+
     // ─── ML-Agents Lifecycle ──────────────────────────────────────────────────────
 
     public override void Initialize()
@@ -167,9 +178,9 @@ public class BossAgent : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        var opponent = trainingEnv != null ? trainingEnv.ActiveOpponent : null;
+        Transform opponentTransform = ResolveOpponentTransform();
 
-        if (opponent == null || bossHealth == null)
+        if (opponentTransform == null || bossHealth == null)
         {
             // Shouldn't happen mid-episode (BossTrainingEnv always picks an opponent in
             // ResetEpisode()), but keeps the 16-float vector length correct if it ever does --
@@ -179,19 +190,41 @@ public class BossAgent : Agent
             return;
         }
 
-        Vector3 toOpponent = opponent.transform.position - transform.position;
+        Vector3 toOpponent = opponentTransform.position - transform.position;
         float distance = toOpponent.magnitude;
         sensor.AddObservation(distance);                                              // 0
 
-        Vector3 opponentVelocity = opponent.Velocity;
+        Vector3 opponentVelocity;
+        float timeSinceLastFiredNorm;
+        float timeSinceLastMovedNorm;
+        float horizon = Mathf.Max(0.01f, playerTimingNormalizationHorizon);
+
+        if (trainingEnv != null && trainingEnv.ActiveOpponent != null)
+        {
+            var opponent = trainingEnv.ActiveOpponent;
+            opponentVelocity = opponent.Velocity;
+            timeSinceLastFiredNorm = Mathf.Clamp01(opponent.TimeSinceLastFired / horizon);
+            timeSinceLastMovedNorm = Mathf.Clamp01(opponent.TimeSinceLastMoved / horizon);
+        }
+        else
+        {
+            // Level 1.unity (Step 7 deployment) -- no PlayerAgentBase to read Velocity /
+            // fire-timing from, so approximate velocity from frame-to-frame position deltas of
+            // the resolved opponent transform, and default the two fire/move timing observations
+            // to a neutral mid-horizon value (0.5) rather than 0 -- 0 reads as "opponent just
+            // fired/just moved", a constant false signal the trained policy never saw in training.
+            opponentVelocity = ComputeFallbackVelocity(opponentTransform.position);
+            timeSinceLastFiredNorm = 0.5f;
+            timeSinceLastMovedNorm = 0.5f;
+        }
+
         sensor.AddObservation(opponentVelocity.x);                                    // 1
         sensor.AddObservation(opponentVelocity.z);                                    // 2
 
         sensor.AddObservation(AngularVelocityAroundBoss(opponentVelocity, toOpponent, distance)); // 3
 
-        float horizon = Mathf.Max(0.01f, playerTimingNormalizationHorizon);
-        sensor.AddObservation(Mathf.Clamp01(opponent.TimeSinceLastFired / horizon));  // 4
-        sensor.AddObservation(Mathf.Clamp01(opponent.TimeSinceLastMoved / horizon));  // 5
+        sensor.AddObservation(timeSinceLastFiredNorm);                                // 4
+        sensor.AddObservation(timeSinceLastMovedNorm);                                // 5
 
         sensor.AddObservation(bossHealth.CurrentHealth / Mathf.Max(1f, bossHealth.maxHealth)); // 6
         sensor.AddObservation(bossHealth.IsPhaseTwo ? 1f : 0f);                       // 7
@@ -205,9 +238,9 @@ public class BossAgent : Agent
         bool canAttack = bossStateMachine != null &&
                           bossStateMachine.CurrentState == BossStateMachine.BossState.Combat;
 
-        var opponent = trainingEnv != null ? trainingEnv.ActiveOpponent : null;
-        float distance = opponent != null
-            ? Vector3.Distance(transform.position, opponent.transform.position)
+        Transform opponentTransform = ResolveOpponentTransform();
+        float distance = opponentTransform != null
+            ? Vector3.Distance(transform.position, opponentTransform.position)
             : Mathf.Infinity;
 
         for (int i = 0; i < attacks.Length; i++)
@@ -306,6 +339,51 @@ public class BossAgent : Agent
     }
 
     // ─── Internal Helpers ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolves the opponent's transform for observations/masking. Training (trainingEnv != null):
+    /// BossTrainingEnv's ActiveOpponent, exactly as before this fallback was added -- Training.unity
+    /// behaviour is unchanged. Level 1.unity (trainingEnv == null -- Step 7 deployment onto the live
+    /// boss): falls back to a cached FindFirstObjectByType&lt;PlayerHealth&gt; lookup for the real
+    /// player, mirroring the same fallback pattern already used by SprintChargeAttack/GroundSlamAttack/
+    /// PounceAttack/CoreOverloadAttack.
+    /// </summary>
+    Transform ResolveOpponentTransform()
+    {
+        if (trainingEnv != null)
+            return trainingEnv.ActiveOpponent != null ? trainingEnv.ActiveOpponent.transform : null;
+
+        if (_fallbackOpponent == null)
+            _fallbackOpponent = FindFirstObjectByType<PlayerHealth>();
+
+        return _fallbackOpponent != null ? _fallbackOpponent.transform : null;
+    }
+
+    /// <summary>
+    /// Level 1.unity fallback (Step 7) for opponent velocity: there's no PlayerAgentBase.Velocity
+    /// (NavMeshAgent-backed) for the real player, so this approximates it from position deltas
+    /// between successive CollectObservations calls. Yields Vector3.zero on the first sample, and
+    /// whenever the gap since the last sample is too large (&gt;=1s -- e.g. after being disabled) to
+    /// be a meaningful instantaneous velocity.
+    /// </summary>
+    Vector3 ComputeFallbackVelocity(Vector3 currentPosition)
+    {
+        Vector3 velocity = Vector3.zero;
+        float now = Time.time;
+
+        if (_hasFallbackSample)
+        {
+            float dt = now - _lastFallbackSampleTime;
+            if (dt > 0.001f && dt < 1f)
+                velocity = (currentPosition - _lastFallbackSamplePosition) / dt;
+        }
+
+        _lastFallbackSamplePosition = currentPosition;
+        _lastFallbackSampleTime = now;
+        _hasFallbackSample = true;
+
+        return velocity;
+    }
 
     /// <summary>
     /// Signed angular velocity (rad/s) of the opponent around the boss: the component of

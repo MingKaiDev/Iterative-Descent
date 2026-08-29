@@ -1,4 +1,5 @@
 ﻿// PuzzleProp.cs
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -54,32 +55,52 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
 
     public void Interact(GameObject interactor)
     {
-        if (_puzzleOpen) return;
+        // _questionsReady guards against interacting before the (async, on
+        // WebGL/Android an HTTP-backed) JSON load finishes -- see Start().
+        if (_puzzleOpen || !_questionsReady) return;
         OpenPuzzle();
     }
 
     // Puzzle Logic
     private bool _puzzleOpen;
+    private bool _questionsReady;
     private QuestionData[] _resolvedQuestions;  // full bank, loaded once
 
     void Awake()
     {
         if (puzzleOverlay != null) puzzleOverlay.SetActive(false);
 
-        // Resolve questions once at startup so the file isn't re-read on every interaction.
-        if (loadFromJson)
+        if (!loadFromJson)
         {
-            _resolvedQuestions = QuizDataLoader.Load(jsonFileName);
+            _resolvedQuestions = questions;
+            _questionsReady    = true;
+        }
+    }
+
+    void Start()
+    {
+        // Loading must happen in a coroutine, not Awake(), because
+        // QuizDataLoader now goes through UnityWebRequest (StreamingAssets
+        // is served over HTTP on WebGL / packed in the APK on Android, so it
+        // can't be read synchronously with System.IO there -- it only
+        // appeared to work before because Editor Play Mode reads the real
+        // Assets/StreamingAssets folder directly).
+        if (loadFromJson)
+            StartCoroutine(LoadQuestionsFromJson());
+    }
+
+    private IEnumerator LoadQuestionsFromJson()
+    {
+        yield return QuizDataLoader.LoadCoroutine(jsonFileName, result =>
+        {
+            _resolvedQuestions = result;
             if (_resolvedQuestions == null)
             {
                 Debug.LogWarning($"[PuzzleProp] '{gameObject.name}' JSON load failed — falling back to Inspector questions.");
                 _resolvedQuestions = questions;
             }
-        }
-        else
-        {
-            _resolvedQuestions = questions;
-        }
+        });
+        _questionsReady = true;
     }
 
     // Holds the selected questions between OpenPuzzle() and OpenPuzzleUI() when

@@ -3,6 +3,7 @@
 // Mirrors PuzzleProp exactly -- same BKT question selection, same DDA hooks,
 // and (as of 2026-08-08) the same concept-tutorial wiring. Use this on any
 // desk / clipboard prop you want to trigger Quiz 2.
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -34,32 +35,53 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
 
     public void Interact(GameObject interactor)
     {
-        if (_open) return;
+        // _questionsReady guards against interacting before the (async, on
+        // WebGL/Android an HTTP-backed) JSON load finishes -- see Start().
+        if (_open || !_questionsReady) return;
         OpenPuzzle();
     }
 
     // ── Private ──────────────────────────────────────────────────────────────
 
     private bool           _open;
+    private bool           _questionsReady;
     private QuestionData[] _resolvedQuestions;
 
     void Awake()
     {
         if (examPaperOverlay != null) examPaperOverlay.SetActive(false);
 
-        if (loadFromJson)
+        if (!loadFromJson)
         {
-            _resolvedQuestions = QuizDataLoader.Load(jsonFileName);
+            _resolvedQuestions = questions;
+            _questionsReady    = true;
+        }
+    }
+
+    void Start()
+    {
+        // Loading must happen in a coroutine, not Awake(), because
+        // QuizDataLoader now goes through UnityWebRequest (StreamingAssets
+        // is served over HTTP on WebGL / packed in the APK on Android, so it
+        // can't be read synchronously with System.IO there -- it only
+        // appeared to work before because Editor Play Mode reads the real
+        // Assets/StreamingAssets folder directly).
+        if (loadFromJson)
+            StartCoroutine(LoadQuestionsFromJson());
+    }
+
+    private IEnumerator LoadQuestionsFromJson()
+    {
+        yield return QuizDataLoader.LoadCoroutine(jsonFileName, result =>
+        {
+            _resolvedQuestions = result;
             if (_resolvedQuestions == null)
             {
                 Debug.LogWarning($"[ExamPaperProp] '{gameObject.name}' JSON load failed -- falling back to Inspector questions.");
                 _resolvedQuestions = questions;
             }
-        }
-        else
-        {
-            _resolvedQuestions = questions;
-        }
+        });
+        _questionsReady = true;
     }
 
     // Holds the selected questions between OpenPuzzle() and OpenExamPaperUI()
