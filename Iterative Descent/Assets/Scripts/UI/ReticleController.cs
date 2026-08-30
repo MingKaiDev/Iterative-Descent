@@ -31,15 +31,18 @@ public class ReticleController : MonoBehaviour
     public float maxOffset = 48f;
     [Tooltip("Arm offset in pixels when AccuracyT = 1 (fully settled).")]
     public float minOffset = 10f;
+
     // --- Private ------------------------------------------------------------
     private PlayerCombat      _pistol;
     private ShotgunController _shotgun;
+    private RifleController   _rifle;
     private CanvasGroup       _canvasGroup;
 
     void Start()
     {
         _pistol  = FindObjectOfType<PlayerCombat>();
         _shotgun = FindObjectOfType<ShotgunController>();
+        _rifle   = FindObjectOfType<RifleController>();
 
         // Use CanvasGroup alpha so this GO stays active and Update() always runs.
         _canvasGroup       = GetComponent<CanvasGroup>();
@@ -61,7 +64,12 @@ public class ReticleController : MonoBehaviour
         else if (_shotgun != null && _shotgun.enabled && _shotgun.IsAiming)
         {
             isAiming  = true;
-            accuracyT = 0f; // shotgun has fixed spread -- reticle stays at maxOffset
+            accuracyT = _shotgun.AccuracyT; // shotgun now has its own settle timer (spread capped at 50%, see ShotgunController)
+        }
+        else if (_rifle != null && _rifle.enabled && _rifle.IsAiming)
+        {
+            isAiming  = true;
+            accuracyT = _rifle.AccuracyT; // rifle now has its own (slower) settle timer
         }
 
         bool shouldShow    = isAiming && !PlayerInteractor.IsPaused;

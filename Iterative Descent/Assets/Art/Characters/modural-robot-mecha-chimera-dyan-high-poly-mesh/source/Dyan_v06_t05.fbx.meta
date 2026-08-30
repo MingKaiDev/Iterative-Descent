@@ -22,7 +22,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -83,7 +83,287 @@ ModelImporter:
   humanDescription:
     serializedVersion: 3
     human: []
-    skeleton: []
+    skeleton:
+    - name: Dyan_v06_t05(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: AirTakerSmall
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: BackTopCover
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: CableSocket
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0.075221315, y: 1.6010591, z: 0.039038505}
+      rotation: {x: 0.28612992, y: 0.057067286, z: -0.22785524, w: 0.9289537}
+      scale: {x: 100.00001, y: 99.99999, z: 100}
+    - name: Cylinder.003
+      parentName: CableSocket
+      position: {x: 0.00015997567, y: -0.00014301829, z: 0.00030360644}
+      rotation: {x: -0.00000008429372, y: -0.7071067, z: -0.000000084293696, w: 0.7071068}
+      scale: {x: 0.99999994, y: 1, z: 1}
+    - name: Cylinder.004
+      parentName: CableSocket
+      position: {x: 0.00013734073, y: -0.000008411724, z: 0.00038549173}
+      rotation: {x: -0.00000008429372, y: -0.7071067, z: -0.000000084293696, w: 0.7071068}
+      scale: {x: 0.99999994, y: 1, z: 1}
+    - name: Cylinder.005
+      parentName: CableSocket
+      position: {x: 0.00027263656, y: 0.0001331408, z: -0.0003923243}
+      rotation: {x: 0.019300234, y: 0.853225, z: 0.23890983, w: -0.4632028}
+      scale: {x: 0.99999994, y: 0.99999994, z: 1}
+    - name: Cylinder.006
+      parentName: CableSocket
+      position: {x: 0.000077377255, y: -0.000072825795, z: 0.0001965041}
+      rotation: {x: 1.8488927e-32, y: 0.000000007450581, z: -0.000000014901161, w: 1}
+      scale: {x: 1, y: 1, z: 0.9999999}
+    - name: Cylinder.007
+      parentName: CableSocket
+      position: {x: 0.00007124975, y: 0.00007084461, z: 0.00019337519}
+      rotation: {x: 1.8488927e-32, y: 0.000000007450581, z: -0.000000014901161, w: 1}
+      scale: {x: 1, y: 1, z: 0.9999999}
+    - name: Cylinder.008
+      parentName: CableSocket
+      position: {x: 0.00007737532, y: 0.000072822455, z: -0.00019650295}
+      rotation: {x: -0.0000025704503, y: 1, z: 0.000008188188, w: 0.000000075476855}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Cylinder.009
+      parentName: CableSocket
+      position: {x: 0.00007124797, y: -0.00007084744, z: -0.00019337353}
+      rotation: {x: -0.0000025779011, y: 1, z: 0.0000081807375, w: 0.00000007547681}
+      scale: {x: 0.99999994, y: 1, z: 1}
+    - name: Cylinder.010
+      parentName: CableSocket
+      position: {x: 0.00021527462, y: 0.00002379613, z: -0.00031244516}
+      rotation: {x: 0.019300207, y: 0.853225, z: 0.23890981, w: -0.4632028}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Plane.038
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Plane.043
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Plane.045
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Plane.047
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Plane.048
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: SideScaleArray
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: TopCam
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: AirTaker
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BackCover
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BackMidCover
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BackScale
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BackSideCover
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BottomScale
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Cable
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Ear
+      parentName: TopCam
+      position: {x: 0.0010832773, y: 0.0010420531, z: 0.01632134}
+      rotation: {x: -0.5522513, y: 0.6626214, z: 0.5017312, w: 0.06494045}
+      scale: {x: 1.0000001, y: 1, z: 1.5000001}
+    - name: EarSmall
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: GlassBottom
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: GlassGap
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: GlassSide
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: JawCorner
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: LightEarSmall
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: ScaleBottom
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: ScaleEarA
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: ScaleEarB
+      parentName: TopCam
+      position: {x: 0.0000070301367, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SideBottom
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SideScale
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: TopGlass
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: TopSensor
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: TopSide
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: TopSocket
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: bottomGlass
+      parentName: TopCam
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: elbowMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: 2.7755576e-17, y: -0.00000011920929, z: -0.0000000055879354}
+      rotation: {x: -0.7071068, y: -6.89982e-18, z: 6.8998187e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: foreArmMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: 2.7755576e-17, y: -0.00000011920929, z: -0.0000000055879354}
+      rotation: {x: -0.7071068, y: -6.89982e-18, z: 6.8998187e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: hipMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: 2.7755576e-17, y: -0.00000011920929, z: -0.0000000055879354}
+      rotation: {x: -0.7071068, y: -6.89982e-18, z: 6.8998187e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: palm
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: 2.7755576e-17, y: -0.00000011920929, z: -0.0000000055879354}
+      rotation: {x: -0.7071068, y: -6.89982e-18, z: 6.8998187e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: tightMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -1.2690637e-24, y: -0.000000044703484, z: 0.00000011920929}
+      rotation: {x: -0.7071068, y: -6.8998406e-18, z: 6.899807e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: calfMesh.001
+      parentName: tightMesh.001
+      position: {x: 1.2690638e-26, y: 0, z: 3.5527136e-17}
+      rotation: {x: 0, y: -1.6543612e-24, z: 7.7653495e-31, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: footMesh.001
+      parentName: calfMesh.001
+      position: {x: -5.2592252e-23, y: 0.000032390668, z: -0.0000026948}
+      rotation: {x: 0.013026558, y: -2.892488e-18, z: -2.542347e-19, w: 0.9999152}
+      scale: {x: 1, y: 1, z: 1}
+    - name: bodyLine.030
+      parentName: footMesh.001
+      position: {x: -2.7755572e-19, y: -5.3551046e-11, z: 0.0000000011923111}
+      rotation: {x: -0, y: 9.7578154e-18, z: -9.693524e-27, w: 1}
+      scale: {x: 1, y: 0.9999999, z: 0.9999999}
+    - name: upperArmMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: 2.7755576e-17, y: -0.00000011920929, z: -0.0000000055879354}
+      rotation: {x: -0.7071068, y: -6.89982e-18, z: 6.8998187e-18, w: 0.7071067}
+      scale: {x: 100, y: 100.000015, z: 100.000015}
+    - name: waistMesh.001
+      parentName: Dyan_v06_t05(Clone)
+      position: {x: -0.000000029802322, y: -9.313226e-10, z: -0.000000007450581}
+      rotation: {x: -0.7071068, y: -1.2119154e-15, z: -1.2119155e-15, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: chestMesh.001
+      parentName: waistMesh.001
+      position: {x: 5.9604643e-10, y: 2.2351741e-10, z: -8.381903e-11}
+      rotation: {x: 0.000000029802326, y: -1.6750415e-23, z: -5.620506e-16, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Plane.042
+      parentName: chestMesh.001
+      position: {x: -0, y: 0, z: 0.0000000011920929}
+      rotation: {x: 0.0000000037252903, y: -2.7755576e-17, z: 2.7755576e-17, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Plane.106
+      parentName: chestMesh.001
+      position: {x: -0, y: 0, z: 0.0000000011920929}
+      rotation: {x: 0.0000000037252903, y: -2.7755576e-17, z: 2.7755576e-17, w: 1}
+      scale: {x: 1, y: 1, z: 1}
     armTwist: 0.5
     foreArmTwist: 0.5
     upperLegTwist: 0.5
@@ -94,13 +374,13 @@ ModelImporter:
     globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
-    hasExtraRoot: 0
+    hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 0
+  avatarSetup: 1
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0

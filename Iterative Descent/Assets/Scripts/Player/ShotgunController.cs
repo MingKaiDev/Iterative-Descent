@@ -29,10 +29,21 @@ public class ShotgunController : MonoBehaviour
 
     [Header("Shotgun - Firing")]
     public int   pelletCount  = 6;
-    public float spreadAngle  = 10f;
+    [Tooltip("Cone spread in degrees on fresh aim (AccuracyT = 0).")]
+    public float maxSpreadAngle = 10f;
+    [Tooltip("Cone spread in degrees at full settle (AccuracyT = 1). Capped at 50% of " +
+             "maxSpreadAngle by design -- a shotgun that converges to near-pinpoint like the " +
+             "pistol/rifle would be too strong.")]
+    public float minSpreadAngle = 5f;
     public float pelletSpeed  = 30f;
     public float pelletDamage = 15f;
     public float fireInterval = 0.75f;
+
+    [Header("Shotgun - Aim Accuracy")]
+    [Tooltip("Seconds of holding aim before reaching full accuracy (minSpreadAngle).")]
+    public float settleTime     = 1f;
+    [Tooltip("Multiplier on settle speed while the player is moving. 0.3 = 30% as fast.")]
+    public float moveSettleRate = 0.3f;
 
     [Header("Shotgun - Reload")]
     [Tooltip("Seconds per shell insert.")]
@@ -66,6 +77,8 @@ public class ShotgunController : MonoBehaviour
     public bool IsReloading => _isReloading;
     public int  CurrentMag  => _currentMag;
     public int  SpareShells => _spareShells;
+    /// <summary>0 = fresh aim (wide spread), 1 = fully settled (spread capped at minSpreadAngle, 50% of max).</summary>
+    public float AccuracyT  => settleTime > 0f ? Mathf.Clamp01(_aimTimer / settleTime) : 1f;
 
     // --- Private ------------------------------------------------------------
     private Animator       _animator;
@@ -77,6 +90,7 @@ public class ShotgunController : MonoBehaviour
     private int            _spareShells;
     private float          _nextFireTime;
     private float          _lastFireTime = -999f;
+    private float          _aimTimer;
     private Coroutine      _reloadCoroutine;
 
     private static readonly int IsAimingHash = Animator.StringToHash("IsAiming");
@@ -135,6 +149,12 @@ public class ShotgunController : MonoBehaviour
         if (_isReloading) return;
 
         HandleAimToggle();
+        if (_isAiming)
+        {
+            bool isMoving = _movement != null && (_movement.IsWalking || _movement.IsRunning);
+            float rate    = isMoving ? moveSettleRate : 1f;
+            _aimTimer     = Mathf.Min(_aimTimer + Time.deltaTime * rate, settleTime);
+        }
         HandleFiring();
         HandleReload();
     }
@@ -150,6 +170,7 @@ public class ShotgunController : MonoBehaviour
     {
         _isAiming = aim;
         _animator.SetBool(IsAimingHash, _isAiming);
+        if (!aim) _aimTimer = 0f; // reset settle timer when gun is lowered
     }
 
     // --- Public API ---------------------------------------------------------
@@ -210,7 +231,8 @@ public class ShotgunController : MonoBehaviour
         OnFired?.Invoke();
         BroadcastAmmo();
 
-        FirePellets();
+        FirePellets();     // reads AccuracyT -- must fire before timer resets
+        _aimTimer = 0f;    // reset after shot so next pellet spread starts wide again
     }
 
     void FirePellets()
@@ -225,11 +247,14 @@ public class ShotgunController : MonoBehaviour
         Vector3   spawnOrigin = muzzlePoint != null ? muzzlePoint.position
                                                      : cam.position + cam.forward * 0.5f;
 
+        // Spread narrows as AccuracyT rises, capped at minSpreadAngle (50% of maxSpreadAngle by design).
+        float spread = Mathf.Lerp(maxSpreadAngle, minSpreadAngle, AccuracyT);
+
         Collider[] playerColliders = GetComponentsInChildren<Collider>();
 
         for (int i = 0; i < pelletCount; i++)
         {
-            Vector3 dir = GetSpreadDirection(cam.forward, cam.right, cam.up);
+            Vector3 dir = GetSpreadDirection(cam.forward, cam.right, cam.up, spread);
 
             GameObject    pelletObj = Instantiate(pelletPrefab, spawnOrigin, Quaternion.LookRotation(dir));
             ShotgunPellet pellet    = pelletObj.GetComponent<ShotgunPellet>();
@@ -255,9 +280,9 @@ public class ShotgunController : MonoBehaviour
         }
     }
 
-    Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up)
+    Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)
     {
-        float diskRadius = Mathf.Tan(spreadAngle * Mathf.Deg2Rad);
+        float diskRadius = Mathf.Tan(angleDeg * Mathf.Deg2Rad);
         float angle      = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
         float r          = Mathf.Sqrt(UnityEngine.Random.Range(0f, 1f));
 

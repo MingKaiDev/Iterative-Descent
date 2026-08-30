@@ -39,8 +39,19 @@ public class PlayerMovement : MonoBehaviour
     public float pistolRecoilKick  = 2f;
     [Tooltip("Degrees the camera kicks upward per shotgun shot.")]
     public float shotgunRecoilKick = 6f;
+    [Tooltip("Degrees the camera kicks upward per rifle shot. Defaults to match " +
+             "shotgunRecoilKick per design request -- the rifle's 100 dmg round kicks as hard " +
+             "as the shotgun despite firing one round instead of a pellet spread.")]
+    public float rifleRecoilKick   = 6f;
     [Tooltip("Degrees per second the recoil offset returns to zero.")]
     public float recoilDecaySpeed  = 12f;
+
+    [Header("Knockback")]
+    [Tooltip("How quickly an applied knockback velocity decays back to zero (higher = " +
+             "shorter, snappier stagger). Used as a Lerp factor in ApplyKnockbackMovement, " +
+             "not a flat per-second subtraction, so it slows down as it approaches zero " +
+             "rather than stopping abruptly.")]
+    public float knockbackRecoverySpeed = 6f;
 
     // --- Public Read-Only State ---------------------------------------------
 
@@ -59,6 +70,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator            _animator;
 
     private Vector3 _velocity;
+    private Vector3 _externalVelocity; // knockback -- decays via ApplyKnockbackMovement
     private float   _yaw;
     private float   _pitch;
     private bool    _isDead;
@@ -98,12 +110,14 @@ public class PlayerMovement : MonoBehaviour
     {
         PlayerCombat.OnFired      += HandlePistolFired;
         ShotgunController.OnFired += HandleShotgunFired;
+        RifleController.OnFired   += HandleRifleFired;
     }
 
     void OnDisable()
     {
         PlayerCombat.OnFired      -= HandlePistolFired;
         ShotgunController.OnFired -= HandleShotgunFired;
+        RifleController.OnFired   -= HandleRifleFired;
     }
 
     void OnDestroy()
@@ -118,6 +132,7 @@ public class PlayerMovement : MonoBehaviour
         HandleLook();
         HandleMovement();
         ApplyGravity();
+        ApplyKnockbackMovement();
     }
 
     // --- Look ---------------------------------------------------------------
@@ -147,6 +162,11 @@ public class PlayerMovement : MonoBehaviour
     void HandleShotgunFired()
     {
         _recoilOffset -= shotgunRecoilKick;
+    }
+
+    void HandleRifleFired()
+    {
+        _recoilOffset -= rifleRecoilKick;
     }
 
     // --- Movement -----------------------------------------------------------
@@ -188,6 +208,31 @@ public class PlayerMovement : MonoBehaviour
 
         _velocity.y += gravity * Time.deltaTime;
         _controller.Move(_velocity * Time.deltaTime);
+    }
+
+    // --- Knockback ------------------------------------------------------------
+
+    /// <summary>
+    /// Applies an instantaneous external velocity on top of normal input movement --
+    /// called by enemy attack scripts (e.g. BruteAttack) on a landed melee hit. Routed
+    /// through here rather than moving transform.position directly, since this class
+    /// owns the CharacterController and a direct transform move would just get undone
+    /// by the next _controller.Move() collision resolution.
+    /// Overwrites rather than adds, so a second hit landing before the first knockback
+    /// has fully decayed does not stack into an ever-increasing launch.
+    /// </summary>
+    public void ApplyKnockback(Vector3 force)
+    {
+        if (_isDead) return;
+        _externalVelocity = force;
+    }
+
+    void ApplyKnockbackMovement()
+    {
+        if (_externalVelocity.sqrMagnitude < 0.0001f) return;
+
+        _controller.Move(_externalVelocity * Time.deltaTime);
+        _externalVelocity = Vector3.Lerp(_externalVelocity, Vector3.zero, knockbackRecoverySpeed * Time.deltaTime);
     }
 
     // --- Death --------------------------------------------------------------

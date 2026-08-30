@@ -1,11 +1,11 @@
 using UnityEngine;
 
 /// <summary>
-/// Handles all weapon audio for both pistol and shotgun.
+/// Handles all weapon audio for pistol, shotgun, and rifle.
 /// Assign AudioClip assets in the Inspector -- no audio is generated at runtime.
 ///
 /// Setup: Add to the Player GameObject alongside PlayerAudioController.
-/// Events from the inactive weapon are ignored, so swapping weapons works automatically.
+/// Events from an inactive weapon are ignored, so swapping weapons works automatically.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class WeaponSounds : MonoBehaviour
@@ -30,11 +30,24 @@ public class WeaponSounds : MonoBehaviour
     [Range(0f, 1f)] public float shotgunMagFullVolume = 0.80f;
     [Range(0f, 1f)] public float shotgunDryVolume     = 0.5f;
 
+    [Header("Rifle")]
+    public AudioClip rifleFireClip;
+    public AudioClip rifleReloadClip;
+    public AudioClip rifleDryFireClip;
+    public AudioClip rifleCockClip;        // bolt-cycle sound, played a short delay after firing
+    public AudioClip rifleMagFullClip;     // played when magazine reaches max capacity
+    [Range(0f, 1f)] public float rifleFireVolume    = 0.95f;
+    [Range(0f, 1f)] public float rifleReloadVolume  = 0.85f;
+    [Range(0f, 1f)] public float rifleDryVolume     = 0.5f;
+    [Range(0f, 1f)] public float rifleCockVolume    = 0.75f;
+    [Range(0f, 1f)] public float rifleMagFullVolume = 0.80f;
+
     // ─── Private ─────────────────────────────────────────────────────────────────
 
     private AudioSource       _source;
     private PlayerCombat      _pistol;
     private ShotgunController _shotgun;
+    private RifleController   _rifle;
 
     // ─── Unity Lifecycle ─────────────────────────────────────────────────────────
 
@@ -46,6 +59,7 @@ public class WeaponSounds : MonoBehaviour
 
         _pistol  = GetComponent<PlayerCombat>();
         _shotgun = GetComponent<ShotgunController>();
+        _rifle   = GetComponent<RifleController>();
 
         PlayerCombat.OnFired         += OnPistolFired;
         PlayerCombat.OnReloadStart   += OnPistolReload;
@@ -55,6 +69,12 @@ public class WeaponSounds : MonoBehaviour
         ShotgunController.OnReloadStart += OnShotgunReload;
         ShotgunController.OnMagFull     += OnShotgunMagFull;
         ShotgunController.OnDryFire     += OnShotgunDryFire;
+
+        RifleController.OnFired       += OnRifleFired;
+        RifleController.OnReloadStart += OnRifleReload;
+        RifleController.OnDryFire     += OnRifleDryFire;
+        RifleController.OnCocked      += OnRifleCock;
+        RifleController.OnMagFull     += OnRifleMagFull;
     }
 
     void OnDestroy()
@@ -67,6 +87,12 @@ public class WeaponSounds : MonoBehaviour
         ShotgunController.OnReloadStart -= OnShotgunReload;
         ShotgunController.OnMagFull     -= OnShotgunMagFull;
         ShotgunController.OnDryFire     -= OnShotgunDryFire;
+
+        RifleController.OnFired       -= OnRifleFired;
+        RifleController.OnReloadStart -= OnRifleReload;
+        RifleController.OnDryFire     -= OnRifleDryFire;
+        RifleController.OnCocked      -= OnRifleCock;
+        RifleController.OnMagFull     -= OnRifleMagFull;
     }
 
     // ─── Pistol handlers ─────────────────────────────────────────────────────────
@@ -113,6 +139,38 @@ public class WeaponSounds : MonoBehaviour
     {
         if (_shotgun != null && !_shotgun.enabled) return;
         Play(shotgunDryFireClip, shotgunDryVolume);
+    }
+
+    // ─── Rifle handlers ──────────────────────────────────────────────────────────
+
+    void OnRifleFired()
+    {
+        if (_rifle != null && !_rifle.enabled) return;
+        Play(rifleFireClip, rifleFireVolume);
+    }
+
+    void OnRifleReload()
+    {
+        if (_rifle != null && !_rifle.enabled) return;
+        Play(rifleReloadClip, rifleReloadVolume);
+    }
+
+    void OnRifleCock()
+    {
+        if (_rifle != null && !_rifle.enabled) return;
+        Play(rifleCockClip, rifleCockVolume);
+    }
+
+    void OnRifleMagFull()
+    {
+        if (_rifle != null && !_rifle.enabled) return;
+        Play(rifleMagFullClip, rifleMagFullVolume);
+    }
+
+    void OnRifleDryFire()
+    {
+        if (_rifle != null && !_rifle.enabled) return;
+        Play(rifleDryFireClip, rifleDryVolume);
     }
 
     // ─── Helper ──────────────────────────────────────────────────────────────────

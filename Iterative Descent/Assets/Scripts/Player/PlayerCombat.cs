@@ -53,6 +53,12 @@ public class PlayerCombat : MonoBehaviour
     [Tooltip("Local rotation relative to Camera.")]
     public Vector3 fpsLocalRotation = new Vector3(0f, 0f, 0f);
 
+    [Header("Barrel Attachment")]
+    [Tooltip("Barrel attachment model -- child of weaponModel, assigned in Inspector. Hidden until EquipBarrelAttachment() is called.")]
+    public GameObject barrelAttachment;
+    [Tooltip("Damage multiplier applied while the barrel attachment is equipped. 1.25 = +25% damage.")]
+    public float barrelDamageMultiplier = 1.25f;
+
     [Header("Reload Tilt")]
     [Tooltip("Euler angle offset applied to the weapon during reload. Z = sideways tilt.")]
     public Vector3 reloadTiltAngle = new Vector3(0f, 0f, 90f);
@@ -72,12 +78,18 @@ public class PlayerCombat : MonoBehaviour
     // --- Public Read-Only State ---------------------------------------------
     public bool  IsReloading => _isReloading;
     public bool  IsAiming    => _isAiming;
+    /// <summary>True once the barrel attachment has been equipped (Reagent Routing puzzle reward).</summary>
+    public bool  HasBarrelAttachment => _hasBarrelAttachment;
     /// <summary>0 = fresh aim (inaccurate), 1 = fully settled (accurate).</summary>
+    // NOTE: the Reagent Routing barrel attachment reward now grants a flat
+    // +barrelDamageMultiplier damage bonus (see EquipBarrelAttachment() /
+    // HasBarrelAttachment below) -- separate from this TODO.
     // TODO (deferred, discussed for the Reagent Routing barrel attachment reward):
-    // tie AccuracyT to bonus damage on FireBullet(), so a tighter/more-settled
-    // shot also hits harder, not just more accurately. Explicitly put on hold --
-    // not implemented. If picked back up, the natural hook is in FireBullet()
-    // right where `damage` is assigned onto the bullet, scaling it by AccuracyT.
+    // additionally tie AccuracyT to bonus damage on FireBullet(), so a tighter/
+    // more-settled shot also hits harder on top of the flat barrel bonus.
+    // Explicitly put on hold -- not implemented. If picked back up, the natural
+    // hook is in FireBullet() right where `damage` is assigned onto the bullet,
+    // scaling it by AccuracyT.
     public float AccuracyT   => settleTime > 0f ? Mathf.Clamp01(_aimTimer / settleTime) : 1f;
     public int  CurrentMag  => _currentMag;
     public int  SpareAmmo   => _spareAmmo;
@@ -91,6 +103,7 @@ public class PlayerCombat : MonoBehaviour
     private bool           _isAiming;
     private bool           _isReloading;
     private bool           _isDead;
+    private bool           _hasBarrelAttachment;
     private int            _currentMag;
     private int            _spareAmmo;
     private float          _nextFireTime;
@@ -111,6 +124,9 @@ public class PlayerCombat : MonoBehaviour
 
         // Hide model on startup; OnEnable will show it once the component is active.
         if (weaponModel != null) weaponModel.SetActive(false);
+
+        // Barrel attachment starts hidden -- only shown once EquipBarrelAttachment() is called.
+        if (barrelAttachment != null) barrelAttachment.SetActive(false);
 
         PlayerHealth.OnPlayerDied += HandlePlayerDied;
     }
@@ -238,7 +254,7 @@ public class PlayerCombat : MonoBehaviour
             return;
         }
 
-        bullet.damage         = damage;
+        bullet.damage         = _hasBarrelAttachment ? damage * barrelDamageMultiplier : damage;
         bullet.impactPrefab   = bulletImpactPrefab;
         bullet.notifyDDAOnHit = true;
 
@@ -362,5 +378,23 @@ public class PlayerCombat : MonoBehaviour
         float oldValue = settleTime;
         settleTime = Mathf.Max(0.1f, settleTime - amount);
         Debug.Log($"[PlayerCombat] Barrel attachment applied. Settle time: {oldValue:F2}s -> {settleTime:F2}s.");
+    }
+
+    /// <summary>
+    /// Permanently equips the barrel attachment: reveals the barrel model (assigned
+    /// in Inspector, already parented under weaponModel) and applies
+    /// barrelDamageMultiplier to every shot fired from here on. Intended for one-time
+    /// permanent upgrade sources (e.g. the Reagent Routing puzzle reward) -- unlike
+    /// AddAmmo()/Heal(), this is a permanent stat change, not a consumable, so callers
+    /// should guard against granting it more than once per session (see
+    /// ReagentRoutingEventHandler's _rewardGranted flag for an example). Stacks
+    /// alongside ReduceSettleTime() -- both are granted together by the Reagent
+    /// Routing puzzle solve as of 2026-08-30.
+    /// </summary>
+    public void EquipBarrelAttachment()
+    {
+        _hasBarrelAttachment = true;
+        if (barrelAttachment != null) barrelAttachment.SetActive(true);
+        Debug.Log($"[PlayerCombat] Barrel attachment equipped. Damage multiplier: x{barrelDamageMultiplier:F2}.");
     }
 }

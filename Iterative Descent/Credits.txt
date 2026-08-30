@@ -1,13 +1,27 @@
+Props
 "Sci-fi Computer Terminal" (https://skfb.ly/6x8OK) by Pedro Belthori is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
 https://sketchfab.com/3d-models/mixamo-bot-character-lowpoly-c0c4d8c54d394e50821c193bd201f24d
 
+"Office Prop Pack - Game Asset" (https://skfb.ly/pyVtK) by AspectStudios is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Conference Table - rectangular 6m" (https://skfb.ly/6CsXU) by MozillaHubs is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Commercial Kitchen Props" (https://skfb.ly/XPT7) by Courvee is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).
+
+"Gun Cabinet" https://sketchfab.com/3d-models/gun-cabinet-free-27dd41060e8b4c9dae8590b0f47cf855#download
+
+Guns
 Shotgun - https://sketchfab.com/3d-models/shotgun-5992139018d34eb6897140999a667043
 Industrial Terminal - https://sketchfab.com/3d-models/industrial-terminal-846bb4773f74406bb8a24fcf2f17cf22
 
 shotgun, 12 gage winchester pump shotgun, single shot by JoseIgnacioTriay -- https://freesound.org/s/515223/ -- License: Attribution NonCommercial 4.0Pump Shotgun Loaded 1 by DrinkingWindGames -- https://freesound.org/s/789652/ -- License: Attribution 4.0
 Load Shotgun 1 by DrinkingWindGames -- https://freesound.org/s/789642/ -- License: Attribution 4.0
 Shotgun Trigger Pull by DrinkingWindGames -- https://freesound.org/s/789658/ -- License: Attribution 4.0
+
+"Repeater Rifle" (https://skfb.ly/6TD8U) by iedalton is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Makarov Pistol Silencer" (https://skfb.ly/oxpDG) by Coozy is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
 Textures
 https://polyhaven.com/a/granite_tile
@@ -16,11 +30,16 @@ https://polyhaven.com/a/painted_plaster_wall
 Audio
 Power Down https://freesound.org/people/noirenex/sounds/159399/
 
-Button Click Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=97549">freesound_community</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=97549">Pixabay</a>
+Button Click Sound Effect by <a href="https://pixabay.com/users/freesound\_community-46691455/?utm\_source=link-attribution\&utm\_medium=referral\&utm\_campaign=music\&utm\_content=97549">freesound_community</a> from <a href="https://pixabay.com//?utm\_source=link-attribution\&utm\_medium=referral\&utm\_campaign=music\&utm\_content=97549">Pixabay</a>
 
 audiopapkin-sound-design-elements-robot-mechanism-014-336703
-Sound Effect by <a href="https://pixabay.com/users/audiopapkin-14728698/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=336703">Paweł Spychała</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=336703">Pixabay</a>
-
-"Office Prop Pack - Game Asset" (https://skfb.ly/pyVtK) by AspectStudios is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+Sound Effect by <a href="https://pixabay.com/users/audiopapkin-14728698/?utm\_source=link-attribution\&utm\_medium=referral\&utm\_campaign=music\&utm\_content=336703">Paweł Spychała</a> from <a href="https://pixabay.com/sound-effects//?utm\_source=link-attribution\&utm\_medium=referral\&utm\_campaign=music\&utm\_content=336703">Pixabay</a>
 
 
+
+Enemies
+https://www.cgtrader.com/free-3d-models/character/sci-fi-character/battle-droid-korah-rigged-for-unreal-engine-unity-mixamo
+
+"Modural Robot Mecha Chimera Dyan high-poly mesh" (https://skfb.ly/oJ76O) by ChamberSu is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Hulking Cyborg" (https://skfb.ly/pqTZR) by simonemaccari is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).

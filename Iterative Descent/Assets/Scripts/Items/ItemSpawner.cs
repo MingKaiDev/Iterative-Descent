@@ -20,14 +20,18 @@ using UnityEngine;
 ///   Final chance = Clamp01(baseChance * ddaMult * needsMult)
 ///
 /// ─── One drop per kill ──────────────────────────────────────────────────────
-///   If both items roll true in the same event, only the higher-priority drop
-///   spawns (health > ammo, because HP loss is more urgent). Disable
-///   maxOneDropPerKill in the Inspector to allow both to drop simultaneously.
+///   If multiple items roll true in the same event, only the higher-priority drop
+///   spawns: health > pistol ammo > shotgun shells > rifle rounds (HP loss is most
+///   urgent). Disable maxOneDropPerKill in the Inspector to allow all to drop
+///   simultaneously.
 ///
 /// ─── Scene setup ────────────────────────────────────────────────────────────
 ///   Attach to the persistent GameManager GameObject.
-///   Assign AmmoBoxPrefab and HealthKitPrefab in the Inspector.
-///   Prefabs must have AmmoPickup / HealthPickup + a trigger Collider.
+///   Assign AmmoBoxPrefab, HealthKitPrefab, ShotgunShellsPrefab, and RifleAmmoBoxPrefab
+///   in the Inspector. Shotgun shells and rifle rounds only roll once their
+///   respective weapon is unlocked (via WeaponManager).
+///   Prefabs must have AmmoPickup / HealthPickup / ShotgunAmmoPickup / RifleAmmoPickup
+///   + a trigger Collider.
 /// </summary>
 public class ItemSpawner : MonoBehaviour
 {
@@ -44,6 +48,8 @@ public class ItemSpawner : MonoBehaviour
     public GameObject healthKitPrefab;
     [Tooltip("ShotgunShells prefab with ShotgunAmmoPickup script and trigger Collider.")]
     public GameObject shotgunShellsPrefab;
+    [Tooltip("RifleAmmoBox prefab with RifleAmmoPickup script and trigger Collider. Only rolls if rifle is unlocked.")]
+    public GameObject rifleAmmoBoxPrefab;
 
     // ─── Inspector: Base Drop Chances ─────────────────────────────────────────
 
@@ -57,6 +63,9 @@ public class ItemSpawner : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Flat probability shotgun shells drop per kill. Only rolls if shotgun is unlocked.")]
     public float shellBaseChance  = 0.30f;
+    [Range(0f, 1f)]
+    [Tooltip("Flat probability a rifle ammo box drops per kill. Only rolls if rifle is unlocked.")]
+    public float rifleBaseChance  = 0.30f;
 
     // ─── Inspector: DDA Modifier ──────────────────────────────────────────────
 
@@ -92,6 +101,14 @@ public class ItemSpawner : MonoBehaviour
     [Tooltip("Extra multiplier on shell drop chance when player is below the shell threshold.")]
     public float shellNeedsMultiplier  = 1.5f;
 
+    [Range(0f, 10f)]
+    [Tooltip("Spare round count below which the player is considered to need rifle ammo. " +
+             "Lower than shellNeedsThreshold since the rifle's whole spare pool is only 10 rounds.")]
+    public float rifleNeedsThreshold   = 4f;
+    [Range(1f, 3f)]
+    [Tooltip("Extra multiplier on rifle ammo drop chance when player is below the rifle threshold.")]
+    public float rifleNeedsMultiplier  = 1.5f;
+
     // ─── Inspector: Spawn Settings ────────────────────────────────────────────
 
     [Header("Spawn Settings")]
@@ -108,6 +125,7 @@ public class ItemSpawner : MonoBehaviour
     private PlayerHealth      _playerHealth;
     private PlayerCombat      _playerCombat;
     private ShotgunController _shotgun;
+    private RifleController   _rifle;
     private WeaponManager     _weaponManager;
 
     // ─── Unity Lifecycle ──────────────────────────────────────────────────────
@@ -144,18 +162,21 @@ public class ItemSpawner : MonoBehaviour
         bool dropAmmo   = RollAmmo();
         bool dropHealth = RollHealth();
         bool dropShells = RollShotgunShells();
+        bool dropRifle  = RollRifleRounds();
 
-        if (!dropAmmo && !dropHealth && !dropShells) return;
+        if (!dropAmmo && !dropHealth && !dropShells && !dropRifle) return;
 
         if (maxOneDropPerKill)
         {
-            // Priority: health > pistol ammo > shotgun shells.
+            // Priority: health > pistol ammo > shotgun shells > rifle rounds.
             if (dropHealth)
                 SpawnItem(healthKitPrefab,    deathPosition);
             else if (dropAmmo)
                 SpawnItem(ammoBoxPrefab,      deathPosition);
-            else
+            else if (dropShells)
                 SpawnItem(shotgunShellsPrefab, deathPosition);
+            else
+                SpawnItem(rifleAmmoBoxPrefab, deathPosition);
         }
         else
         {
@@ -163,6 +184,7 @@ public class ItemSpawner : MonoBehaviour
             if (dropHealth) SpawnItem(healthKitPrefab,     deathPosition);
             if (dropAmmo)   SpawnItem(ammoBoxPrefab,       deathPosition + Vector3.right * 0.3f);
             if (dropShells) SpawnItem(shotgunShellsPrefab, deathPosition - Vector3.right * 0.3f);
+            if (dropRifle)  SpawnItem(rifleAmmoBoxPrefab,  deathPosition + Vector3.forward * 0.3f);
         }
     }
 
@@ -207,6 +229,21 @@ public class ItemSpawner : MonoBehaviour
 
         bool drop = Random.value < chance;
         Debug.Log($"[ItemSpawner] Shell roll: base={shellBaseChance:F2} dda={ddaMult:F2} " +
+                  $"needs={needsMult:F2} final={chance:F2} -> {(drop ? "DROP" : "no drop")}");
+        return drop;
+    }
+
+    private bool RollRifleRounds()
+    {
+        if (rifleAmmoBoxPrefab == null) return false;
+        if (_weaponManager == null || !_weaponManager.IsRifleUnlocked) return false;
+
+        float ddaMult   = DDAMultiplier();
+        float needsMult = RifleNeedsMultiplier();
+        float chance    = Mathf.Clamp01(rifleBaseChance * ddaMult * needsMult);
+
+        bool drop = Random.value < chance;
+        Debug.Log($"[ItemSpawner] Rifle roll: base={rifleBaseChance:F2} dda={ddaMult:F2} " +
                   $"needs={needsMult:F2} final={chance:F2} -> {(drop ? "DROP" : "no drop")}");
         return drop;
     }
@@ -272,6 +309,17 @@ public class ItemSpawner : MonoBehaviour
         return needsShells ? shellNeedsMultiplier : 1f;
     }
 
+    /// <summary>
+    /// Returns rifleNeedsMultiplier when spare rounds are below the threshold.
+    /// Falls back to 1.0 if RifleController is not found.
+    /// </summary>
+    private float RifleNeedsMultiplier()
+    {
+        if (_rifle == null) return 1f;
+        bool needsRounds = _rifle.SpareRounds < rifleNeedsThreshold;
+        return needsRounds ? rifleNeedsMultiplier : 1f;
+    }
+
     // ─── Spawn ────────────────────────────────────────────────────────────────
 
     private void SpawnItem(GameObject prefab, Vector3 origin)
@@ -293,6 +341,7 @@ public class ItemSpawner : MonoBehaviour
         _playerHealth  = FindFirstObjectByType<PlayerHealth>();
         _playerCombat  = FindFirstObjectByType<PlayerCombat>();
         _shotgun       = FindFirstObjectByType<ShotgunController>();
+        _rifle         = FindFirstObjectByType<RifleController>();
         _weaponManager = FindFirstObjectByType<WeaponManager>();
 
         if (_playerHealth  == null)
@@ -301,7 +350,9 @@ public class ItemSpawner : MonoBehaviour
             Debug.LogWarning("[ItemSpawner] PlayerCombat not found in scene. Ammo needs check disabled.");
         if (_shotgun       == null)
             Debug.LogWarning("[ItemSpawner] ShotgunController not found in scene. Shell needs check disabled.");
+        if (_rifle         == null)
+            Debug.LogWarning("[ItemSpawner] RifleController not found in scene. Rifle needs check disabled.");
         if (_weaponManager == null)
-            Debug.LogWarning("[ItemSpawner] WeaponManager not found in scene. Shotgun unlock gate disabled.");
+            Debug.LogWarning("[ItemSpawner] WeaponManager not found in scene. Weapon unlock gates disabled.");
     }
 }

@@ -46,6 +46,7 @@ public class CombatHUD : MonoBehaviour
     // ─── Private ────────────────────────────────────────────────────────────────
     private PlayerCombat      _combat;
     private ShotgunController _shotgun;
+    private RifleController   _rifle;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ public class CombatHUD : MonoBehaviour
         PlayerHealth.OnHealthChanged    += HandleHealthChanged;
         PlayerCombat.OnAmmoChanged      += HandlePistolAmmoChanged;
         ShotgunController.OnAmmoChanged += HandleShotgunAmmoChanged;
+        RifleController.OnAmmoChanged   += HandleRifleAmmoChanged;
         PlayerHealth.OnPlayerDied       += HandlePlayerDied;
 
         // Death overlay starts hidden.
@@ -68,6 +70,7 @@ public class CombatHUD : MonoBehaviour
         PlayerHealth.OnHealthChanged    -= HandleHealthChanged;
         PlayerCombat.OnAmmoChanged      -= HandlePistolAmmoChanged;
         ShotgunController.OnAmmoChanged -= HandleShotgunAmmoChanged;
+        RifleController.OnAmmoChanged   -= HandleRifleAmmoChanged;
         PlayerHealth.OnPlayerDied       -= HandlePlayerDied;
     }
 
@@ -75,6 +78,7 @@ public class CombatHUD : MonoBehaviour
     {
         _combat  = FindObjectOfType<PlayerCombat>();
         _shotgun = FindObjectOfType<ShotgunController>();
+        _rifle   = FindObjectOfType<RifleController>();
 
         // Seed ammo display in case events fire before this Start()
         if (_combat != null)
@@ -112,6 +116,13 @@ public class CombatHUD : MonoBehaviour
     {
         // Ignore if shotgun is not the active weapon.
         if (_shotgun != null && !_shotgun.enabled) return;
+        if (ammoText != null) ammoText.text = $"[ {mag} | {spare} ]";
+    }
+
+    void HandleRifleAmmoChanged(int mag, int spare)
+    {
+        // Ignore if rifle is not the active weapon.
+        if (_rifle != null && !_rifle.enabled) return;
         if (ammoText != null) ammoText.text = $"[ {mag} | {spare} ]";
     }
 

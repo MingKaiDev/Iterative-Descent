@@ -2,23 +2,28 @@ using UnityEngine;
 
 /// <summary>
 /// Listens for ReagentRoutingUI.OnReagentRoutingSolved and permanently equips
-/// the player with a pistol barrel attachment: reduces PlayerCombat.settleTime
-/// by settleTimeReduction seconds, so the aim reticle reaches full accuracy
-/// faster.
+/// the player with a pistol barrel attachment. Grants TWO stacked effects on
+/// solve:
+///   1. Reduces PlayerCombat.settleTime by settleTimeReduction seconds, so the
+///      aim reticle reaches full accuracy faster.
+///   2. Reveals the barrel model (Inspector-assigned on PlayerCombat, already
+///      parented under weaponModel) and applies a flat damage multiplier
+///      (PlayerCombat.barrelDamageMultiplier, default +25%) to every shot.
 ///
-/// DESIGN HISTORY (this reward has changed twice across the design conversation)
+/// DESIGN HISTORY (this reward has changed across the design conversation)
 /// ------------------------------------------------------------------------
 /// Round 1: replaced an earlier chemistryLabDoor placeholder with a
 /// MatchingEventHandler-style guaranteed ammo+health drop via ItemSpawner.
-/// Round 2 (this version): replaced that with a permanent barrel attachment
-/// per an explicit "bigger reward" request. Confirmed to REPLACE the
-/// ammo+health drop, not stack with it, and to auto-grant on solve rather
-/// than spawn a physical pickup (no new prefab/art needed).
+/// Round 2: replaced that with a permanent settle-time-only barrel attachment
+/// per an explicit "bigger reward" request.
+/// Round 3 (this version, 2026-08-30): added a visible barrel model + flat
+/// damage buff via PlayerCombat.EquipBarrelAttachment(), confirmed to STACK
+/// with the Round 2 settle-time reduction rather than replace it.
 ///
-/// A separate idea -- tying reticle size (AccuracyT) to bonus damage, so a
-/// tighter/more-settled shot also hits harder -- was raised but explicitly
-/// put on hold; it is NOT implemented here. See the TODO comment next to
-/// AccuracyT in PlayerCombat.cs for where that would hook in later.
+/// A separate idea -- tying reticle size (AccuracyT) to bonus damage on top of
+/// this, so a tighter/more-settled shot also hits harder -- was raised but
+/// explicitly put on hold; it is NOT implemented here. See the TODO comment
+/// next to AccuracyT in PlayerCombat.cs for where that would hook in later.
 ///
 /// RULES (same as DrainEventHandler / StackEventHandler)
 /// ------------------------------------------------------------------------
@@ -66,6 +71,7 @@ public class ReagentRoutingEventHandler : MonoBehaviour
         }
 
         combat.ReduceSettleTime(settleTimeReduction);
+        combat.EquipBarrelAttachment();
         _rewardGranted = true;
     }
 }
