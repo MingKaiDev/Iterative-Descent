@@ -1,4 +1,4 @@
-﻿// PlayerInteractor.cs
+// PlayerInteractor.cs
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -43,9 +43,19 @@ public class PlayerInteractor : MonoBehaviour
     private readonly List<InteractableBase> _inRange = new();
     private int _selectedIndex = 0;
 
+    [Header("Line of Sight")]
+    [Tooltip("Eye height (relative to the player's own transform) the obstruction raycast is cast from/to. Matches the convention used by EnemyChaser's proximity LOS check.")]
+    public float losHeight = 1.6f;
+
+    // Obstruction layer for the line-of-sight check -- same layer name used by
+    // EnemyChaser's HasLineOfSight() and the Boss attack wall checks, so a
+    // single "Level 1 Obstacle" layer governs LOS project-wide.
+    private int _wallLayer;
+
     void Awake()
     {
         Instance = this;
+        _wallLayer = LayerMask.GetMask("Level 1 Obstacle");
     }
 
     void OnDestroy()
@@ -84,7 +94,8 @@ public class PlayerInteractor : MonoBehaviour
         foreach (var obj in _all)
         {
             if (obj == null) continue;
-            if (Vector3.Distance(transform.position, obj.Center) <= obj.highlightRadius)
+            if (Vector3.Distance(transform.position, obj.Center) <= obj.highlightRadius
+                && HasLineOfSight(obj))
                 _inRange.Add(obj);
         }
 
@@ -94,6 +105,22 @@ public class PlayerInteractor : MonoBehaviour
 
         if (_inRange.Count == 0) _selectedIndex = 0;
         else _selectedIndex = Mathf.Clamp(_selectedIndex, 0, _inRange.Count - 1);
+    }
+
+    /// <summary>
+    /// Raycasts between the player and the prop's interaction point at
+    /// losHeight, against the "Level 1 Obstacle" layer. Returns true (clear)
+    /// if nothing on that layer is between them -- so a prop behind a wall
+    /// stays out of _inRange even when it's within highlightRadius.
+    /// </summary>
+    private bool HasLineOfSight(InteractableBase obj)
+    {
+        Vector3 from = transform.position + Vector3.up * losHeight;
+        Vector3 to   = obj.Center;
+
+        // Linecast returns true if it HIT something -- i.e. blocked -- so a
+        // clear line of sight is the inverse of that.
+        return !Physics.Linecast(from, to, _wallLayer, QueryTriggerInteraction.Ignore);
     }
 
     void HandleSelection()

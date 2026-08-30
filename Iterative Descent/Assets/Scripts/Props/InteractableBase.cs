@@ -35,6 +35,20 @@ public class InteractableBase : MonoBehaviour
             Debug.LogWarning($"[InteractableBase] '{gameObject.name}' has no IInteractable component.", this);
     }
 
+    /// <summary>
+    /// Runs whenever this component is disabled -- including the
+    /// self-disable pattern props like GateDisableProp use after firing once
+    /// (enabled = false so it can't be triggered again). Without this the
+    /// Outline component (a separate component, unaffected by disabling
+    /// InteractableBase) stays in whatever state UpdateState() last left it,
+    /// so the highlight kept showing permanently after interaction.
+    /// </summary>
+    void OnDisable()
+    {
+        if (_outline != null) _outline.enabled = false;
+        if (promptPanel != null) promptPanel.SetActive(false);
+    }
+
     /// <summary>Called every frame by PlayerInteractor.</summary>
     public void UpdateState(bool inRadius, bool selected)
     {
