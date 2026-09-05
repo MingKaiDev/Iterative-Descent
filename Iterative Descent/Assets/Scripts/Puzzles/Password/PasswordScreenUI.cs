@@ -26,6 +26,13 @@ public class PasswordScreenUI : MonoBehaviour
     public string correctPassword = "C0mput3r#1";
     public float typeSpeed = 0.08f;
 
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    [Tooltip("Played once per character as the password auto-types itself in.")]
+    public AudioClip keystrokeSound;
+    [Range(0f, 1f)]
+    public float sfxVolume = 0.4f;
+
     [Header("Colours")]
     // Phosphor CRT palette -- matches ARBITEX terminal theme
     public Color defaultColour  = new Color(0.20f, 1.00f, 0.20f, 1f);  // #33FF33 phosphor green
@@ -73,6 +80,7 @@ public class PasswordScreenUI : MonoBehaviour
         foreach (char c in correctPassword)
         {
             passwordInputField.text += c;
+            if (sfxAudioSource != null && keystrokeSound != null) sfxAudioSource.PlayOneShot(keystrokeSound, sfxVolume);
             yield return new WaitForSecondsRealtime(typeSpeed);
         }
 

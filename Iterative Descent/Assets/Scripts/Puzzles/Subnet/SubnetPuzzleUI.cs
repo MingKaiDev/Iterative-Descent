@@ -57,6 +57,9 @@ public class SubnetPuzzleUI : MonoBehaviour
     /// </summary>
     public static event Action<int> OnSubnetSolved;
 
+    /// <summary>Singleton set in Awake() -- lets SubnetServerRow play arrow SFX without a direct reference.</summary>
+    public static SubnetPuzzleUI Instance { get; private set; }
+
     // ── Server Data ───────────────────────────────────────────────────────────
 
     private struct ServerDef
@@ -93,6 +96,28 @@ public class SubnetPuzzleUI : MonoBehaviour
     [Header("Feedback")]
     [SerializeField] private SubnetFeedbackPopup feedbackPopup;
 
+    [Header("Audio")]
+    [Tooltip("One-shot source for left/right arrow clicks.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+
+    [Tooltip("Looping source for the continuous console hum while the panel is open.")]
+    [SerializeField] private AudioSource ambientAudioSource;
+
+    [Tooltip("Continuous ambient loop played for as long as the panel is open.")]
+    [SerializeField] private AudioClip ambientLoopClip;
+
+    [Tooltip("Played when a server row's LEFT (<) button is pressed.")]
+    [SerializeField] private AudioClip leftArrowSound;
+
+    [Tooltip("Played when a server row's RIGHT (>) button is pressed.")]
+    [SerializeField] private AudioClip rightArrowSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float ambientVolume = 0.25f;
+
     // ── Runtime ───────────────────────────────────────────────────────────────
 
     private Action _onClose;
@@ -104,6 +129,11 @@ public class SubnetPuzzleUI : MonoBehaviour
 
     // ── Unity ─────────────────────────────────────────────────────────────────
 
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void OnEnable()
     {
         if (submitButton != null) submitButton.onClick.AddListener(OnSubmit);
@@ -114,6 +144,7 @@ public class SubnetPuzzleUI : MonoBehaviour
     {
         if (submitButton != null) submitButton.onClick.RemoveListener(OnSubmit);
         if (closeButton  != null) closeButton.onClick.RemoveListener(OnClosePressed);
+        StopAmbientLoop();
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -154,6 +185,7 @@ public class SubnetPuzzleUI : MonoBehaviour
         }
 
         PlayerMetricsTracker.Instance?.NotifySubnetStarted();
+        StartAmbientLoop();
     }
 
     // ── Submit ────────────────────────────────────────────────────────────────
@@ -211,7 +243,36 @@ public class SubnetPuzzleUI : MonoBehaviour
 
     private void OnClosePressed() => DoClose();
 
-    private void DoClose() => _onClose?.Invoke();
+    private void DoClose()
+    {
+        StopAmbientLoop();
+        _onClose?.Invoke();
+    }
+
+    // ── Audio ─────────────────────────────────────────────────────────────────
+
+    /// <summary>Called by SubnetServerRow when its left/right button is pressed.</summary>
+    public void PlayArrowSound(bool isRight)
+    {
+        if (sfxAudioSource == null) return;
+        AudioClip clip = isRight ? rightArrowSound : leftArrowSound;
+        if (clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
+    }
+
+    private void StartAmbientLoop()
+    {
+        if (ambientAudioSource == null || ambientLoopClip == null) return;
+        ambientAudioSource.clip   = ambientLoopClip;
+        ambientAudioSource.loop   = true;
+        ambientAudioSource.volume = ambientVolume;
+        ambientAudioSource.Play();
+    }
+
+    private void StopAmbientLoop()
+    {
+        if (ambientAudioSource == null) return;
+        ambientAudioSource.Stop();
+    }
 
     // ── DDA Tier ──────────────────────────────────────────────────────────────
 

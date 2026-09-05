@@ -7,10 +7,24 @@ using UnityEngine;
 /// Starts at Tier 1 (Easy) so new players get a gentler first encounter.
 ///
 /// Signal weights:
-///   [35%] Accuracy          — ShotsLanded / ShotsFired
+///   [35%] Accuracy          — ShotsLanded / ShotsFired, pooled across all three weapons.
+///                            2026-09: pistol and rifle each call NotifyShotFired() once
+///                            per trigger pull and NotifyShotLanded() once immediately on
+///                            a hit (single projectile, binary hit/miss -- see
+///                            ShotgunPellet.notifyDDAOnHit). The shotgun also calls
+///                            NotifyShotFired() once per trigger pull, but a shot only
+///                            counts as NotifyShotLanded() once at least
+///                            ShotgunController.pelletHitFractionForDDA (default 40%) of
+///                            that shot's pellets connect -- see ShotgunController's
+///                            PelletVolley tally, which resolves once every pellet in
+///                            the shot has hit or expired.
 ///   [30%] Normalised health — CurrentHP / MaxHP at encounter end
 ///   [20%] Combat time       — InverseLerp(fastTime, slowTime, duration), inverted so fast = 1
-///   [15%] Normalised ammo   — (mag + spare) / ammoCombatSoftCap at encounter end
+///   [15%] Normalised ammo   — InverseLerp(minAmmoCount, ammoCombatSoftCap, mag + spare)
+///                            at encounter end. 2026-09 revamp: uses a floor
+///                            (PlayerCombat.minAmmoCount) instead of raw zero, so a
+///                            player sitting on a handful of rounds isn't scored as
+///                            meaningfully different from a player with none.
 ///
 /// Partial data: if a signal source is unavailable (e.g. no shots fired yet),
 /// that signal is excluded and the remaining weights are re-normalised, matching

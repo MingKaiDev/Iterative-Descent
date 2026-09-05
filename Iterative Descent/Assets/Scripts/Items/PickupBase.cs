@@ -8,9 +8,12 @@ using UnityEngine;
 ///   2. Add a BoxCollider (or SphereCollider), tick "Is Trigger".
 ///   3. Player GameObject must have tag "Player".
 ///
-/// Subclasses override ApplyPickup() to define the effect.
-/// The item bobs and rotates in-world to signal interactivity,
-/// and destroys itself on collection. Double-pickup is guarded.
+/// Subclasses override ApplyPickup() to define the effect and return whether
+/// the item was actually consumed. Almost always true -- HealthPickup is the
+/// one exception, returning false (declining the pickup, leaving it in the
+/// world) when the player's medkit inventory is already at its cap.
+/// The item bobs and rotates in-world to signal interactivity, and destroys
+/// itself on collection. Double-pickup is guarded.
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public abstract class PickupBase : MonoBehaviour
@@ -56,16 +59,21 @@ public abstract class PickupBase : MonoBehaviour
         if (_consumed) return;
         if (!other.CompareTag("Player")) return;
 
+        bool consumed = ApplyPickup(other.gameObject);
+        if (!consumed) return; // e.g. HealthPickup declining a full medkit inventory
+
         _consumed = true;
-        ApplyPickup(other.gameObject);
         Destroy(gameObject);
     }
 
     // ─── Abstract ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Called exactly once when the player touches this pickup.
+    /// Called exactly once when the player touches this pickup (re-called on a
+    /// later touch if a previous call returned false and the pickup is still here).
     /// Use <paramref name="player"/> to get PlayerHealth, PlayerCombat, etc.
+    /// Return true if the item was actually consumed (destroy it), false to leave
+    /// it in the world untouched.
     /// </summary>
-    protected abstract void ApplyPickup(GameObject player);
+    protected abstract bool ApplyPickup(GameObject player);
 }

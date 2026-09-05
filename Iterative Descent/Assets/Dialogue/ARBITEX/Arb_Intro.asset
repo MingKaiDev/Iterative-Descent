@@ -17,11 +17,15 @@ MonoBehaviour:
     text: Well. That's new. Most test subjects don't survive first contact.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 013080148588f234388455a61aeaa6f2, type: 3}
   - speakerName: ARBITEX
-    text: I am ARBITEX. I administer this facility, and everything inside it. Including you.
+    text: I am ARBITEX. I administer this facility, and everything inside it. Including
+      you.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: a826e50c22b036d4898e029c427e8cf7, type: 3}
   - speakerName: ARBITEX
     text: Let's see if you're worth the rest of my attention.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: d48fc04bf75d68d4bbf70ab54ef05adb, type: 3}

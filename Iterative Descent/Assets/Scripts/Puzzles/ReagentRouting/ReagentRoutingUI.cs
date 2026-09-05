@@ -188,6 +188,29 @@ public class ReagentRoutingUI : MonoBehaviour
     [SerializeField] private int attemptsBeforeReveal = 3;
 
     // =========================================================================
+    // Inspector: Audio
+    // =========================================================================
+
+    [Header("Audio")]
+    [Tooltip("One-shot source for node clicks, undo, reset, and commit.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+
+    [Tooltip("Played when a valve/node is clicked and added to the route.")]
+    [SerializeField] private AudioClip nodeClickSound;
+
+    [Tooltip("Played when UNDO removes the last step of the route.")]
+    [SerializeField] private AudioClip undoSound;
+
+    [Tooltip("Played when RESET ROUTE clears the route back to INTAKE.")]
+    [SerializeField] private AudioClip resetSound;
+
+    [Tooltip("Played when COMMIT ROUTE runs validation.")]
+    [SerializeField] private AudioClip commitSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
+    // =========================================================================
     // Colours (amber/copper industrial-chemical palette --
     // deliberately distinct from Drain's green CRT / Stack's charcoal PDU /
     // PacketFilter's green terminal)
@@ -600,6 +623,7 @@ public class ReagentRoutingUI : MonoBehaviour
         }
 
         _path.Add(id);
+        PlaySfx(nodeClickSound);
         RefreshAllNodeVisuals();
         RefreshAllEdgeVisuals();
 
@@ -622,6 +646,7 @@ public class ReagentRoutingUI : MonoBehaviour
         if (_path.Count > 1)
         {
             _path.RemoveAt(_path.Count - 1);
+            PlaySfx(undoSound);
             _committed = false;
             RefreshAllNodeVisuals();
             RefreshAllEdgeVisuals();
@@ -633,6 +658,7 @@ public class ReagentRoutingUI : MonoBehaviour
     private void OnResetClicked()
     {
         if (_done) return;
+        PlaySfx(resetSound);
         _path = new List<int> { _sourceId };
         _committed = false;
         _showOptimal = false;
@@ -647,6 +673,7 @@ public class ReagentRoutingUI : MonoBehaviour
         if (_done || _committed) return;
         if (_path[_path.Count - 1] != _targetId) return;
 
+        PlaySfx(commitSound);
         _committed = true;
 
         (Dictionary<int, int> dist, Dictionary<int, int> prev) = Dijkstra(_sourceId);
@@ -707,6 +734,16 @@ public class ReagentRoutingUI : MonoBehaviour
         RefreshInfoPanel();
 
         feedbackPopup?.Show(true, msg, onDismiss: null);
+    }
+
+    // =========================================================================
+    // Audio
+    // =========================================================================
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource == null || clip == null) return;
+        sfxAudioSource.PlayOneShot(clip, sfxVolume);
     }
 
     // =========================================================================

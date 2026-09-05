@@ -51,6 +51,9 @@ using System.Linq;
 ///   statusText          TMP for live console output (optional)
 ///   submitButton        Optional -- calls CheckSolution
 ///   closeButton         Calls ClosePanel
+///   sfxAudioSource      AudioSource for one-shot wiring stings (optional -- no-ops if unassigned)
+///   nodeSelectSound     Clip played on port-select (node or HEAD)
+///   wireSnapSound       Clip played when a connection lands on a node or NULL terminal
 ///
 /// NOTES
 /// -----
@@ -104,6 +107,17 @@ public class LinkedListPuzzleUI : MonoBehaviour
     [SerializeField] private float corruptionIntervalHard     = 20f;
     [Tooltip("Seconds between corruptions on Tier 4. 0 = disabled.")]
     [SerializeField] private float corruptionIntervalVeryHard = 12f;
+
+    [Header("Audio")]
+    [Tooltip("AudioSource used for one-shot wiring feedback stings.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [Tooltip("Played when a node's port (or the HEAD port) is clicked to select it as the connection source.")]
+    [SerializeField] private AudioClip nodeSelectSound;
+    [Tooltip("Played when a pending connection is committed onto a destination node or the NULL terminal.")]
+    [SerializeField] private AudioClip wireSnapSound;
+    [Tooltip("Volume for both wiring one-shot stings.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 0.4f;
 
     // ── Node / Arrow Collections ───────────────────────────────────────────────
     private List<LLNodeBlock> _nodes        = new();
@@ -334,6 +348,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
 
         string srcLabel = _pendingSourceIsHead ? "HEAD" : _pendingSourceNode.Value.ToString();
         SetStatus($"> PTR [{srcLabel}] -> [{targetNode.Value}]  UPDATED");
+        PlaySfx(wireSnapSound);
 
         CancelPending();
         RebuildArrows();
@@ -357,6 +372,7 @@ public class LinkedListPuzzleUI : MonoBehaviour
 
         _pendingSourceNode.SetNext(null);
         SetStatus($"> PTR [{_pendingSourceNode.Value}] -> [NULL_PTR]  UPDATED");
+        PlaySfx(wireSnapSound);
 
         CancelPending();
         RebuildArrows();
@@ -368,6 +384,8 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _hasPending           = true;
         _pendingSourceNode    = sourceNode;
         _pendingSourceIsHead  = isHead;
+
+        PlaySfx(nodeSelectSound);
 
         if (isHead)
         {
@@ -395,6 +413,12 @@ public class LinkedListPuzzleUI : MonoBehaviour
         _pendingSourceIsHead = false;
 
         DestroyPendingArrow();
+    }
+
+    /// <summary>Defensive one-shot helper -- no-ops if either the AudioSource or clip is unassigned.</summary>
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
     }
 
     // ── Arrow Management ──────────────────────────────────────────────────────

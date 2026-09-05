@@ -1455,7 +1455,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54179b6a554b5f64a9cba2deef408e6e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
-  maxHealth: 700
+  maxHealth: 800
   phaseThreshold: 0.5
 --- !u!114 &3250978346409964684
 MonoBehaviour:

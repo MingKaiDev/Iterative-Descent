@@ -42,6 +42,11 @@ public class EnemyChaser : EnemyBase
     [Header("Animator Parameter Names")]
     [SerializeField] private string speedParamName  = "Speed";
     [SerializeField] private string deadParamName   = "IsDead";
+    [Tooltip("Animator trigger fired once when a DPS-triggered stagger begins " +
+             "(see EnemyBase.OnStaggerStart). Must exist as a Trigger parameter -- " +
+             "safe to leave the Animator Controller without one, SetAnimFloat/trigger " +
+             "calls are all null-guarded via _animator == null checks.")]
+    [SerializeField] private string staggerParamName = "Stagger";
 
     [Header("Attack Animation")]
     [Tooltip("Animator trigger fired on odd swings (1st, 3rd, ...). Must exist " +
@@ -105,6 +110,7 @@ public class EnemyChaser : EnemyBase
     private int _deadHash;
     private int _punch1Hash;
     private int _punch2Hash;
+    private int _staggerHash;
 
     // Lazily-resolved player reference used only for auto-activation, before
     // this enemy has ever received an explicit target via Activate().
@@ -135,10 +141,11 @@ public class EnemyChaser : EnemyBase
         _agent.stoppingDistance = Mathf.Max(0f, attackRange - 0.1f);
 
         // Build hashes after serialised names are available
-        _speedHash  = Animator.StringToHash(speedParamName);
-        _deadHash   = Animator.StringToHash(deadParamName);
-        _punch1Hash = Animator.StringToHash(punch1TriggerName);
-        _punch2Hash = Animator.StringToHash(punch2TriggerName);
+        _speedHash   = Animator.StringToHash(speedParamName);
+        _deadHash    = Animator.StringToHash(deadParamName);
+        _punch1Hash  = Animator.StringToHash(punch1TriggerName);
+        _punch2Hash  = Animator.StringToHash(punch2TriggerName);
+        _staggerHash = Animator.StringToHash(staggerParamName);
 
         _state = State.Idle;
         // Base Awake already sets agent.enabled = false and this.enabled = false
@@ -247,11 +254,53 @@ public class EnemyChaser : EnemyBase
         }
     }
 
+    // ─── Stagger (EnemyBase hooks) ─────────────────────────────────────────────
+
+    protected override void OnStaggerStart()
+    {
+        // Cancel any in-progress windup pose so the enemy doesn't hold a half-turned
+        // stance through the stun -- TickAttack()'s FaceTarget()/WindupRotate() are
+        // both skipped while IsStaggered (see Update() below), so this just cleans up
+        // whatever was mid-flight the instant stagger hit.
+        _isWindingUp = false;
+        if (_windupRoutine != null)
+        {
+            StopCoroutine(_windupRoutine);
+            _windupRoutine = null;
+        }
+
+        if (_animator != null)
+            _animator.SetTrigger(_staggerHash);
+
+        SetAnimFloat(_speedHash, 0f);
+    }
+
+    protected override void OnStaggerEnd()
+    {
+        if (_state == State.Dead) return;
+
+        // Same convention as ResumeChase() -- force back into Chasing with a fresh
+        // path rather than trying to guess whether we were chasing or mid-attack
+        // when the stagger interrupted us.
+        _state = State.Chasing;
+        if (_agent.isOnNavMesh && _target != null)
+            _agent.SetDestination(_target.position);
+        _pathTimer = 0f;
+    }
+
     // ─── Update ───────────────────────────────────────────────────────────────
 
     private void Update()
     {
         if (_state == State.Dead || _target == null) return;
+
+        // While staggered, EnemyBase has already stopped the NavMeshAgent -- just
+        // hold still and skip all chase/attack ticks until OnStaggerEnd() fires.
+        if (IsStaggered)
+        {
+            SetAnimFloat(_speedHash, 0f);
+            return;
+        }
 
         float dist = Vector3.Distance(transform.position, _target.position);
 

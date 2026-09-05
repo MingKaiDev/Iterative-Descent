@@ -54,13 +54,41 @@ public class DoorController : MonoBehaviour
             return;
         }
 
-        // Capture starting closed state
-        _closedLocalRot = doorMesh.localRotation;
-        _closedLocalPos = doorMesh.localPosition;
+        Quaternion openDelta = Quaternion.Euler(openAngleX, openAngleY, openAngle);
 
-        // Derive open state
-        _openLocalRot = _closedLocalRot * Quaternion.Euler(openAngleX, openAngleY, openAngle);
-        _openLocalPos = _closedLocalPos + openPositionOffset;
+        if (isOpen)
+        {
+            // This door starts already open in the Editor (e.g. a kitchen
+            // door that gets CLOSED later by a key pickup, rather than the
+            // usual locked-door-that-gets-opened case every other door in
+            // the project uses). The pose captured here IS the open pose, so
+            // the closed pose must be derived by REMOVING the open
+            // rotation/offset instead of adding it.
+            //
+            // Without this branch, the code below always treated "whatever
+            // pose the mesh is in right now" as the CLOSED baseline -- fine
+            // for every other door (they all start closed), but wrong here:
+            // it would compute a bogus "open" pose as (already-open pose +
+            // another openAngle on top), then Close() would animate FROM
+            // that bogus pose BACK TO the door's real starting (open) pose --
+            // visually reading as "the door twitches/rotates and ends up
+            // open again", never actually closing. This branch fixes that
+            // without changing behaviour for any door that starts closed.
+            _openLocalRot = doorMesh.localRotation;
+            _openLocalPos = doorMesh.localPosition;
+            _closedLocalRot = _openLocalRot * Quaternion.Inverse(openDelta);
+            _closedLocalPos = _openLocalPos - openPositionOffset;
+        }
+        else
+        {
+            // Capture starting closed state (unchanged from before)
+            _closedLocalRot = doorMesh.localRotation;
+            _closedLocalPos = doorMesh.localPosition;
+
+            // Derive open state
+            _openLocalRot = _closedLocalRot * openDelta;
+            _openLocalPos = _closedLocalPos + openPositionOffset;
+        }
     }
 
     /// <summary>

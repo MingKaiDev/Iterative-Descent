@@ -16,16 +16,18 @@ public class ShotgunAmmoPickup : PickupBase
 
     // ─── PickupBase ───────────────────────────────────────────────────────────
 
-    protected override void ApplyPickup(GameObject player)
+    protected override bool ApplyPickup(GameObject player)
     {
         ShotgunController shotgun = player.GetComponent<ShotgunController>();
         if (shotgun == null)
         {
             Debug.LogWarning("[ShotgunAmmoPickup] ShotgunController not found on player GameObject.");
-            return;
+            return true;
         }
 
         shotgun.AddAmmo(shellAmount);
         Debug.Log($"[ShotgunAmmoPickup] Collected. +{shellAmount} spare shells.");
+
+        return true;
     }
 }

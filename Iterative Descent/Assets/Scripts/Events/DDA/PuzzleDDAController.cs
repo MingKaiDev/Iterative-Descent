@@ -116,6 +116,7 @@ public class PuzzleDDAController : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved     += OnGeneralPuzzleSolved;
         SchedulingPuzzleUI.OnSchedulingSolved     += OnGeneralPuzzleSolved;
         StackPuzzleUI.OnStackSolved               += OnGeneralPuzzleSolved;
+        HashTablePuzzleUI.OnHashTableSolved       += OnGeneralPuzzleSolved;
         DrainPuzzleUI.OnDrainSolved               += OnGeneralPuzzleSolved;
         MatchingPuzzleUI.OnMatchingSolved         += OnGeneralPuzzleSolved;
         SubnetPuzzleUI.OnSubnetSolved             += OnGeneralPuzzleSolved;
@@ -131,6 +132,7 @@ public class PuzzleDDAController : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved     -= OnGeneralPuzzleSolved;
         SchedulingPuzzleUI.OnSchedulingSolved     -= OnGeneralPuzzleSolved;
         StackPuzzleUI.OnStackSolved               -= OnGeneralPuzzleSolved;
+        HashTablePuzzleUI.OnHashTableSolved       -= OnGeneralPuzzleSolved;
         DrainPuzzleUI.OnDrainSolved               -= OnGeneralPuzzleSolved;
         MatchingPuzzleUI.OnMatchingSolved         -= OnGeneralPuzzleSolved;
         SubnetPuzzleUI.OnSubnetSolved             -= OnGeneralPuzzleSolved;

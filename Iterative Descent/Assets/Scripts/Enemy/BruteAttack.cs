@@ -6,7 +6,9 @@ using System.Collections;
 ///
 ///   1. Combo A -- "Left+Right swipe": Mutant Swipe (left hand) -> Mutant Swipe (2) (right hand)
 ///   2. Combo B -- "Right+Left swipe": Mutant Swipe (1) (right hand) -> Mutant Swipe (3) (left hand)
-///   3. Grab    -- "Thrusting Attack": INSTANT KILL on the player if it connects.
+///   3. Grab    -- "Thrusting Attack": grabs the player on contact (movement frozen),
+///                  then deals a fixed chunk of damage (grabDamage) at the end of the
+///                  animation -- see "Grab redesign" below.
 ///
 /// Every decision (see TryAttack) rolls independently between Grab and a swipe combo,
 /// gated by two SEPARATE cooldowns -- Grab has its own long cooldown plus a low base
@@ -24,7 +26,9 @@ using System.Collections;
 /// hitbox's current world position, fired either by an Animation Event (frame-accurate)
 /// or a coroutine fallback timed by an Inspector delay (hitboxDelay-style fields below).
 /// Both paths funnel through the same private RunHitCheck() so there is only one place
-/// that actually applies damage / the instant kill.
+/// that actually applies damage for a swipe hit. Grab is the one exception -- see "Grab
+/// redesign" below -- it polls a WINDOW rather than a single instant, and its damage
+/// is deferred to the end of the animation, not the moment of contact.
 ///
 /// ─── Fist / grab hitbox setup (mirrors RusherAttack) ──────────────────────
 ///   Root (EnemyBrute + BruteAttack + NavMeshAgent)
@@ -37,6 +41,39 @@ using System.Collections;
 ///           └── LeftFistHitbox   same setup       ↑ assign to leftFistBox
 ///       └── (centred on chest/reach, e.g. a child of the spine or hips bone)
 ///           └── GrabHitbox       same setup       ↑ assign to grabHitbox
+///                                 (kept for gizmo/reference only -- see "Grab hit
+///                                 detection" note below; Grab's hit check no longer
+///                                 reads this box)
+///
+/// ─── Grab hit detection (2026-09-03 fix) ─────────────────────────────────
+///   Grab used to run its hit check against grabHitbox alone -- a separate, much
+///   smaller box (roughly a third the height of either fist box) sitting right on the
+///   Hand_R bone, effectively a clone of RightFistHitbox that was never repositioned
+///   for the Thrusting Attack lunge. It essentially never overlapped the player's
+///   hurtbox, so Grab was landing far less often than the swipes despite firing the
+///   same OverlapBox pattern. Grab's hit check now reuses rightFistBox/leftFistBox --
+///   the same boxes already proven to land hits via the swipe combos -- checking both
+///   (Thrusting Attack is a two-handed lunge) and taking whichever connects first.
+///
+/// ─── Grab redesign -- grab-then-kill (2026-09-03) ──────────────────────────
+///   Grab no longer applies damage the instant its hitbox connects. It now works as a
+///   genuine grab:
+///     1. grabHitboxDelay after the Grab trigger fires, the grab hitbox WINDOW opens.
+///     2. While open, every Update() polls rightFistBox/leftFistBox for the player
+///        (PollGrabWindow) -- the FIRST overlap grabs the player immediately: the
+///        window closes right there (one grab per swing), and
+///        PlayerMovement.SetGrabbed(true) freezes their WASD input (look/gravity/
+///        knockback keep working). No damage yet.
+///     3. If nothing overlapped, the window auto-closes after grabHitboxOpenDuration --
+///        a clean miss, same as before.
+///     4. grabRecoveryDuration after the window closes (grabbed or not), the animation
+///        is considered over. If a grab landed, THIS is when ResolveGrabOutcome() fires --
+///        it deals a flat grabDamage (default 50, tune in Inspector) rather than an
+///        instant kill -- and releases the movement lock -- "damage at the end of the
+///        animation", not at the moment of contact. A missed window just clears normally.
+///   OnDisable() releases any grab still in progress (movement unlocked, no kill) so a
+///   Brute destroyed mid-grab (e.g. shot dead while holding the player) can never leave
+///   the player permanently frozen -- see ReleaseGrabIfActive().
 ///
 /// ─── Animator parameters (Triggers) ────────────────────────────────────────
 ///   "SwipeA_Hit1"  -- Mutant Swipe        (Combo A, hit 1 -- left hand)
@@ -55,12 +92,16 @@ using System.Collections;
 /// ─── Animation Events (optional but recommended) ──────────────────────────
 ///   Impact frame of Mutant Swipe / (1)   -> OnComboHit1Frame()
 ///   Impact frame of Mutant Swipe (2)/(3) -> OnComboHit2Frame()
-///   Impact frame of Thrusting Attack     -> OnGrabHitFrame()
+///   Reach begins (Thrusting Attack)      -> OnGrabHitboxOpen()
+///   Reach ends (Thrusting Attack)        -> OnGrabHitboxClose()
 ///   Last frame of any clip (optional)    -> OnAttackEnd()
-///   All are optional -- the coroutine fallback (the *Delay fields below) handles hit
-///   detection and state reset regardless of whether events are wired, same as
-///   EnemyAttack/RusherAttack. Watch the "[BruteAttack] HIT CHECK ACTIVE" log against
-///   the swing in Play mode to tune the *Delay fields if you are not using events.
+///   All are optional -- the coroutine fallback (the *Delay/*Duration fields below)
+///   handles hit detection, the grab window, and state reset regardless of whether
+///   events are wired, same as EnemyAttack/RusherAttack. Watch the "[BruteAttack] HIT
+///   CHECK ACTIVE" / "GRAB HITBOX OPEN/CLOSE" logs against the swing in Play mode to
+///   tune the *Delay/*Duration fields if you are not using events. OnAttackEnd() also
+///   resolves (deals grabDamage to) a still-active grab if it fires before the coroutine
+///   reaches its own natural end, so wiring it early never soft-locks the player.
 /// </summary>
 public class BruteAttack : MonoBehaviour
 {
@@ -115,20 +156,38 @@ public class BruteAttack : MonoBehaviour
 
     // ─── Inspector -- Grab (instant kill) ──────────────────────────────────────
 
-    [Header("Grab Attack (Thrusting Attack) -- INSTANT KILL, tune carefully")]
+    [Header("Grab Attack (Thrusting Attack) -- fixed damage, tune carefully")]
     [SerializeField] private string grabTriggerName = "Grab";
-    [Tooltip("Seconds after the Grab trigger fires before the hit check runs. Tune against " +
-             "the Thrusting Attack clip's reach frame.")]
-    [SerializeField] private float grabHitboxDelay = 1.8f;  // ESTIMATE ONLY -- frame 54/100 @ 30fps, extrapolated from Combo B Hit1's 53.75% impact fraction applied to the 100-frame Grab clip (exit-time 0.9257 read from Phobos.controller "Grab" state). This is the WEAKEST of the three estimates: Grab is a grapple/thrust, not a swipe, so its anticipation-to-impact pacing has no reason to match a swipe's. Grab is also the instant-kill move that already caused one "killed me" complaint -- do not treat this as trustworthy until confirmed by scrubbing Thrusting Attack.fbx for the real contact frame the same way frame 43 was found for Combo B, or by the OnAnimStart/OnAnimEnd + a manual OnComboHit1Frame-style event at the real grab-contact frame.
-    [Tooltip("Seconds AFTER the Grab hit-check fires before the attack is considered " +
-             "over (_isAttacking cleared). FIX for 'grab keeps getting cut off' " +
-             "(2026-08-29): GrabSequence() used to clear _isAttacking the instant the " +
-             "hit check ran, letting EnemyBrute resume chasing / fire a new attack " +
-             "trigger while ~1.3s of the Thrusting Attack clip was still playing -- " +
-             "the new trigger cuts the current clip instantly since Any State " +
-             "transitions now have 0 Transition Duration. This field covers that " +
-             "remaining tail. ESTIMATE, same caveats as grabHitboxDelay above.")]
-    [SerializeField] private float grabRecoveryDuration = 1.29f;  // ESTIMATE: (exit-time frame 92.57 - hit frame 54) / 30fps, exit-time 0.9257 read from Phobos.controller "Grab" state
+    [Tooltip("Seconds after the Grab trigger fires before the grab hitbox WINDOW opens " +
+             "(2026-09-03: was a single hit-check instant, now the start of a window -- " +
+             "see grabHitboxOpenDuration). CONFIRMED 2026-09-03 against Thrust Slash.fbx's " +
+             "own baked bone curves (frame 53/101) -- see grabHitboxOpenDuration's tooltip " +
+             "for how. OnGrabHitboxOpen is now wired as a real Animation Event at this same " +
+             "frame, so this value is a fallback that should almost never be the one that " +
+             "actually opens the window during normal play.")]
+    [SerializeField] private float grabHitboxDelay = 1.7667f;  // CONFIRMED: frame 53/101 @ 30fps -- both hand bones (mixamorig:LeftHand / mixamorig:RightHand) sampled via forward-kinematics across every baked frame of Thrust Slash.fbx; frame 53 is where both hands' distance from mixamorig:Hips first crosses 90% of that hand's own peak reach SIMULTANEOUSLY (frames 15-20 hit that threshold for one hand alone but not both together -- that's mid wind-up, not the real thrust). Superseded the old 1.8s swipe-derived estimate, which turned out to be close (1.8 vs 1.767) but was never actually measured against this clip.
+    [Tooltip("Seconds the grab hitbox WINDOW stays open once it opens. While open, every " +
+             "Update() polls rightFistBox/leftFistBox for the player (PollGrabWindow) -- " +
+             "the first overlap grabs the player immediately (movement locked, window " +
+             "closes early) rather than waiting out the rest of this duration. CONFIRMED " +
+             "2026-09-03: frames 53-63/101 (11 frames = both hands held near-maximum " +
+             "extension from the hips simultaneously -- a genuine sustained-reach plateau " +
+             "in the clip, not an instant). OnGrabHitboxClose is wired as a real Animation " +
+             "Event at frame 64, so this is the fallback duration. Widen this if Grab keeps " +
+             "whiffing despite the Brute visibly reaching the player; narrow it if Grab " +
+             "connects from further away than the animation looks like it should.")]
+    [SerializeField] private float grabHitboxOpenDuration = 0.3667f;
+    [Tooltip("Seconds AFTER the grab hitbox WINDOW CLOSES before the attack is considered " +
+             "fully over (_isAttacking cleared). Covers the rest of the Thrusting Attack " +
+             "clip so EnemyBrute doesn't resume chasing / fire a new trigger mid-animation " +
+             "(FIX 2026-08-29, same root cause as comboXHit2RecoveryDuration above). " +
+             "2026-09-03: if the window landed a grab, THIS is also when the instant kill " +
+             "actually resolves -- see ResolveGrabOutcome() -- so the player stays " +
+             "grabbed (frozen, alive) for this entire stretch, not just an instant. " +
+             "CONFIRMED 2026-09-03: (OnAnimEnd frame 100.21 - window-close frame 64) / 30fps " +
+             "-- OnAnimEnd's 0.9921875 normalized time was already wired; window-close frame " +
+             "is the same confirmed frame 64 from grabHitboxOpenDuration above.")]
+    [SerializeField] private float grabRecoveryDuration = 1.2071f;  // CONFIRMED: (100.2109 - 64) / 30fps -- see tooltip
     [Tooltip("Seconds before Grab can be attempted again, win or miss. This is the main " +
              "lever for keeping the instant kill rare -- a miss still burns the full " +
              "cooldown, there is no instant retry.")]
@@ -148,6 +207,10 @@ public class BruteAttack : MonoBehaviour
              "grabChanceLowHealth applies instead of grabChanceBase. 0.3 = 30% HP.")]
     [Range(0f, 1f)]
     [SerializeField] private float playerLowHealthThreshold = 0.3f;
+    [Tooltip("Flat damage dealt to the player when a Grab resolves at the end of the " +
+             "animation. No longer an instant kill -- tune this like any other damage " +
+             "value. Not affected by ApplyDamageMultiplier (see that method's doc).")]
+    [SerializeField] private float grabDamage = 50f;
 
     // ─── Inspector -- Hitboxes ──────────────────────────────────────────────────
 
@@ -156,16 +219,18 @@ public class BruteAttack : MonoBehaviour
     [SerializeField] private BoxCollider leftFistBox;
     [Tooltip("BoxCollider on the right hand bone. Used for Combo A hit 2 and Combo B hit 1.")]
     [SerializeField] private BoxCollider rightFistBox;
-    [Tooltip("BoxCollider centred on the Brute's reach for the Grab attack -- a chest/hips " +
-             "child bone works well since Thrusting Attack is a two-handed lunge, not a " +
-             "single-hand swing.")]
+    [Tooltip("Legacy reference-only box for the Grab attack's gizmo. NOT read by the hit " +
+             "check anymore (2026-09-03) -- it was a separate, badly-placed box that " +
+             "rarely overlapped the player, so Grab now reuses rightFistBox/leftFistBox " +
+             "instead (see the class doc comment's \"Grab hit detection\" note). Safe to " +
+             "leave assigned or clear.")]
     [SerializeField] private BoxCollider grabHitbox;
 
     [Header("Hit Detection")]
     [Tooltip("Layers the OverlapBox checks hit. Set this to the Player layer.")]
     [SerializeField] private LayerMask hitableLayers = ~0;
 
-    [Header("Knockback (swipe hits only -- Grab is an instant kill, no knockback needed)")]
+    [Header("Knockback (swipe hits only -- Grab freezes+damages, no knockback needed)")]
     [Tooltip("Horizontal speed (m/s) given to the player, pushed straight away from the " +
              "Brute, the instant a swipe connects. This is hand-off to " +
              "PlayerMovement.ApplyKnockback -- that component owns the actual decay, see " +
@@ -175,6 +240,15 @@ public class BruteAttack : MonoBehaviour
              "of stagger feel (a hit that only shoves sideways can look like the player " +
              "slid on ice). 0 = perfectly horizontal.")]
     [SerializeField] private float knockbackUpwardKick = 1f;
+
+    [Header("Grab Feedback")]
+    [Tooltip("Seconds the camera-shake pulse (PlayerMovement.Shake) lasts, fired the " +
+             "instant Grab connects -- see GrabPlayer(). Linear falloff over this duration.")]
+    [SerializeField] private float grabShakeDuration = 0.35f;
+    [Tooltip("Peak magnitude (metres) of that camera-shake pulse. PlayerMovement applies " +
+             "it as a small additive offset to the camera's local position, so keep this " +
+             "small -- 0.15-0.25 reads as a hard jolt without the view breaking apart.")]
+    [SerializeField] private float grabShakeMagnitude = 0.18f;
 
     [Header("Animator -- leave empty, auto-found in children")]
     [SerializeField] private Animator animator;
@@ -194,10 +268,13 @@ public class BruteAttack : MonoBehaviour
     private float   _grabCooldownTimer;
     private bool    _isAttacking;
     private bool    _currentComboIsA;   // which box mapping the in-progress combo is using
-    private bool    _hitCheckDone;      // guards against double-check (event fired + coroutine fallback)
+    private bool    _hitCheckDone;      // guards against double-check (event fired + coroutine fallback) -- swipes only, see Grab redesign note above
+    private bool    _hitboxWindowOpen;  // true only while Grab's hitbox window is open -- polled every Update()
+    private PlayerHealth _grabbedTarget; // non-null only while a landed Grab is holding the player -- cleared on kill/release
     private Coroutine _attackRoutine;
     private PlayerHealth _player;
     private PlayerMovement _playerMovement;
+    private BruteAudio _audio; // null-safe; optional component, same convention as EnemyBrute's _audio
 
     // ─── Public Read-Only State ─────────────────────────────────────────────────
 
@@ -216,6 +293,8 @@ public class BruteAttack : MonoBehaviour
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
+
+        _audio = GetComponent<BruteAudio>(); // null-safe; optional component
 
         // BoxColliders are never enabled at runtime -- sizing references only.
         if (leftFistBox  != null) leftFistBox.enabled  = false;
@@ -247,6 +326,22 @@ public class BruteAttack : MonoBehaviour
     {
         if (_swipeCooldownTimer > 0f) _swipeCooldownTimer -= Time.deltaTime;
         if (_grabCooldownTimer  > 0f) _grabCooldownTimer  -= Time.deltaTime;
+
+        // Poll the grab hitbox window every frame it's open -- see PollGrabWindow's doc
+        // comment. Stops polling itself the instant a grab lands (GrabPlayer clears
+        // _hitboxWindowOpen), so this is cheap outside of Grab's brief open window.
+        if (_hitboxWindowOpen)
+            PollGrabWindow();
+    }
+
+    private void OnDisable()
+    {
+        // Safety net: if this Brute is disabled/destroyed while it's holding the player
+        // (e.g. shot dead mid-grab), the GrabSequence coroutine is killed by Unity before
+        // it ever reaches ResolveGrabOutcome(). Without this, the player would stay
+        // movement-locked forever with no kill and no way to recover. Releases with no
+        // kill -- dying mid-grab is a reasonable way for the player to escape it.
+        ReleaseGrabIfActive();
     }
 
     // ─── DDA API ──────────────────────────────────────────────────────────────
@@ -254,15 +349,15 @@ public class BruteAttack : MonoBehaviour
     /// <summary>
     /// Applies a DDA damage multiplier relative to the base inspector value, same
     /// convention as EnemyAttack/RusherAttack. Deliberately does NOT affect Grab --
-    /// an instant kill stays an instant kill regardless of tier; DDA should instead
-    /// tune how OFTEN it can happen via grabCooldown/grabChance* if that is ever
-    /// needed per-tier (not wired yet -- flag for EnemyDirector if wanted).
+    /// grabDamage is a flat, separately-tunable value regardless of tier; DDA should
+    /// instead tune how OFTEN Grab can happen via grabCooldown/grabChance* if that is
+    /// ever needed per-tier (not wired yet -- flag for EnemyDirector if wanted).
     /// </summary>
     public void ApplyDamageMultiplier(float multiplier)
     {
         meleeDamage = _baseMeleeDamage * multiplier;
         Debug.Log($"[BruteAttack] Swipe damage set to {meleeDamage:F1} " +
-                  $"(base {_baseMeleeDamage:F1} x{multiplier:F2}). Grab remains an instant kill.");
+                  $"(base {_baseMeleeDamage:F1} x{multiplier:F2}). Grab damage unaffected ({grabDamage:F0}).");
     }
 
     // ─── Public API ── called by EnemyBrute every frame in attack range ───────
@@ -408,8 +503,9 @@ public class BruteAttack : MonoBehaviour
 
     private void StartGrab()
     {
-        _isAttacking  = true;
-        _hitCheckDone = false;
+        _isAttacking      = true;
+        _hitboxWindowOpen = false; // opened later, either by the coroutine delay or an Animation Event
+        _grabbedTarget    = null;
 
         // _grabCooldownTimer is NOT set here -- see GrabSequence()'s end. Same reasoning
         // as StartComboSwipe() above: setting it at the start under-counts the real
@@ -423,23 +519,32 @@ public class BruteAttack : MonoBehaviour
         if (_attackRoutine != null) StopCoroutine(_attackRoutine);
         _attackRoutine = StartCoroutine(GrabSequence());
 
-        Debug.Log("[BruteAttack] Starting GRAB (instant-kill) attack.");
+        Debug.Log("[BruteAttack] Starting GRAB attack (grab-then-kill).");
     }
 
     private IEnumerator GrabSequence()
     {
+        // -- Window open --
         yield return new WaitForSeconds(grabHitboxDelay);
+        OpenGrabHitboxWindow(); // idempotent -- harmless if an Animation Event already opened it
 
-        if (!_hitCheckDone)
-            RunHitCheck(grabHitbox, "Grab (Thrusting Attack)", instaKill: true);
+        // -- Window stays open for grabHitboxOpenDuration, or until PollGrabWindow (in
+        // Update()) grabs the player and closes it early --
+        yield return new WaitForSeconds(grabHitboxOpenDuration);
+        CloseGrabHitboxWindow(); // idempotent -- harmless if already closed by a landed grab
 
-        // FIX for "grab keeps getting cut off" (2026-08-29): used to clear _isAttacking
-        // right here, the instant the hit check ran. That let EnemyBrute resume chasing
-        // or fire a new attack trigger while the Thrusting Attack clip still had ~1.3s
-        // left to play, and since the Any State attack transitions now have 0 Transition
-        // Duration, the new trigger cut Grab's clip instantly instead of blending. Wait
-        // out the clip's real remaining tail before releasing the attack lock.
+        // FIX for "grab keeps getting cut off" (2026-08-29): don't clear _isAttacking the
+        // instant the window closes -- EnemyBrute would resume chasing / fire a new attack
+        // trigger while the Thrusting Attack clip still had time left to play, and Any
+        // State attack transitions have 0 Transition Duration so the new trigger would cut
+        // the current clip instantly instead of blending. Wait out the clip's real
+        // remaining tail before releasing the attack lock.
         yield return new WaitForSeconds(grabRecoveryDuration);
+
+        // 2026-09-03: this is "the end of the animation" -- if the window above landed a
+        // grab, the instant kill fires HERE, not at the moment of contact. No-op if
+        // nothing was grabbed (a clean miss).
+        ResolveGrabOutcome();
 
         // Same fix as ComboSequence() above -- cooldown starts counting from the real end
         // of the attack, not from StartGrab() at the top.
@@ -502,19 +607,33 @@ public class BruteAttack : MonoBehaviour
             instaKill: false);
     }
 
-    /// <summary>[Animation Event] Impact frame of Thrusting Attack.</summary>
-    public void OnGrabHitFrame()
-    {
-        if (_hitCheckDone) return;
-        RunHitCheck(grabHitbox, "Grab (Thrusting Attack)", instaKill: true);
-    }
+    /// <summary>[Animation Event -- WIRED 2026-09-03] Fires from Thrust Slash.fbx at
+    /// normalized time 0.5247525 (frame 53/101), the confirmed frame where both hand
+    /// bones are simultaneously near their maximum reach from the hips -- opens the grab
+    /// hitbox window frame-accurately. The coroutine fallback (grabHitboxDelay) also opens
+    /// it regardless, in case the Animator isn't actually playing this clip for some
+    /// reason -- whichever fires first wins, this is idempotent either way.</summary>
+    public void OnGrabHitboxOpen() => OpenGrabHitboxWindow();
+
+    /// <summary>[Animation Event -- WIRED 2026-09-03] Fires from Thrust Slash.fbx at
+    /// normalized time 0.6336634 (frame 64/101), the confirmed frame where both hands'
+    /// reach drops back off the plateau -- closes the grab hitbox window frame-accurately.
+    /// The coroutine fallback (grabHitboxOpenDuration after the open) also closes it
+    /// regardless. Safe to call even if the window is already closed, e.g. because a grab
+    /// already landed (idempotent).</summary>
+    public void OnGrabHitboxClose() => CloseGrabHitboxWindow();
 
     /// <summary>
     /// [Optional Animation Event] Place on the last frame of any attack clip to reset
     /// state early. The coroutine fallback handles this regardless of whether it's wired.
+    /// Also resolves (instant-kills) a still-active Grab if this fires before
+    /// GrabSequence() reaches its own natural end -- without this, wiring OnAttackEnd on
+    /// the Thrusting Attack clip could StopCoroutine the grab away with the player still
+    /// frozen and never killed.
     /// </summary>
     public void OnAttackEnd()
     {
+        ResolveGrabOutcome(); // no-op unless a grab is actually in progress
         _isAttacking = false;
         if (_attackRoutine != null)
         {
@@ -523,25 +642,198 @@ public class BruteAttack : MonoBehaviour
         }
     }
 
+    // ─── Grab window (2026-09-03) ──────────────────────────────────────────────
+
+    private void OpenGrabHitboxWindow()
+    {
+        if (_hitboxWindowOpen) return; // idempotent -- event + coroutine fallback can both fire
+        _hitboxWindowOpen = true;
+        Debug.Log($"[BruteAttack] GRAB HITBOX OPEN | time={Time.time:F2}");
+    }
+
+    private void CloseGrabHitboxWindow()
+    {
+        if (!_hitboxWindowOpen) return; // idempotent -- also true once GrabPlayer already closed it
+        _hitboxWindowOpen = false;
+        Debug.Log($"[BruteAttack] GRAB HITBOX CLOSE | time={Time.time:F2}");
+    }
+
+    /// <summary>
+    /// Called every Update() while the grab hitbox window is open. Checks
+    /// rightFistBox/leftFistBox for the player exactly like a swipe's hit check, but as a
+    /// GRAB rather than an instant kill -- see GrabPlayer(). Stops itself the moment
+    /// something is grabbed (_hitboxWindowOpen is cleared by GrabPlayer), so this never
+    /// grabs more than one target per swing even though it polls every frame the window
+    /// is open (a window can span several frames, unlike the old single-instant check).
+    /// </summary>
+    private void PollGrabWindow()
+    {
+        foreach (BoxCollider box in new[] { rightFistBox, leftFistBox })
+        {
+            if (box == null) continue;
+
+            PlayerHealth target = FindPlayerOverlap(box, out _);
+            if (target == null) continue;
+
+            GrabPlayer(target);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// The grab hitbox window found the player. Locks their movement immediately via
+    /// PlayerMovement.SetGrabbed(true) -- no damage yet, grabDamage is dealt via
+    /// ResolveGrabOutcome() at the end of the animation (see GrabSequence()). Closes the
+    /// window early so only one target can ever be grabbed per swing.
+    /// </summary>
+    private void GrabPlayer(PlayerHealth target)
+    {
+        _grabbedTarget    = target;
+        _hitboxWindowOpen = false;
+
+        PlayerMovement pm = target.GetComponent<PlayerMovement>();
+        if (pm == null) pm = _playerMovement; // fallback to the cached reference from Awake
+
+        if (pm != null)
+        {
+            // transform = this Brute -- forces the player's camera to stay locked onto
+            // whatever is holding them (see PlayerMovement.UpdateGrabLook) instead of
+            // free-looking away from their own death. Cleared automatically the moment
+            // SetGrabbed(false) is called (ResolveGrabOutcome/ReleaseGrabIfActive).
+            pm.SetGrabbed(true, transform);
+            pm.Shake(grabShakeDuration, grabShakeMagnitude);
+        }
+        else
+        {
+            Debug.LogWarning($"[BruteAttack] Grab connected on '{target.name}' but no " +
+                              "PlayerMovement was found to freeze -- player will not be " +
+                              "movement-locked, but grabDamage will still be dealt " +
+                              "at the end of the animation.");
+        }
+
+        _audio?.PlayGrabConnect();
+
+        Debug.Log($"[BruteAttack] GRAB CONNECTED on '{target.name}' -- movement locked, " +
+                  "camera forced, grabDamage resolves at the end of the animation.");
+    }
+
+    /// <summary>
+    /// Called at the true end of the Grab animation (GrabSequence()'s natural finish, or
+    /// early via OnAttackEnd()). If PollGrabWindow ever grabbed the player, this is where
+    /// grabDamage actually lands and the movement lock is released. No-op if nothing was
+    /// grabbed this swing (a clean miss) -- safe to call unconditionally.
+    /// </summary>
+    private void ResolveGrabOutcome()
+    {
+        if (_grabbedTarget == null) return;
+
+        PlayerHealth target = _grabbedTarget;
+        _grabbedTarget = null; // clear first so a re-entrant call (see OnAttackEnd) is a no-op
+
+        PlayerMovement pm = target.GetComponent<PlayerMovement>();
+        if (pm == null) pm = _playerMovement;
+        pm?.SetGrabbed(false);
+
+        _audio?.PlayNeckSnap();
+
+        target.TakeDamage(grabDamage, target.transform.position);
+        Debug.Log($"[BruteAttack] Grab (Thrusting Attack) resolved on '{target.name}' -- " +
+                  $"dealt {grabDamage:F0} damage at animation end.");
+    }
+
+    /// <summary>
+    /// Releases a grab in progress WITHOUT killing -- only called from OnDisable(), when
+    /// this Brute is disabled/destroyed mid-grab (e.g. shot dead while holding the
+    /// player) and GrabSequence()'s coroutine is killed before it can reach
+    /// ResolveGrabOutcome() on its own. Prevents the player being left permanently
+    /// movement-locked with no way to recover.
+    /// </summary>
+    private void ReleaseGrabIfActive()
+    {
+        if (_grabbedTarget == null) return;
+
+        PlayerHealth target = _grabbedTarget;
+        _grabbedTarget = null;
+
+        PlayerMovement pm = target.GetComponent<PlayerMovement>();
+        if (pm == null) pm = _playerMovement;
+        pm?.SetGrabbed(false);
+
+        Debug.Log($"[BruteAttack] Grab on '{target.name}' released early (BruteAttack " +
+                  "disabled/destroyed mid-grab) -- movement restored, no kill applied.");
+    }
+
     // ─── Hit check ──────────────────────────────────────────────────────────────
 
     /// <summary>
     /// One-shot OverlapBox at the given hitbox's current world position. Damage (or the
     /// instant kill) only registers at the exact moment this runs. When instaKill is
     /// true, damage is CurrentHealth + 1 -- guaranteed lethal regardless of maxHealth,
-    /// rather than a large magic-number damage value.
+    /// rather than a large magic-number damage value. Thin wrapper around the multi-box
+    /// overload below for the swipe combos, which only ever check one hand at a time.
     /// </summary>
     private void RunHitCheck(BoxCollider box, string label, bool instaKill)
+    {
+        RunHitCheck(new[] { box }, label, instaKill);
+    }
+
+    /// <summary>
+    /// Same as the single-box overload, but tries each box in order and stops at the
+    /// first one that actually connects -- used by Grab, which now checks both
+    /// rightFistBox and leftFistBox instead of the dedicated (and badly placed)
+    /// grabHitbox. See the "Grab hit detection" note in this file's header comment.
+    /// Null entries in boxes are skipped, so callers don't need to null-check first.
+    /// </summary>
+    private void RunHitCheck(BoxCollider[] boxes, string label, bool instaKill)
     {
         _hitCheckDone = true;
 
         Debug.Log($"[BruteAttack] HIT CHECK ACTIVE -- {label} | time={Time.time:F2}");
 
-        if (box == null)
+        bool anyBoxAssigned = false;
+
+        foreach (BoxCollider box in boxes)
         {
-            Debug.Log($"[BruteAttack] STUB -- hitbox for {label} not assigned yet.");
+            if (box == null) continue;
+            anyBoxAssigned = true;
+
+            PlayerHealth target = FindPlayerOverlap(box, out Vector3 hitPoint);
+            if (target == null) continue;
+
+            if (instaKill)
+            {
+                float killAmount = target.CurrentHealth + 1f;
+                target.TakeDamage(killAmount, hitPoint);
+                Debug.Log($"[BruteAttack] {label} connected on '{target.name}' -- INSTANT KILL.");
+            }
+            else
+            {
+                target.TakeDamage(meleeDamage, hitPoint);
+                Debug.Log($"[BruteAttack] {label} hit '{target.name}' for {meleeDamage} dmg.");
+                ApplyKnockback(target.transform);
+            }
+            return; // one target per swing
+        }
+
+        if (!anyBoxAssigned)
+        {
+            Debug.Log($"[BruteAttack] STUB -- no hitbox for {label} assigned yet.");
             return;
         }
+
+        Debug.Log($"[BruteAttack] {label} missed.");
+    }
+
+    /// <summary>
+    /// Shared OverlapBox query used by both RunHitCheck (swipe hits) and PollGrabWindow
+    /// (the grab-then-kill path) -- one place that knows how to turn a reference
+    /// BoxCollider's current world position into "is the player standing in it right
+    /// now". Returns the player's PlayerHealth if found, otherwise null. Assumes box is
+    /// non-null -- callers already skip null boxes.
+    /// </summary>
+    private PlayerHealth FindPlayerOverlap(BoxCollider box, out Vector3 hitPoint)
+    {
+        hitPoint = default;
 
         Vector3 worldCenter = box.transform.TransformPoint(box.center);
         Vector3 halfExtents = Vector3.Scale(box.size * 0.5f, AbsScale(box.transform.lossyScale));
@@ -565,24 +857,11 @@ public class BruteAttack : MonoBehaviour
             PlayerHealth target = hit.GetComponentInParent<PlayerHealth>();
             if (target == null) continue;
 
-            Vector3 hitPoint = hit.ClosestPoint(worldCenter);
-
-            if (instaKill)
-            {
-                float killAmount = target.CurrentHealth + 1f;
-                target.TakeDamage(killAmount, hitPoint);
-                Debug.Log($"[BruteAttack] {label} connected on '{hit.name}' -- INSTANT KILL.");
-            }
-            else
-            {
-                target.TakeDamage(meleeDamage, hitPoint);
-                Debug.Log($"[BruteAttack] {label} hit '{hit.name}' for {meleeDamage} dmg.");
-                ApplyKnockback(hit.transform);
-            }
-            return; // one target per swing
+            hitPoint = hit.ClosestPoint(worldCenter);
+            return target;
         }
 
-        Debug.Log($"[BruteAttack] {label} missed.");
+        return null;
     }
 
     /// <summary>

@@ -167,6 +167,26 @@ public class PlayerMetricsTracker : MonoBehaviour
     private float _stackStartTime;   // realtimeSinceStartup -- immune to timeScale
     private bool  _stackInProgress;
 
+    // ── Hash Table Puzzle State ────────────────────────────────────────────────
+
+    /// <summary>Crates/orders spilled (wrong basket at arrival) on the most recently solved hash-table puzzle.</summary>
+    public int   LastHashTableWrongAttempts    { get; private set; }
+
+    /// <summary>Seconds taken to clear the most recently completed hash-table puzzle.</summary>
+    public float LastHashTableTime             { get; private set; }
+
+    /// <summary>Total hash-table puzzles solved this session.</summary>
+    public int   TotalHashTableSolved          { get; private set; }
+
+    /// <summary>Running average spills per hash-table puzzle this session.</summary>
+    public float AverageHashTableWrongAttempts { get; private set; }
+
+    /// <summary>Running average clear time for hash-table puzzles this session.</summary>
+    public float AverageHashTableTime          { get; private set; }
+
+    private float _hashTableStartTime;   // realtimeSinceStartup -- immune to timeScale
+    private bool  _hashTableInProgress;
+
     // ── General Puzzle Pool State ─────────────────────────────────────────────
     // Pools: Stack, Drain, Matching, Subnet, PacketFilter + any future puzzle types.
     // Add a call to UpdateGeneralPool(wrongAttempts, timeTaken) in each new puzzle handler.
@@ -229,6 +249,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved   += HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   += HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             += HandleStackSolved;
+        HashTablePuzzleUI.OnHashTableSolved     += HandleHashTableSolved;
         DrainPuzzleUI.OnDrainSolved             += HandleDrainSolved;
         MatchingPuzzleUI.OnMatchingSolved       += HandleMatchingSolved;
         SubnetPuzzleUI.OnSubnetSolved           += HandleSubnetSolved;
@@ -246,6 +267,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         LinkedListPuzzleUI.OnLinkedListSolved   -= HandleLinkedListSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   -= HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             -= HandleStackSolved;
+        HashTablePuzzleUI.OnHashTableSolved     -= HandleHashTableSolved;
         DrainPuzzleUI.OnDrainSolved             -= HandleDrainSolved;
         MatchingPuzzleUI.OnMatchingSolved       -= HandleMatchingSolved;
         SubnetPuzzleUI.OnSubnetSolved           -= HandleSubnetSolved;
@@ -412,6 +434,52 @@ public class PlayerMetricsTracker : MonoBehaviour
 
         Debug.Log($"[Metrics] Stack puzzle solved | Wrong attempts: {wrongAttempts} | " +
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageStackWrongAttempts:F1}");
+    }
+
+    // ── Hash Table Puzzle API ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Call this when the player opens the hash-table conveyor puzzle so we
+    /// can time it. Called inside HashTablePuzzleUI.InitPuzzle() -- do NOT
+    /// call it from the prop too.
+    /// </summary>
+    public void NotifyHashTableStarted()
+    {
+        _hashTableStartTime  = Time.realtimeSinceStartup;
+        _hashTableInProgress = true;
+        Debug.Log("[Metrics] Hash table puzzle started.");
+    }
+
+    private void HandleHashTableSolved(int spilled)
+    {
+        float timeTaken = _hashTableInProgress
+            ? Time.realtimeSinceStartup - _hashTableStartTime
+            : 0f;
+
+        LastHashTableWrongAttempts = spilled;
+        LastHashTableTime          = timeTaken;
+        _hashTableInProgress       = false;
+        TotalHashTableSolved++;
+
+        AverageHashTableWrongAttempts = TotalHashTableSolved <= 1
+            ? spilled
+            : (AverageHashTableWrongAttempts * (TotalHashTableSolved - 1) + spilled)
+              / TotalHashTableSolved;
+
+        AverageHashTableTime = TotalHashTableSolved <= 1
+            ? timeTaken
+            : (AverageHashTableTime * (TotalHashTableSolved - 1) + timeTaken)
+              / TotalHashTableSolved;
+
+        // BKT update -- replay each spilled crate as a wrong attempt, then the clear
+        for (int i = 0; i < spilled; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.HashTables, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.HashTables, true);
+
+        UpdateGeneralPool(spilled, timeTaken);
+
+        Debug.Log($"[Metrics] Hash table puzzle solved | Spilled: {spilled} | " +
+                  $"Time: {timeTaken:F1}s | Avg spilled: {AverageHashTableWrongAttempts:F1}");
     }
 
     // ── Drain Puzzle API ───────────────────────────────────────────────────
@@ -911,6 +979,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageStackWrongAttempts = 0f;
         AverageStackTime          = 0f;
         _stackInProgress          = false;
+
+        // Hash Table
+        LastHashTableWrongAttempts    = 0;
+        LastHashTableTime             = 0f;
+        TotalHashTableSolved          = 0;
+        AverageHashTableWrongAttempts = 0f;
+        AverageHashTableTime          = 0f;
+        _hashTableInProgress          = false;
 
         // Drain
         LastDrainWrongAttempts    = 0;

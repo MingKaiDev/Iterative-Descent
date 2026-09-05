@@ -34,6 +34,15 @@ public class RifleController : MonoBehaviour
     [Tooltip("Internal magazine capacity. 5 rounds per the bolt-action design.")]
     public int magazineSize = 5;
 
+    [Header("Rifle - DDA")]
+    [Tooltip("Absolute floor on spare rounds below which the player is considered " +
+             "critically low. ItemSpawner's rifle-needs check treats hitting this floor as " +
+             "an automatic 'needs rounds' regardless of any percentage-based check. " +
+             "Replaces the old ItemSpawner-owned rifleNeedsThreshold field -- kept on the " +
+             "controller itself so the weapon owns its own ammo semantics, mirroring " +
+             "PlayerCombat.minAmmoCount.")]
+    public int minAmmoCount = 4;
+
     [Header("Rifle - Firing")]
     [Tooltip("Damage dealt per round.")]
     public float roundDamage  = 100f;
@@ -248,6 +257,7 @@ public class RifleController : MonoBehaviour
         OnFired?.Invoke();
         BroadcastAmmo();
 
+        PlayerMetricsTracker.Instance?.NotifyShotFired();
         FireRound();               // reads AccuracyT -- must fire before timer resets
         StartCoroutine(PlayCockRoutine());
         _aimTimer = 0f;            // reset after shot so next round's spread starts wide again

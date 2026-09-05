@@ -29,6 +29,15 @@ public class PuzzleUI : MonoBehaviour
     [Tooltip("Minimum font size -- auto-shrinks to fit long strings")]
     public float buttonFontSizeMin = 10f;
 
+    [Header("Audio")]
+    public AudioSource sfxAudioSource;
+    [Tooltip("Played each time a new question is shown (including the first) -- emulates a notebook page flip.")]
+    public AudioClip pageFlipSound;
+    [Tooltip("Played when the player clicks an answer option -- emulates a pencil marking the notebook.")]
+    public AudioClip pencilSound;
+    [Range(0f, 1f)]
+    public float sfxVolume = 0.4f;
+
     // ── Static events ─────────────────────────────────────────────
 
     /// <summary>
@@ -123,6 +132,7 @@ public class PuzzleUI : MonoBehaviour
     {
         if (index >= _questions.Length) { ShowCompletion(); return; }
 
+        PlaySfx(pageFlipSound);
         _answered = false;
         QuestionData q = _questions[index];
         questionText.text = q.question;
@@ -145,6 +155,7 @@ public class PuzzleUI : MonoBehaviour
     {
         if (_answered) return;
         _answered = true;
+        PlaySfx(pencilSound);
 
         bool correct = chosen == _questions[_currentIndex].correctAnswerIndex;
 
@@ -258,5 +269,11 @@ public class PuzzleUI : MonoBehaviour
     {
         var img = btn.GetComponent<Image>();
         if (img != null) img.color = c;
+    }
+
+    // ── Audio helper -- no-ops if either the AudioSource or clip is unassigned ─
+    void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
     }
 }

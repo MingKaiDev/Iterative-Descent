@@ -52,6 +52,7 @@ public static class ConceptTutorials
         { "processes_threads", "A process is a sealed room with its own walls and its own air. A thread is a worker who can share a room with others, using the same walls, the same shared memory. Share too carelessly between threads and you get a race, where the outcome depends on who moves first." },
         { "stacks_and_queues", "Two disciplines of order. A stack serves whoever arrived last, like a pile of plates. A queue serves whoever arrived first, like a line at a door." },
         { "trees_bst", "A binary search tree keeps a simple promise at every node: smaller values to the left, larger values to the right. Follow that promise and you can find anything in a tree of a million nodes in about twenty steps." },
+        { "dijkstra", "Not every path costs the same. Dijkstra's algorithm finds the cheapest route through a network by always expanding the nearest unvisited point first, locking in its true cost before moving on. Wander down the wrong branch and you simply backtrack -- the algorithm never has to guess twice about a point once its cost is settled." },
     };
 
     // Tracks which concept tags have already had their tutorial shown this

@@ -16,16 +16,18 @@ public class AmmoPickup : PickupBase
 
     // ─── PickupBase ───────────────────────────────────────────────────────────
 
-    protected override void ApplyPickup(GameObject player)
+    protected override bool ApplyPickup(GameObject player)
     {
         PlayerCombat combat = player.GetComponent<PlayerCombat>();
         if (combat == null)
         {
             Debug.LogWarning("[AmmoPickup] PlayerCombat not found on player GameObject.");
-            return;
+            return true;
         }
 
         combat.AddAmmo(ammoAmount);
         Debug.Log($"[AmmoPickup] Collected. +{ammoAmount} spare ammo.");
+
+        return true;
     }
 }

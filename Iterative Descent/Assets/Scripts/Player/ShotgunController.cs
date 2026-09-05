@@ -27,6 +27,21 @@ public class ShotgunController : MonoBehaviour
     [Header("Shotgun - Ammo")]
     public int magazineSize = 6;
 
+    [Header("Shotgun - DDA")]
+    [Tooltip("Absolute floor on spare shells below which the player is considered " +
+             "critically low. ItemSpawner's shell-needs check treats hitting this floor as " +
+             "an automatic 'needs shells' regardless of any percentage-based check. " +
+             "Replaces the old ItemSpawner-owned shellNeedsThreshold field -- kept on the " +
+             "controller itself so the weapon owns its own ammo semantics, mirroring " +
+             "PlayerCombat.minAmmoCount.")]
+    public int minAmmoCount = 8;
+    [Range(0f, 1f)]
+    [Tooltip("Fraction of a single shot's pellets that must connect with an IDamageable " +
+             "for that whole shot to count as a 'landed' hit on the DDA accuracy signal. " +
+             "Below this fraction the shot counts as a miss even if some pellets connected " +
+             "-- a shotgun blast that grazes one enemy out of ten pellets isn't a clean hit.")]
+    public float pelletHitFractionForDDA = 0.4f;
+
     [Header("Shotgun - Firing")]
     public int   pelletCount  = 6;
     [Tooltip("Cone spread in degrees on fresh aim (AccuracyT = 0).")]
@@ -231,6 +246,7 @@ public class ShotgunController : MonoBehaviour
         OnFired?.Invoke();
         BroadcastAmmo();
 
+        PlayerMetricsTracker.Instance?.NotifyShotFired(); // one shot = one trigger pull, not per-pellet
         FirePellets();     // reads AccuracyT -- must fire before timer resets
         _aimTimer = 0f;    // reset after shot so next pellet spread starts wide again
     }
@@ -252,6 +268,10 @@ public class ShotgunController : MonoBehaviour
 
         Collider[] playerColliders = GetComponentsInChildren<Collider>();
 
+        // One volley per shot -- every pellet fired here reports back into the same
+        // tally so the shot resolves as a single DDA hit/miss (see PelletVolley below).
+        var volley = new PelletVolley { expected = pelletCount };
+
         for (int i = 0; i < pelletCount; i++)
         {
             Vector3 dir = GetSpreadDirection(cam.forward, cam.right, cam.up, spread);
@@ -263,11 +283,13 @@ public class ShotgunController : MonoBehaviour
             {
                 Debug.LogWarning("[ShotgunController] pelletPrefab is missing ShotgunPellet component.");
                 Destroy(pelletObj);
+                volley.expected--; // this pellet will never report back -- don't wait on it
                 continue;
             }
 
             pellet.damage       = pelletDamage;
             pellet.impactPrefab = bulletImpactPrefab;
+            pellet.onResolved   = hit => ResolveVolleyPellet(volley, hit);
 
             Collider pelletCol = pelletObj.GetComponent<Collider>();
             if (pelletCol != null)
@@ -278,6 +300,40 @@ public class ShotgunController : MonoBehaviour
 
             pellet.Launch(dir, pelletSpeed);
         }
+    }
+
+    // ─── DDA Accuracy Tracking ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Tracks one shot's pellet outcomes for the DDA accuracy signal. Allocated fresh
+    /// per shot (not per-pellet, not on the controller instance) so two overlapping
+    /// volleys -- e.g. a future fire-rate upgrade faster than pellet maxLifetime --
+    /// can never cross-contaminate each other's tally.
+    /// </summary>
+    private class PelletVolley
+    {
+        public int expected;
+        public int resolved;
+        public int hits;
+    }
+
+    /// <summary>
+    /// Called once per pellet in a volley as each one resolves (hit or expired).
+    /// Once every pellet in the shot has reported back, the whole shot counts as a
+    /// "landed" hit for DDA purposes if at least pelletHitFractionForDDA of its pellets
+    /// connected -- otherwise it counts as a miss even if a few pellets grazed a target.
+    /// </summary>
+    private void ResolveVolleyPellet(PelletVolley volley, bool hit)
+    {
+        volley.resolved++;
+        if (hit) volley.hits++;
+
+        if (volley.resolved < volley.expected) return;
+        if (volley.expected <= 0) return; // pelletPrefab was misconfigured for every pellet
+
+        float hitFraction = (float)volley.hits / volley.expected;
+        if (hitFraction >= pelletHitFractionForDDA)
+            PlayerMetricsTracker.Instance?.NotifyShotLanded();
     }
 
     Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)

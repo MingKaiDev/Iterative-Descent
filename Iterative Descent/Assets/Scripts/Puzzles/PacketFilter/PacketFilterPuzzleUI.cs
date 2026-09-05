@@ -183,6 +183,44 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     [SerializeField] private PacketFilterFeedbackPopup feedbackPopup;
 
     // =========================================================================
+    // Inspector: Audio
+    // =========================================================================
+
+    [Header("Audio")]
+    [Tooltip("One-shot source for scan/classify/rule SFX.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+
+    [Tooltip("Looping source for the panel's background music.")]
+    [SerializeField] private AudioSource bgmAudioSource;
+
+    [Tooltip("Background music, looped for as long as the panel is open.")]
+    [SerializeField] private AudioClip bgmClip;
+
+    [Tooltip("Played when Phase 1's INITIATE LIVE SCAN button actually starts the live " +
+             "stream -- not when the same button is repurposed as BACK TO RULES in Phase 3.")]
+    [SerializeField] private AudioClip initiateScanSound;
+
+    [Tooltip("Phase 2: played when a packet is classified correctly " +
+             "(ALLOW on legitimate traffic, or DENY on C2 traffic).")]
+    [SerializeField] private AudioClip correctClassifySound;
+
+    [Tooltip("Phase 2: played when a packet is classified incorrectly " +
+             "(ALLOW on C2 traffic, or a false-positive DENY on legitimate traffic).")]
+    [SerializeField] private AudioClip incorrectClassifySound;
+
+    [Tooltip("Phase 3: played when a rule is successfully parsed and added to the list.")]
+    [SerializeField] private AudioClip addRuleSound;
+
+    [Tooltip("Phase 3: played when the COMMIT FIREWALL RULES button runs validation.")]
+    [SerializeField] private AudioClip commitSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float bgmVolume = 0.3f;
+
+    // =========================================================================
     // Inspector: Timing
     // =========================================================================
 
@@ -255,6 +293,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         commitButton  ?.onClick.RemoveListener(OnCommitRules);
         viewLogButton ?.onClick.RemoveListener(OnToggleLogOverlay);
         closeButton   ?.onClick.RemoveListener(OnClose);
+        StopBgm();
     }
 
     // =========================================================================
@@ -301,6 +340,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
         SetPhase(Phase.LogAnalysis);
         PopulateLogTable();
+        StartBgm();
     }
 
     // =========================================================================
@@ -391,6 +431,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
             CloseLogOverlay();
             return;
         }
+
+        PlaySfx(initiateScanSound);
 
         _pendingLive      = new List<PacketData>(_scenario.LivePackets);
         _totalCards       = _scenario.LivePackets.Count;
@@ -492,11 +534,13 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         {
             if (pkt.IsMalicious)
             {
+                PlaySfx(incorrectClassifySound);
                 AddSessionLog($"[ALLOWED] {pkt.SrcIp} {portStr} -- C2 packet passed through", ColRed);
                 TintCard(card, new Color(1f, 0.2f, 0.2f, 0.12f));
             }
             else
             {
+                PlaySfx(correctClassifySound);
                 AddSessionLog($"[ALLOWED] {pkt.SrcIp} {portStr}", Color.white);
                 TintCard(card, Color.clear);
             }
@@ -505,6 +549,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         {
             if (!pkt.IsMalicious)
             {
+                PlaySfx(incorrectClassifySound);
                 _falsePositives = Mathf.Min(_falsePositives + 1, MaxFP);
                 AddSessionLog($"[DENIED] {pkt.SrcIp} {portStr} -- WARNING: false positive x{_falsePositives}", ColAmber);
                 TintCard(card, new Color(1f, 0.75f, 0.2f, 0.15f));
@@ -519,6 +564,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
             }
             else
             {
+                PlaySfx(correctClassifySound);
                 AddSessionLog($"[DENIED] {pkt.SrcIp} {portStr} -- C2 blocked", ColGreen);
                 TintCard(card, new Color(0.2f, 0.82f, 0.4f, 0.15f));
 
@@ -651,6 +697,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
         }
 
         if (ruleParseErrorText != null) ruleParseErrorText.gameObject.SetActive(false);
+        PlaySfx(addRuleSound);
         _rules.Add(result.Rule);
         ruleInputField.text = string.Empty;
 
@@ -660,6 +707,8 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private void OnCommitRules()
     {
+        PlaySfx(commitSound);
+
         if (_rules.Count == 0)
         {
             feedbackPopup?.Show(false, "No rules committed.\nWrite at least one DENY rule.");
@@ -862,7 +911,33 @@ public class PacketFilterPuzzleUI : MonoBehaviour
     private void OnClose()
     {
         StopAllCoroutines();
+        StopBgm();
         _onClose?.Invoke();
+    }
+
+    // =========================================================================
+    // Audio
+    // =========================================================================
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource == null || clip == null) return;
+        sfxAudioSource.PlayOneShot(clip, sfxVolume);
+    }
+
+    private void StartBgm()
+    {
+        if (bgmAudioSource == null || bgmClip == null) return;
+        bgmAudioSource.clip   = bgmClip;
+        bgmAudioSource.loop   = true;
+        bgmAudioSource.volume = bgmVolume;
+        bgmAudioSource.Play();
+    }
+
+    private void StopBgm()
+    {
+        if (bgmAudioSource == null) return;
+        bgmAudioSource.Stop();
     }
 
     // =========================================================================

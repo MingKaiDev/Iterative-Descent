@@ -2,16 +2,21 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
 /// Drag-and-match puzzle: player pairs networking protocol names to their default port numbers.
 ///
-/// PAIRS (fixed, no DDA scaling -- this is a reward terminal, not a gate):
+/// PAIRS (fixed pool of 8; DDA TIER controls how many are in play):
 ///   HTTP=80, HTTPS=443, SSH=22, FTP=21, DNS=53, SMTP=25, Telnet=23, POP3=110
+///   Tier 0 = 4 pairs ... Tier 4 = 8 pairs (see PairsPerTier). Low tier = fewer,
+///   easier pairs on screen; top tier maxes out at the full pool of 8.
 ///
 /// On solve: fires OnMatchingSolved(int wrongSubmissions), updates BKT via
-///   PlayerMetricsTracker.
+///   PlayerMetricsTracker. Wrong submissions also feed PuzzleDDAController's
+///   general puzzle pool the same way every other puzzle type does -- more
+///   wrong submissions before solving pulls the DDA score (and tier) down.
 ///
 /// ── HIERARCHY ─────────────────────────────────────────────────────────────
 ///
@@ -34,6 +39,7 @@ using TMPro;
 ///   submitButton     -- SubmitButton
 ///   closeButton      -- CloseButton
 ///   feedbackPopup    -- FeedbackPopup
+///   sfxAudioSource / pickupSound / dropSound / sfxVolume -- audio (see Audio header)
 ///
 /// NOTE: The Canvas that owns this panel needs a GraphicRaycaster component
 ///   and an EventSystem in the scene for drag events to work.
@@ -48,7 +54,7 @@ public class MatchingPuzzleUI : MonoBehaviour
     /// </summary>
     public static event Action<int> OnMatchingSolved;
 
-    // ── Port Pairs (fixed -- no DDA tier scaling) ─────────────────────────────
+    // ── Port Pairs (fixed pool; DDA tier picks the subset in play) ────────────
 
     private static readonly (string term, int port)[] AllPairs =
     {
@@ -61,6 +67,12 @@ public class MatchingPuzzleUI : MonoBehaviour
         ("Telnet", 23),
         ("POP3",   110),
     };
+
+    // ── DDA Tier Scaling ────────────────────────────────────────────────────
+    // Number of pairs in play this session, indexed by PuzzleDDAController's
+    // CurrentTier (0-4). Low tier = fewer pairs on screen, top tier = the
+    // full pool of 8 ("maxes out" -- never exceeds AllPairs.Length).
+    private static readonly int[] PairsPerTier = { 4, 5, 6, 7, 8 };
 
     // ── Inspector ─────────────────────────────────────────────────────────────
 
@@ -76,6 +88,18 @@ public class MatchingPuzzleUI : MonoBehaviour
 
     [Header("Feedback")]
     [SerializeField] private MatchingFeedbackPopup feedbackPopup;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxAudioSource;
+
+    [Tooltip("Played when a protocol card is picked up (drag begins).")]
+    [SerializeField] private AudioClip pickupSound;
+
+    [Tooltip("Played when a protocol card is dropped (drag ends -- on a slot or back to the pool).")]
+    [SerializeField] private AudioClip dropSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
 
     // ── Runtime ───────────────────────────────────────────────────────────────
 
@@ -113,21 +137,43 @@ public class MatchingPuzzleUI : MonoBehaviour
         if (feedbackPopup != null)
             feedbackPopup.gameObject.SetActive(false);
 
-        // Shuffle term names and port numbers independently so the visual
-        // presentation is randomised but answers never give themselves away.
-        var terms = new List<string>(AllPairs.Length);
-        var ports = new List<int>(AllPairs.Length);
-        foreach (var p in AllPairs) { terms.Add(p.term); ports.Add(p.port); }
+        // DDA tier decides how many of the 8 fixed pairs are in play this
+        // session -- low tier = fewer/easier, top tier maxes out at all 8.
+        int tier = PuzzleDDAController.Instance != null
+            ? Mathf.Clamp(PuzzleDDAController.Instance.CurrentTier, 0, PairsPerTier.Length - 1)
+            : 2;
+        int pairCount = Mathf.Clamp(PairsPerTier[tier], 1, AllPairs.Length);
+
+        // Pick which subset of the fixed pool is in play, then shuffle term
+        // and port presentation order independently so answers never give
+        // themselves away.
+        var pairIndices = new List<int>(AllPairs.Length);
+        for (int i = 0; i < AllPairs.Length; i++) pairIndices.Add(i);
+        Shuffle(pairIndices);
+        pairIndices = pairIndices.GetRange(0, pairCount);
+
+        var terms = new List<string>(pairCount);
+        var ports = new List<int>(pairCount);
+        foreach (int idx in pairIndices) { terms.Add(AllPairs[idx].term); ports.Add(AllPairs[idx].port); }
         Shuffle(terms);
         Shuffle(ports);
 
-        // Setup cards
+        // Setup cards -- only the first pairCount are used this session; the
+        // rest are hidden (the VerticalLayoutGroup re-packs around them).
         for (int i = 0; i < termCards.Length; i++)
-            termCards[i].SetupCard(terms[i]);
+        {
+            bool inUse = i < pairCount;
+            termCards[i].gameObject.SetActive(inUse);
+            if (inUse) termCards[i].SetupCard(this, terms[i]);
+        }
 
         // Setup slots
         for (int i = 0; i < portSlots.Length; i++)
-            portSlots[i].SetupSlot(ports[i]);
+        {
+            bool inUse = i < pairCount;
+            portSlots[i].gameObject.SetActive(inUse);
+            if (inUse) portSlots[i].SetupSlot(ports[i]);
+        }
 
         // Notify metrics tracker for timing
         PlayerMetricsTracker.Instance?.NotifyMatchingStarted();
@@ -139,9 +185,11 @@ public class MatchingPuzzleUI : MonoBehaviour
     {
         if (_solved) return;
 
-        // Require all slots to be filled before checking
+        // Require all ACTIVE slots to be filled before checking (inactive
+        // slots are pairs not in play this session, per DDA tier scaling)
         foreach (var slot in portSlots)
         {
+            if (!slot.gameObject.activeInHierarchy) continue;
             if (slot.OccupiedCard == null)
             {
                 feedbackPopup?.Show(false, "Assign a protocol to every port before submitting.");
@@ -149,12 +197,13 @@ public class MatchingPuzzleUI : MonoBehaviour
             }
         }
 
-        // Evaluate each slot
+        // Evaluate each active slot
         ResetHighlights();
         int wrongCount = 0;
 
         foreach (var slot in portSlots)
         {
+            if (!slot.gameObject.activeInHierarchy) continue;
             bool correct = IsCorrectPair(slot.OccupiedCard.TermName, slot.PortNumber);
             slot.SetHighlight(correct);
             if (!correct) wrongCount++;
@@ -194,6 +243,19 @@ public class MatchingPuzzleUI : MonoBehaviour
     private void OnClosePressed() => DoClose();
 
     private void DoClose() => _onClose?.Invoke();
+
+    // ── Audio ─────────────────────────────────────────────────────────────────
+
+    /// <summary>Called by MatchingTermCard.OnBeginDrag.</summary>
+    public void OnCardDragBegin(MatchingTermCard card, PointerEventData e) => PlaySfx(pickupSound);
+
+    /// <summary>Called by MatchingTermCard.OnEndDrag.</summary>
+    public void OnCardDragEnd(MatchingTermCard card, PointerEventData e) => PlaySfx(dropSound);
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 

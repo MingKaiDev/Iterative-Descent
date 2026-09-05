@@ -38,12 +38,13 @@ public class MatchingTermCard : MonoBehaviour,
 
     // ── Private ───────────────────────────────────────────────────────────────
 
-    private RectTransform _rect;
-    private CanvasGroup   _group;
-    private Image         _bg;
-    private Canvas        _canvas;
-    private Transform     _originalParent;
-    private int           _originalSiblingIndex;
+    private RectTransform     _rect;
+    private CanvasGroup       _group;
+    private Image             _bg;
+    private Canvas            _canvas;
+    private Transform         _originalParent;
+    private int               _originalSiblingIndex;
+    private MatchingPuzzleUI  _master;
 
     private void Awake()
     {
@@ -55,8 +56,9 @@ public class MatchingTermCard : MonoBehaviour,
     // ── Public API ────────────────────────────────────────────────────────────
 
     /// <summary>Call from MatchingPuzzleUI.InitPuzzle() to set term name and reset state.</summary>
-    public void SetupCard(string term)
+    public void SetupCard(MatchingPuzzleUI master, string term)
     {
+        _master                = master;
         TermName              = term;
         AssignedSlot          = null;
         _originalParent       = transform.parent;
@@ -104,6 +106,8 @@ public class MatchingTermCard : MonoBehaviour,
         _group.alpha          = 0.82f;
         _group.blocksRaycasts = false; // let pointer events reach the slot beneath
         ApplyColor(ColorDragging);
+
+        _master?.OnCardDragBegin(this, eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -123,6 +127,8 @@ public class MatchingTermCard : MonoBehaviour,
 
         // Colour reflects whether a slot accepted the drop
         ApplyColor(AssignedSlot != null ? ColorAssigned : ColorFree);
+
+        _master?.OnCardDragEnd(this, eventData);
     }
 
     // ── Private ───────────────────────────────────────────────────────────────

@@ -24,6 +24,10 @@ using System.Collections;
 /// ─── Required components (on same GameObject) ─────────────────────────────
 ///   • NavMeshAgent  (auto-required by EnemyBase)
 ///   • BruteAttack   (auto-required here)
+///   • BruteAudio    (OPTIONAL, same convention as EnemyChaser/EnemyChaserAudio --
+///                    resolved via GetComponent and used with ?., so the Brute still
+///                    works with no audio wired up. Add one to play the wakeup Scream
+///                    clip and Mutant Walk footsteps -- see BruteAudio.cs's doc comment.)
 ///
 /// ─── Animator parameters to create ───────────────────────────────────────
 ///   Float   "Speed"  — driven by agent velocity magnitude
@@ -49,6 +53,9 @@ public class EnemyBrute : EnemyBase
     [SerializeField] private string speedParamName  = "Speed";
     [SerializeField] private string deadParamName   = "IsDead";
     [SerializeField] private string screamParamName = "Scream";
+    [Tooltip("Animator trigger fired once when a DPS-triggered stagger begins " +
+             "(see EnemyBase.OnStaggerStart). Must exist as a Trigger parameter.")]
+    [SerializeField] private string staggerParamName = "Stagger";
 
     [Header("Wakeup Scream")]
     [Tooltip("Seconds the Brute stands still and roars (Zombie Scream) before it starts " +
@@ -63,12 +70,14 @@ public class EnemyBrute : EnemyBase
     private State _state = State.Idle;
 
     private BruteAttack _attack;
+    private BruteAudio  _audio;   // null-safe; optional component, same convention as EnemyChaser's EnemyChaserAudio
     private float        _pathTimer;
     private Coroutine    _wakeupRoutine;
 
     private int _speedHash;
     private int _deadHash;
     private int _screamHash;
+    private int _staggerHash;
 
     // ─── EnemyBase overrides ──────────────────────────────────────────────────
 
@@ -77,13 +86,15 @@ public class EnemyBrute : EnemyBase
         base.Awake(); // sets up _agent, _animator, _currentHealth
 
         _attack = GetComponent<BruteAttack>();
+        _audio  = GetComponent<BruteAudio>();
 
         _agent.speed            = chaseSpeed;
         _agent.stoppingDistance = Mathf.Max(0f, attackRange - 0.1f);
 
-        _speedHash  = Animator.StringToHash(speedParamName);
-        _deadHash   = Animator.StringToHash(deadParamName);
-        _screamHash = Animator.StringToHash(screamParamName);
+        _speedHash   = Animator.StringToHash(speedParamName);
+        _deadHash    = Animator.StringToHash(deadParamName);
+        _screamHash  = Animator.StringToHash(screamParamName);
+        _staggerHash = Animator.StringToHash(staggerParamName);
 
         _state = State.Idle;
         // Base Awake already sets agent.enabled = false and this.enabled = false
@@ -102,6 +113,8 @@ public class EnemyBrute : EnemyBase
 
         if (_wakeupRoutine != null) StopCoroutine(_wakeupRoutine);
         _wakeupRoutine = StartCoroutine(WakeUpRoutine());
+
+        _audio?.PlayEncounterMusic();
     }
 
     protected override void OnDeactivate()
@@ -126,14 +139,56 @@ public class EnemyBrute : EnemyBase
         SetAnimBool(_deadHash, true);
         SetAnimFloat(_speedHash, 0f);
 
+        _audio?.PlayDeath();
+        _audio?.StopEncounterMusic();
+
         // TODO: ragdoll, death VFX, score reward, notify GameManager -- same as EnemyChaser.
         Destroy(gameObject, 3f);
     }
 
     protected override void OnHit(float amount, Vector3 hitPoint)
     {
-        // TODO: hit-stagger animation, blood VFX -- same as EnemyChaser/EnemyRusher.
+        // TODO: blood VFX -- hit-stagger animation is now handled by OnStaggerStart below,
+        // driven by EnemyBase's DPS threshold rather than every single hit.
         Debug.Log($"[EnemyBrute] Hit for {amount} at {hitPoint}. HP remaining: {_currentHealth}");
+    }
+
+    // ─── Stagger (EnemyBase hooks) ─────────────────────────────────────────────
+
+    protected override void OnStaggerStart()
+    {
+        // If the DPS threshold hits mid wakeup-roar, cancel it -- same rationale as
+        // interrupting the Brute for any other reason: the stagger should visibly cut
+        // off whatever the Brute was doing, not queue up behind it.
+        if (_wakeupRoutine != null)
+        {
+            StopCoroutine(_wakeupRoutine);
+            _wakeupRoutine = null;
+        }
+
+        // NOTE: does NOT cancel BruteAttack's swipe/grab coroutine -- an in-progress
+        // swing still resolves on its own timer even if stagger lands mid-swipe. Only
+        // new attacks and movement are blocked (via _state and the base class's
+        // NavMeshAgent pause) for staggerDuration. Cancelling a Grab mid-window would
+        // also need to release PlayerMovement.SetGrabbed(false) to avoid soft-locking
+        // the player, so that's left as a follow-up if it turns out staggering out of
+        // a Grab needs to be possible.
+        _state = State.Idle; // blocks TickChase/TickAttack in Update() below until recovery
+
+        if (_animator != null)
+            _animator.SetTrigger(_staggerHash);
+
+        SetAnimFloat(_speedHash, 0f);
+    }
+
+    protected override void OnStaggerEnd()
+    {
+        if (_state == State.Dead) return;
+
+        _state = State.Chasing;
+        if (_agent.isOnNavMesh && _target != null)
+            _agent.SetDestination(_target.position);
+        _pathTimer = 0f;
     }
 
     // ─── Wakeup ───────────────────────────────────────────────────────────────
@@ -151,6 +206,7 @@ public class EnemyBrute : EnemyBase
 
         if (_animator != null)
             _animator.SetTrigger(_screamHash);
+        _audio?.PlayScream();
 
         yield return new WaitForSeconds(wakeupLockDuration);
 
@@ -165,6 +221,14 @@ public class EnemyBrute : EnemyBase
 
     private void Update()
     {
+        // While staggered, EnemyBase has already stopped the NavMeshAgent -- just
+        // hold still and skip all chase/attack ticks until OnStaggerEnd() fires.
+        if (IsStaggered)
+        {
+            SetAnimFloat(_speedHash, 0f);
+            return;
+        }
+
         // WakingUp is handled entirely by the coroutine above -- Update() just waits it out.
         if (_state == State.Dead || _state == State.WakingUp || _target == null)
         {

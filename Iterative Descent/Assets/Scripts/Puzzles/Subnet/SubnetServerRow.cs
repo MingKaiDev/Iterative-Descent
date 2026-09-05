@@ -93,6 +93,7 @@ public class SubnetServerRow : MonoBehaviour
         _selectedIndex = (_selectedIndex - 1 + _options.Length) % _options.Length;
         ResetHighlight();
         RefreshPrefix();
+        SubnetPuzzleUI.Instance?.PlayArrowSound(isRight: false);
     }
 
     private void OnRight()
@@ -101,6 +102,7 @@ public class SubnetServerRow : MonoBehaviour
         _selectedIndex = (_selectedIndex + 1) % _options.Length;
         ResetHighlight();
         RefreshPrefix();
+        SubnetPuzzleUI.Instance?.PlayArrowSound(isRight: true);
     }
 
     private void RefreshPrefix()

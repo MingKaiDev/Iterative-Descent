@@ -26,6 +26,12 @@ public class CombatHUD : MonoBehaviour
     [Tooltip("TextMeshPro showing [ mag | spare ].")]
     public TextMeshProUGUI ammoText;
 
+    [Header("Medkit Display")]
+    [Tooltip("Optional count badge shown on the medkit icon, e.g. 'x2'. Leave blank to hide. " +
+             "Pair with the MedkitIcon/KeyHintBG+KeyHintText objects in the CombatHUD Panel " +
+             "prefab (icon below the health bar, 'Q' key hint below that).")]
+    public TextMeshProUGUI medkitText;
+
     [Header("Crosshair")]
     [Tooltip("Assign the ReticleController component (on the Reticle Canvas child). " +
              "It manages its own visibility -- do not assign a plain crosshair here.")]
@@ -52,11 +58,12 @@ public class CombatHUD : MonoBehaviour
 
     void Awake()
     {
-        PlayerHealth.OnHealthChanged    += HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged      += HandlePistolAmmoChanged;
-        ShotgunController.OnAmmoChanged += HandleShotgunAmmoChanged;
-        RifleController.OnAmmoChanged   += HandleRifleAmmoChanged;
-        PlayerHealth.OnPlayerDied       += HandlePlayerDied;
+        PlayerHealth.OnHealthChanged      += HandleHealthChanged;
+        PlayerHealth.OnMedkitCountChanged += HandleMedkitCountChanged;
+        PlayerCombat.OnAmmoChanged        += HandlePistolAmmoChanged;
+        ShotgunController.OnAmmoChanged   += HandleShotgunAmmoChanged;
+        RifleController.OnAmmoChanged     += HandleRifleAmmoChanged;
+        PlayerHealth.OnPlayerDied         += HandlePlayerDied;
 
         // Death overlay starts hidden.
         if (deathOverlay != null)
@@ -67,11 +74,12 @@ public class CombatHUD : MonoBehaviour
 
     void OnDestroy()
     {
-        PlayerHealth.OnHealthChanged    -= HandleHealthChanged;
-        PlayerCombat.OnAmmoChanged      -= HandlePistolAmmoChanged;
-        ShotgunController.OnAmmoChanged -= HandleShotgunAmmoChanged;
-        RifleController.OnAmmoChanged   -= HandleRifleAmmoChanged;
-        PlayerHealth.OnPlayerDied       -= HandlePlayerDied;
+        PlayerHealth.OnHealthChanged      -= HandleHealthChanged;
+        PlayerHealth.OnMedkitCountChanged -= HandleMedkitCountChanged;
+        PlayerCombat.OnAmmoChanged        -= HandlePistolAmmoChanged;
+        ShotgunController.OnAmmoChanged   -= HandleShotgunAmmoChanged;
+        RifleController.OnAmmoChanged     -= HandleRifleAmmoChanged;
+        PlayerHealth.OnPlayerDied         -= HandlePlayerDied;
     }
 
     void Start()
@@ -103,6 +111,12 @@ public class CombatHUD : MonoBehaviour
 
         if (healthValueText != null)
             healthValueText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
+    }
+
+    void HandleMedkitCountChanged(int current, int max)
+    {
+        if (medkitText != null)
+            medkitText.text = $"x{current}";
     }
 
     void HandlePistolAmmoChanged(int mag, int spare)

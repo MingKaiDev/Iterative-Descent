@@ -71,6 +71,7 @@ public class DialogueTrigger : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+
         if (_triggerOnPlayerSpawn) return; // spawn mode does not use the collider path
 
         if (_playOnce && _fired) return;

@@ -95,6 +95,19 @@ public class SchedulingPuzzleUI : MonoBehaviour
     [Tooltip("Root RectTransform of the Canvas. Cards are reparented here while dragged.")]
     [SerializeField] private RectTransform dragLayer;
 
+    [Header("Audio")]
+    [Tooltip("AudioSource used for one-shot drag/drop/wrong feedback stings.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [Tooltip("Played when a process token is picked up (BeginDrag).")]
+    [SerializeField] private AudioClip pickupSound;
+    [Tooltip("Played when a process token is released (EndDrag) -- whether it lands in a slot or falls back to the pool.")]
+    [SerializeField] private AudioClip dropSound;
+    [Tooltip("Played when a submission is checked and does not match the RR solution.")]
+    [SerializeField] private AudioClip wrongSound;
+    [Tooltip("Volume for all three one-shot stings.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 0.4f;
+
     // ── Public Accessors (used by SchedulingProcessCard during drag) ───────────
     public RectTransform DragLayer   => dragLayer;
     public float         CanvasScale => dragLayer.lossyScale.x;
@@ -271,7 +284,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
 
     // ── Drag Callbacks (called by SchedulingProcessCard) ──────────────────────
 
-    public void OnCardDragBegin(SchedulingProcessCard card, PointerEventData e) { }
+    public void OnCardDragBegin(SchedulingProcessCard card, PointerEventData e) => PlaySfx(pickupSound);
 
     /// <summary>
     /// Called from SchedulingProcessCard.OnEndDrag().
@@ -280,6 +293,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
     /// </summary>
     public void OnCardDragEnd(SchedulingProcessCard card, PointerEventData e)
     {
+        PlaySfx(dropSound);
         if (card.CurrentSlot == null)
             card.ReturnToPool(); // missed all slots → back to pool
     }
@@ -343,6 +357,7 @@ public class SchedulingPuzzleUI : MonoBehaviour
         else
         {
             _attempts++;
+            PlaySfx(wrongSound);
 
             if (_attempts > 2)
             {
@@ -366,6 +381,12 @@ public class SchedulingPuzzleUI : MonoBehaviour
     }
 
     public void ClosePanel() => _onClose?.Invoke();
+
+    // ── Audio helper -- no-ops if either the AudioSource or clip is unassigned ─
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
+    }
 
     // ── Round Robin Core Logic ────────────────────────────────────────────────
 

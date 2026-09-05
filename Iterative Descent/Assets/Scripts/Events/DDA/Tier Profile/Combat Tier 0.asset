@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afd5523f750fdf6458b52f5081199bd8, type: 3}
   m_Name: Combat Tier 0
   m_EditorClassIdentifier: Assembly-CSharp::TierProfile
-  enemyCountMultiplier: 0.8
   speedMultiplier: 0.9
   damageMultiplier: 0.8
+  enemyHealthMultiplier: 0.8
+  damageMitigation: 0
   ammoSpawnMultiplier: 1.4
   healthSpawnMultiplier: 1.2

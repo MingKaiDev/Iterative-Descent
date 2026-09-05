@@ -53,6 +53,75 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.24689478, y: 1.8776742, z: 0.28623083}
   m_Center: {x: -0.03524171, y: -0.358719, z: -0.038429115}
+--- !u!1 &4359341179086703395
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4576475067331704240}
+  - component: {fileID: 3029094454744465886}
+  - component: {fileID: 8521996416642510088}
+  m_Layer: 0
+  m_Name: HitBox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4576475067331704240
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359341179086703395}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.008, y: -0.106, z: 0.014}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2244105623367306351}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &3029094454744465886
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359341179086703395}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.15
+  m_Height: 0.19
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8521996416642510088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359341179086703395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2217e5a535088f84c9e6475bac910cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHitbox
+  damageMultiplier: 2
 --- !u!1 &5598794976549760575
 GameObject:
   m_ObjectHideFlags: 0
@@ -233,6 +302,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6502182839619065283, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8137073261256130511}
+    - targetCorrespondingSourceObject: {fileID: 8700783698680967558, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4576475067331704240}
     - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4131032496646264359}
@@ -252,7 +324,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8881583551230904035}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6533139943279609705}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6745750013792667680}
   m_SourcePrefab: {fileID: 100100000, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+--- !u!4 &2244105623367306351 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8700783698680967558, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+  m_PrefabInstance: {fileID: 7465787858261949929}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4442706851687180330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
@@ -299,17 +382,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BruteAttack
   attackCooldown: 1.8
   meleeDamage: 18
-  comboGapDuration: 0.25
   comboAHit1TriggerName: SwipeA_Hit1
   comboAHit1Delay: 0.4
+  comboAGapDuration: 0.98
   comboAHit2TriggerName: SwipeA_Hit2
   comboAHit2Delay: 0.4
+  comboAHit2RecoveryDuration: 0.52
   comboBHit1TriggerName: SwipeB_Hit1
   comboBHit1Delay: 0.4
+  comboBGapDuration: 0.98
   comboBHit2TriggerName: SwipeB_Hit2
   comboBHit2Delay: 0.4
+  comboBHit2RecoveryDuration: 0.52
   grabTriggerName: Grab
   grabHitboxDelay: 0.5
+  grabHitboxOpenDuration: 0.3667
+  grabRecoveryDuration: 1.2071
   grabCooldown: 16
   grabChanceBase: 0.12
   grabChanceLowHealth: 0.7
@@ -320,6 +408,10 @@ MonoBehaviour:
   hitableLayers:
     serializedVersion: 2
     m_Bits: 64
+  knockbackForce: 6
+  knockbackUpwardKick: 1
+  grabShakeDuration: 0.35
+  grabShakeMagnitude: 0.18
   animator: {fileID: 0}
 --- !u!114 &6613115884633343056
 MonoBehaviour:
@@ -333,14 +425,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a77b0af81a05c54b9b9fe95daac864b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBrute
-  maxHealth: 400
+  maxHealth: 500
   deathGroundSnapOffset: 0.03
+  staggerDpsThreshold: 75
+  staggerWindowSeconds: 2
+  staggerDuration: 1
+  staggerCooldown: 1.5
+  staggerResistanceGrowth: 1.5
+  staggerBigHitDamage: 55
   chaseSpeed: 2
   attackRange: 1.5
   pathUpdateRate: 0.2
   speedParamName: Speed
   deadParamName: IsDead
   screamParamName: Scream
+  staggerParamName: Stagger
   wakeupLockDuration: 1.6
 --- !u!136 &8881583551230904035
 CapsuleCollider:
@@ -361,10 +460,131 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.62623024
-  m_Height: 2.1937008
+  m_Radius: 0.47950947
+  m_Height: 2.016277
   m_Direction: 1
-  m_Center: {x: -0.0005569458, y: 1.0957096, z: 0}
+  m_Center: {x: -0.0005569458, y: 1.0069977, z: -0.0028039217}
+--- !u!82 &6533139943279609705
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7735679278581121208}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: -2255164308667334564, guid: d16168f361ac8f740ae86b8d68af9f63, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 50
+  Pan2D: 0
+  rolloffMode: 1
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &6745750013792667680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7735679278581121208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e58c920f92343e485f2ef883db65de5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BruteAudio
+  footstepClip: {fileID: 8300000, guid: 6b758f07aeaeb244fbba0749aa2aefb1, type: 3}
+  screamClip: {fileID: 8300000, guid: f4fd29625dbbdd04e9858c613ddeb700, type: 3}
+  grabConnectClip: {fileID: 0}
+  neckSnapClip: {fileID: 0}
+  deathClip: {fileID: 0}
+  footstepVolume: 0.7
+  screamVolume: 1
+  grabConnectVolume: 0.9
+  neckSnapVolume: 1
+  deathVolume: 1
+  encounterMusicClip: {fileID: 0}
+  encounterMusicVolume: 0.35
 --- !u!4 &9092312768300401185 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1852576806548013000, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}

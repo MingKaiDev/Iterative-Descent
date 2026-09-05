@@ -53,6 +53,20 @@ public class PlayerMovement : MonoBehaviour
              "rather than stopping abruptly.")]
     public float knockbackRecoverySpeed = 6f;
 
+    [Header("Camera Shake")]
+    [Tooltip("Continuous small camera jitter applied for as long as IsGrabbed is true, on " +
+             "top of any one-off Shake() pulse -- keeps a grab feeling like an active " +
+             "struggle instead of a freeze-frame. 0 = off.")]
+    public float grabbedRumbleMagnitude = 0.015f;
+
+    [Header("Grab Look")]
+    [Tooltip("Degrees/second-equivalent Lerp speed used to whip the camera around to face " +
+             "whatever grabbed the player (see SetGrabbed's grabber param) and hold it " +
+             "there -- higher = snappier whip, lower = a slower, heavier drag. Mouse look " +
+             "is completely ignored while grabbed, so this is the only thing driving the " +
+             "camera during a grab.")]
+    public float grabLookSnapSpeed = 10f;
+
     // --- Public Read-Only State ---------------------------------------------
 
     /// <summary>True while the player is sprinting. Read by weapon scripts.</summary>
@@ -63,6 +77,14 @@ public class PlayerMovement : MonoBehaviour
 
     /// <summary>Current camera pitch in degrees. Read by UpperBodyAim to drive spine bone rotation.</summary>
     public float CameraPitch => _pitch;
+
+    /// <summary>
+    /// True while an enemy's grab attack (e.g. BruteAttack's Thrusting Attack) is holding
+    /// the player in place. WASD movement is ignored while this is true -- look input,
+    /// gravity and knockback keep running so the player can still look around and stays
+    /// grounded. Set via SetGrabbed(), called by the grabbing enemy.
+    /// </summary>
+    public bool IsGrabbed { get; private set; }
 
     // --- Private ------------------------------------------------------------
 
@@ -76,6 +98,17 @@ public class PlayerMovement : MonoBehaviour
     private bool    _isDead;
 
     private float _recoilOffset;
+
+    // Camera shake -- see Shake()/ApplyCameraShake(). _cameraBaseLocalPosition is
+    // captured once in Start() so shake can be a pure additive offset from the camera's
+    // real rest position instead of drifting it frame over frame.
+    private Vector3 _cameraBaseLocalPosition;
+    private float   _shakeTimer;      // seconds remaining on the current one-off pulse
+    private float   _shakeDuration;   // total duration of that pulse, for linear falloff
+    private float   _shakeMagnitude;  // peak magnitude of that pulse
+
+    // Grab look -- see SetGrabbed()/UpdateGrabLook(). Null whenever not grabbed.
+    private Transform _grabbedBy;
 
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
     private static readonly int IsRunningHash = Animator.StringToHash("IsRunning");
@@ -97,6 +130,9 @@ public class PlayerMovement : MonoBehaviour
 
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
+
+        if (cameraTransform != null)
+            _cameraBaseLocalPosition = cameraTransform.localPosition;
 
         _yaw   = transform.eulerAngles.y;
         _pitch = 0f;
@@ -130,15 +166,26 @@ public class PlayerMovement : MonoBehaviour
         if (_isDead) return;
 
         HandleLook();
-        HandleMovement();
+        if (!IsGrabbed) // frozen by an enemy's grab attack -- see SetGrabbed
+            HandleMovement();
         ApplyGravity();
         ApplyKnockbackMovement();
+        ApplyCameraShake();
     }
 
     // --- Look ---------------------------------------------------------------
 
     void HandleLook()
     {
+        // While grabbed, mouse input is completely ignored -- the enemy is forcing the
+        // player's view onto itself (classic "you can't look away" horror beat), not just
+        // adding to whatever they're already doing. See SetGrabbed()/UpdateGrabLook().
+        if (IsGrabbed && _grabbedBy != null)
+        {
+            UpdateGrabLook();
+            return;
+        }
+
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
         _yaw   += mouseDelta.x * mouseSensitivity * Time.deltaTime * 10f;
@@ -146,6 +193,42 @@ public class PlayerMovement : MonoBehaviour
         _pitch  = Mathf.Clamp(_pitch, pitchMin, pitchMax);
 
         // Decay recoil offset back to zero each frame.
+        _recoilOffset = Mathf.MoveTowards(_recoilOffset, 0f, recoilDecaySpeed * Time.deltaTime);
+
+        transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
+
+        if (cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.Euler(_pitch + _recoilOffset, 0f, 0f);
+    }
+
+    /// <summary>
+    /// Whips _yaw/_pitch toward whatever grabbed the player (_grabbedBy) and holds them
+    /// there, instead of following the mouse. Uses the same Quaternion.Euler(pitch,0,0) /
+    /// Euler(0,yaw,0) split as the normal path above so it stays consistent with
+    /// UpperBodyAim and anything else reading CameraPitch. Runs every frame while
+    /// grabbed, not just once, so it keeps tracking if the grabbing enemy moves or
+    /// rotates during the hold.
+    /// </summary>
+    void UpdateGrabLook()
+    {
+        Vector3 eye = cameraTransform != null ? cameraTransform.position : transform.position;
+        Vector3 toGrabber = _grabbedBy.position - eye;
+
+        if (toGrabber.sqrMagnitude > 0.0001f)
+        {
+            Vector3 flatDir = toGrabber; flatDir.y = 0f;
+            if (flatDir.sqrMagnitude > 0.0001f)
+            {
+                float targetYaw = Quaternion.LookRotation(flatDir.normalized).eulerAngles.y;
+                _yaw = Mathf.LerpAngle(_yaw, targetYaw, grabLookSnapSpeed * Time.deltaTime);
+            }
+
+            float horizontalDist = flatDir.magnitude;
+            float targetPitch = -Mathf.Atan2(toGrabber.y, Mathf.Max(horizontalDist, 0.0001f)) * Mathf.Rad2Deg;
+            targetPitch = Mathf.Clamp(targetPitch, pitchMin, pitchMax);
+            _pitch = Mathf.Lerp(_pitch, targetPitch, grabLookSnapSpeed * Time.deltaTime);
+        }
+
         _recoilOffset = Mathf.MoveTowards(_recoilOffset, 0f, recoilDecaySpeed * Time.deltaTime);
 
         transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
@@ -225,6 +308,66 @@ public class PlayerMovement : MonoBehaviour
     {
         if (_isDead) return;
         _externalVelocity = force;
+    }
+
+    // --- Grab -----------------------------------------------------------------
+
+    /// <summary>
+    /// Called by an enemy's grab attack (e.g. BruteAttack.GrabPlayer/ResolveGrabOutcome/
+    /// ReleaseGrabIfActive) the instant its grab hitbox connects, and again with false
+    /// once the grab resolves (instant kill) or is released early (e.g. the grabbing
+    /// enemy is destroyed mid-animation). Gates movement (IsGrabbed, see Update()) and
+    /// drives the forced grab-look (grabber, see UpdateGrabLook()) -- safe to call at any
+    /// time, including after the player is already dead (Update() has already bailed out
+    /// on _isDead by then anyway).
+    /// </summary>
+    /// <param name="grabbed">True to start/keep the grab, false to release it.</param>
+    /// <param name="grabber">The Transform the camera should be forced to face while
+    /// grabbed (typically the grabbing enemy's own transform). Ignored when grabbed is
+    /// false -- releasing always clears it, whatever is passed.</param>
+    public void SetGrabbed(bool grabbed, Transform grabber = null)
+    {
+        IsGrabbed  = grabbed;
+        _grabbedBy = grabbed ? grabber : null;
+    }
+
+    /// <summary>
+    /// Starts (or restarts) a one-off camera-position shake pulse, e.g. the impact moment
+    /// of an enemy's grab connecting. Overwrites rather than stacks -- a second call
+    /// before the first pulse finishes just restarts at the new duration/magnitude,
+    /// same "overwrite not stack" convention as ApplyKnockback -- so repeated triggers
+    /// stay predictable instead of compounding into something jittery.
+    /// </summary>
+    public void Shake(float duration, float magnitude)
+    {
+        _shakeDuration  = Mathf.Max(duration, 0.0001f);
+        _shakeTimer     = duration;
+        _shakeMagnitude = magnitude;
+    }
+
+    /// <summary>
+    /// Applies the current one-off shake pulse (linear falloff over its duration) plus
+    /// the continuous grabbedRumbleMagnitude jitter while IsGrabbed, as a pure additive
+    /// offset from _cameraBaseLocalPosition -- never accumulates, so it can't drift the
+    /// camera away from its real rest position over a long play session.
+    /// </summary>
+    void ApplyCameraShake()
+    {
+        if (cameraTransform == null) return;
+
+        Vector3 offset = Vector3.zero;
+
+        if (_shakeTimer > 0f)
+        {
+            _shakeTimer -= Time.deltaTime;
+            float falloff = Mathf.Clamp01(_shakeTimer / _shakeDuration);
+            offset += UnityEngine.Random.insideUnitSphere * (_shakeMagnitude * falloff);
+        }
+
+        if (IsGrabbed && grabbedRumbleMagnitude > 0f)
+            offset += UnityEngine.Random.insideUnitSphere * grabbedRumbleMagnitude;
+
+        cameraTransform.localPosition = _cameraBaseLocalPosition + offset;
     }
 
     void ApplyKnockbackMovement()

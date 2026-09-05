@@ -16,16 +16,18 @@ public class RifleAmmoPickup : PickupBase
 
     // ─── PickupBase ───────────────────────────────────────────────────────────
 
-    protected override void ApplyPickup(GameObject player)
+    protected override bool ApplyPickup(GameObject player)
     {
         RifleController rifle = player.GetComponent<RifleController>();
         if (rifle == null)
         {
             Debug.LogWarning("[RifleAmmoPickup] RifleController not found on player GameObject.");
-            return;
+            return true;
         }
 
         rifle.AddAmmo(roundAmount);
         Debug.Log($"[RifleAmmoPickup] Collected. +{roundAmount} spare rounds.");
+
+        return true;
     }
 }

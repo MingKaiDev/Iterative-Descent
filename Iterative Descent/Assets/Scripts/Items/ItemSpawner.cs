@@ -14,8 +14,16 @@ using UnityEngine;
 ///
 ///   3. NEEDS CHECK   — if the player is below a resource threshold, that item's
 ///                      chance is further multiplied by its needs multiplier (default 1.5x).
-///                      Ammo needs:   spareAmmo < ammoCombatSoftCap * ammoNeedsThreshold
-///                      Health needs: currentHP  < maxHP             * healthNeedsThreshold
+///                      Ammo needs (2026-09 revamp -- EITHER can trigger it, since these are
+///                      two different ways of detecting the same low-ammo condition):
+///                        spareAmmo < ammoCombatSoftCap * ammoNeedsThreshold  OR
+///                        spareAmmo <= PlayerCombat.minAmmoCount (absolute floor,
+///                        catches a small soft cap where the percentage check alone
+///                        could round to an oddly small or zero trigger point)
+///                      Health needs (2026-09 revamp -- BOTH must hold, since health kits
+///                      are now a capped medkit inventory rather than an instant heal):
+///                        currentHP   < maxHP     * healthNeedsThreshold  AND
+///                        medkitCount < maxMedkits * medkitNeedsThreshold
 ///
 ///   Final chance = Clamp01(baseChance * ddaMult * needsMult)
 ///
@@ -79,34 +87,38 @@ public class ItemSpawner : MonoBehaviour
 
     [Header("Needs Modifier")]
     [Range(0f, 1f)]
-    [Tooltip("Spare ammo threshold as a fraction of ammoCombatSoftCap. " +
-             "Below this level the player is considered to need ammo.")]
+    [Tooltip("Spare ammo threshold as a fraction of ammoCombatSoftCap. Below this level " +
+             "(OR below PlayerCombat.minAmmoCount, see that field's tooltip) the player is " +
+             "considered to need ammo.")]
     public float ammoNeedsThreshold   = 0.40f;
     [Range(1f, 3f)]
-    [Tooltip("Extra multiplier on ammo drop chance when player is below the ammo threshold.")]
+    [Tooltip("Extra multiplier on ammo drop chance when either ammo-needs condition above is met.")]
     public float ammoNeedsMultiplier  = 1.5f;
 
     [Range(0f, 1f)]
     [Tooltip("Health threshold as a fraction of maxHealth. " +
-             "Below this level the player is considered to need healing.")]
+             "Below this level (AND below medkitNeedsThreshold, see below) the player is " +
+             "considered to need healing.")]
     public float healthNeedsThreshold  = 0.50f;
+    [Range(0f, 1f)]
+    [Tooltip("Held-medkit threshold as a fraction of PlayerHealth.maxMedkits. Below this level " +
+             "(AND below healthNeedsThreshold on current HP) the player is considered to need " +
+             "healing. Both conditions must hold -- a player sitting on a full medkit stack " +
+             "doesn't need more dropped just because they're currently hurt, and a player who's " +
+             "out of medkits but at high HP doesn't need one dropped yet either.")]
+    public float medkitNeedsThreshold  = 0.50f;
     [Range(1f, 3f)]
-    [Tooltip("Extra multiplier on health drop chance when player is below the health threshold.")]
+    [Tooltip("Extra multiplier on health drop chance when both needs conditions above are met.")]
     public float healthNeedsMultiplier = 1.5f;
 
-    [Range(0f, 20f)]
-    [Tooltip("Spare shell count below which the player is considered to need shotgun ammo.")]
-    public float shellNeedsThreshold   = 8f;
     [Range(1f, 3f)]
-    [Tooltip("Extra multiplier on shell drop chance when player is below the shell threshold.")]
+    [Tooltip("Extra multiplier on shell drop chance when spare shells are at or below " +
+             "ShotgunController.minAmmoCount.")]
     public float shellNeedsMultiplier  = 1.5f;
 
-    [Range(0f, 10f)]
-    [Tooltip("Spare round count below which the player is considered to need rifle ammo. " +
-             "Lower than shellNeedsThreshold since the rifle's whole spare pool is only 10 rounds.")]
-    public float rifleNeedsThreshold   = 4f;
     [Range(1f, 3f)]
-    [Tooltip("Extra multiplier on rifle ammo drop chance when player is below the rifle threshold.")]
+    [Tooltip("Extra multiplier on rifle ammo drop chance when spare rounds are at or below " +
+             "RifleController.minAmmoCount.")]
     public float rifleNeedsMultiplier  = 1.5f;
 
     // ─── Inspector: Spawn Settings ────────────────────────────────────────────
@@ -276,47 +288,58 @@ public class ItemSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns ammoNeedsMultiplier when the player's spare ammo is below the threshold.
+    /// Returns ammoNeedsMultiplier when the player's spare ammo is below the percentage
+    /// threshold OR at/below PlayerCombat's absolute minAmmoCount floor -- either condition
+    /// is enough, since they're two different ways of catching the same "running low" state
+    /// (the absolute floor matters most for a weapon with a small soft cap, where a flat
+    /// percentage could round down to an unreachable trigger point).
     /// Falls back to 1.0 if PlayerCombat is not found.
     /// </summary>
     private float AmmoNeedsMultiplier()
     {
         if (_playerCombat == null) return 1f;
-        float cap       = Mathf.Max(1, _playerCombat.ammoCombatSoftCap);
-        bool  needsAmmo = _playerCombat.SpareAmmo < cap * ammoNeedsThreshold;
-        return needsAmmo ? ammoNeedsMultiplier : 1f;
+
+        float cap                  = Mathf.Max(1, _playerCombat.ammoCombatSoftCap);
+        bool  belowPercentThreshold = _playerCombat.SpareAmmo < cap * ammoNeedsThreshold;
+        bool  belowAbsoluteFloor    = _playerCombat.SpareAmmo <= _playerCombat.minAmmoCount;
+
+        return (belowPercentThreshold || belowAbsoluteFloor) ? ammoNeedsMultiplier : 1f;
     }
 
     /// <summary>
-    /// Returns healthNeedsMultiplier when the player's HP is below the threshold.
+    /// Returns healthNeedsMultiplier only when the player is BOTH low on current HP
+    /// AND low on held medkits -- see the class doc comment for why both are required.
     /// Falls back to 1.0 if PlayerHealth is not found.
     /// </summary>
     private float HealthNeedsMultiplier()
     {
         if (_playerHealth == null) return 1f;
-        bool needsHealth = _playerHealth.CurrentHealth < _playerHealth.maxHealth * healthNeedsThreshold;
-        return needsHealth ? healthNeedsMultiplier : 1f;
+
+        bool lowHp      = _playerHealth.CurrentHealth < _playerHealth.maxHealth * healthNeedsThreshold;
+        bool lowMedkits = _playerHealth.MedkitCount    < _playerHealth.maxMedkits * medkitNeedsThreshold;
+
+        return (lowHp && lowMedkits) ? healthNeedsMultiplier : 1f;
     }
 
     /// <summary>
-    /// Returns shellNeedsMultiplier when spare shells are below the threshold.
-    /// Falls back to 1.0 if ShotgunController is not found.
+    /// Returns shellNeedsMultiplier when spare shells are at or below
+    /// ShotgunController.minAmmoCount. Falls back to 1.0 if ShotgunController is not found.
     /// </summary>
     private float ShellNeedsMultiplier()
     {
         if (_shotgun == null) return 1f;
-        bool needsShells = _shotgun.SpareShells < shellNeedsThreshold;
+        bool needsShells = _shotgun.SpareShells <= _shotgun.minAmmoCount;
         return needsShells ? shellNeedsMultiplier : 1f;
     }
 
     /// <summary>
-    /// Returns rifleNeedsMultiplier when spare rounds are below the threshold.
-    /// Falls back to 1.0 if RifleController is not found.
+    /// Returns rifleNeedsMultiplier when spare rounds are at or below
+    /// RifleController.minAmmoCount. Falls back to 1.0 if RifleController is not found.
     /// </summary>
     private float RifleNeedsMultiplier()
     {
         if (_rifle == null) return 1f;
-        bool needsRounds = _rifle.SpareRounds < rifleNeedsThreshold;
+        bool needsRounds = _rifle.SpareRounds <= _rifle.minAmmoCount;
         return needsRounds ? rifleNeedsMultiplier : 1f;
     }
 

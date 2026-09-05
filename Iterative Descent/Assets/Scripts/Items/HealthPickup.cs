@@ -1,32 +1,34 @@
 using UnityEngine;
 
 /// <summary>
-/// Pickup that restores player health.
+/// Pickup that adds a medkit to the player's inventory.
 /// Attach to the HealthKit prefab alongside a trigger Collider.
 ///
-/// Calls PlayerHealth.Heal() which handles HUD broadcast automatically.
-/// Healing is clamped to maxHealth inside PlayerHealth — no overflow possible.
+/// 2026-09 revamp: no longer heals on contact. Calls PlayerHealth.AddMedkit(),
+/// which the player later consumes with Q (see PlayerHealth.UseMedkit()) for a
+/// flat medkitHealFraction of max health. If the player's medkit inventory is
+/// already full, AddMedkit() returns false and this pickup declines itself --
+/// it stays in the world (see PickupBase) rather than being wasted.
 /// </summary>
 public class HealthPickup : PickupBase
 {
-    // ─── Inspector ────────────────────────────────────────────────────────────
-
-    [Header("Healing")]
-    [Tooltip("HP restored on pickup. Clamped to player maxHealth internally.")]
-    public float healAmount = 20f;
-
     // ─── PickupBase ───────────────────────────────────────────────────────────
 
-    protected override void ApplyPickup(GameObject player)
+    protected override bool ApplyPickup(GameObject player)
     {
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         if (health == null)
         {
             Debug.LogWarning("[HealthPickup] PlayerHealth not found on player GameObject.");
-            return;
+            return true; // nothing we can do with it either way -- consume so it doesn't linger
         }
 
-        health.Heal(healAmount);
-        Debug.Log($"[HealthPickup] Collected. +{healAmount} HP.");
+        bool added = health.AddMedkit();
+        if (added)
+            Debug.Log("[HealthPickup] Collected. Medkit added to inventory.");
+        else
+            Debug.Log("[HealthPickup] Medkit inventory full -- pickup left in world.");
+
+        return added;
     }
 }

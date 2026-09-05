@@ -308,7 +308,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.959
+      value: -0.71
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_LocalPosition.y
@@ -346,6 +346,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 400028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.127
+      objectReference: {fileID: 0}
+    - target: {fileID: 400028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.018
+      objectReference: {fileID: 0}
     - target: {fileID: 9500000, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       propertyPath: m_Controller
       value: 
@@ -378,6 +390,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6314615908461827026}
+    - targetCorrespondingSourceObject: {fileID: 100028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3887461760018119093}
+    - targetCorrespondingSourceObject: {fileID: 100028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2826898338426472803}
   m_SourcePrefab: {fileID: 100100000, guid: cf3910b7639e12447827e45f63f60201, type: 3}
 --- !u!4 &4407843886773946209 stripped
 Transform:
@@ -389,6 +407,47 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400026, guid: cf3910b7639e12447827e45f63f60201, type: 3}
   m_PrefabInstance: {fileID: 4407843886774345209}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4407843886774246213 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100028, guid: cf3910b7639e12447827e45f63f60201, type: 3}
+  m_PrefabInstance: {fileID: 4407843886774345209}
+  m_PrefabAsset: {fileID: 0}
+--- !u!136 &3887461760018119093
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4407843886774246213}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.12
+  m_Height: 0.33
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.06, z: 0}
+--- !u!114 &2826898338426472803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4407843886774246213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2217e5a535088f84c9e6475bac910cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHitbox
+  damageMultiplier: 2
 --- !u!1 &4407843886774246237 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100004, guid: cf3910b7639e12447827e45f63f60201, type: 3}
@@ -406,21 +465,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1830140ab6b91042ad649bcbe7dfd06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
-  maxHealth: 100
+  maxHealth: 120
   deathGroundSnapOffset: 0.3
+  staggerDpsThreshold: 40
+  staggerWindowSeconds: 1
+  staggerDuration: 1
+  staggerCooldown: 1.5
+  staggerResistanceGrowth: 1.25
   chaseSpeed: 2
   attackRange: 0.85
   pathUpdateRate: 0.2
   speedParamName: Speed
   deadParamName: IsDead
+  staggerParamName: Stagger
   punch1TriggerName: Punch1
   punch2TriggerName: Punch2
-  punch1HitboxDelay: 1.4
+  punch1HitboxDelay: 0.8
   punch2HitboxDelay: 0.2
   windupRotationDegrees: 0
   autoActivateRadius: 3
   autoActivateCheckInterval: 0.25
   playerTag: Player
+  losHeight: 1
 --- !u!114 &4887279213927914859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -483,9 +549,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.4
-  m_Height: 1.811731
+  m_Height: 1.51
   m_Direction: 1
-  m_Center: {x: 0, y: 0.93629074, z: 0}
+  m_Center: {x: 0, y: 0.77, z: 0}
 --- !u!82 &3270739732144565938
 AudioSource:
   m_ObjectHideFlags: 0

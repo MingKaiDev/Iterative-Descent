@@ -17,9 +17,11 @@ public class GateDisableProp : MonoBehaviour, IInteractable
     [Tooltip("The gate GameObject to hide when the player activates this panel.")]
     public GameObject gateObject;
 
+    [Tooltip("The label for the interaction.")]
+    public string InteractLabel => "Open Front Gate";
+
     // ── IInteractable ─────────────────────────────────────────────────────────
 
-    public string InteractLabel => "Open Gate";
 
     public void Interact(GameObject interactor)
     {

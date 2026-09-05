@@ -162,6 +162,23 @@ public class StackPuzzleUI : MonoBehaviour
     [Tooltip("Prefab: root Button + child TMP named 'Label'.")]
     [SerializeField] private GameObject tokenButtonPrefab;
 
+    // ── Inspector: Audio ──────────────────────────────────────────────────────
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxAudioSource;
+
+    [Tooltip("Played on a successful pop (breaker removed from the stack).")]
+    [SerializeField] private AudioClip popSound;
+
+    [Tooltip("Played when a breaker token is pushed onto the stack.")]
+    [SerializeField] private AudioClip pushSound;
+
+    [Tooltip("Played when a correct sequence is authorized (Phase 1 pass, Phase 2 reconstruction, or full solve).")]
+    [SerializeField] private AudioClip authorizeSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 1f;
+
     // ── Cell Background Colors ─────────────────────────────────────────────────
     // Industrial / circuit breaker palette -- dark theme
 
@@ -365,6 +382,7 @@ public class StackPuzzleUI : MonoBehaviour
             return; // ConsumeP1Move already handled exhaustion
 
         _stack.Add(value);
+        PlaySfx(pushSound);
         ConsumeP1Move();
         RefreshP1StackDisplay();
     }
@@ -383,6 +401,7 @@ public class StackPuzzleUI : MonoBehaviour
             return;
 
         _stack.RemoveAt(_stack.Count - 1);
+        PlaySfx(popSound);
         ConsumeP1Move();
         RefreshP1StackDisplay();
     }
@@ -418,6 +437,7 @@ public class StackPuzzleUI : MonoBehaviour
         }
 
         // ── Phase 1 correct ───────────────────────────────────────────────────
+        PlaySfx(authorizeSound);
         bool hasPhase2 = _tier >= 2;
         if (!hasPhase2)
         {
@@ -679,6 +699,7 @@ public class StackPuzzleUI : MonoBehaviour
         if (!StackMatchesTarget(_buses[(int)BusId.Restore])) return;
 
         SetPhase(PuzzlePhase.Complete);
+        PlaySfx(authorizeSound);
         OnStackSolved?.Invoke(_totalWrongAttempts);
 
         SetStatusBadge("OVERRIDE ACCEPTED", BadgeDone);
@@ -1010,6 +1031,14 @@ public class StackPuzzleUI : MonoBehaviour
         if (rt == null) return;
         for (int i = rt.childCount - 1; i >= 0; i--)
             Destroy(rt.GetChild(i).gameObject);
+    }
+
+    // ── Audio ─────────────────────────────────────────────────────────────────
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource == null || clip == null) return;
+        sfxAudioSource.PlayOneShot(clip, sfxVolume);
     }
 
     public void ClosePanel() => _onClose?.Invoke();

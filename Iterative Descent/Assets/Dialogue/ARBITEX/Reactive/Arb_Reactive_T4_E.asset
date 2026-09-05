@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: ARBITEX
-    text: I am recalculating everything I assumed about you. All of it was wrong. Wonderful.
+    text: I am recalculating everything I assumed about you. All of it was wrong.
+      Wonderful.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 0}

@@ -170,6 +170,26 @@ public class DrainPuzzleUI : MonoBehaviour
     [Tooltip("DrainWaterFill component on the WaterFill child GameObject (first in hierarchy).")]
     [SerializeField] private DrainWaterFill waterFill;
 
+    [Header("Audio")]
+    [Tooltip("Looping AudioSource for the constant water-flowing ambience -- kept separate from " +
+             "sfxAudioSource so the flush one-shot never cuts the loop off. Starts on GeneratePuzzle(), " +
+             "stops on OnDisable() (covers the panel being closed either via ClosePanel or SetActive(false)).")]
+    [SerializeField] private AudioSource waterAudioSource;
+    [Tooltip("Continuous water-flowing sound. Looped for as long as the puzzle panel is open.")]
+    [SerializeField] private AudioClip waterLoopClip;
+    [Tooltip("Water loop volume. Applied every time the loop (re)starts, and live while the puzzle " +
+             "is open in Play Mode so it can be tuned without stopping.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float waterVolume = 0.25f;
+
+    [Tooltip("AudioSource used for the one-shot flush sting.")]
+    [SerializeField] private AudioSource sfxAudioSource;
+    [Tooltip("Played each time a correct scan drains the water down one step.")]
+    [SerializeField] private AudioClip flushSound;
+    [Tooltip("Volume for the flush one-shot.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float sfxVolume = 0.4f;
+
     // =========================================================================
     // Inspector: Feedback Popup
     // =========================================================================
@@ -250,6 +270,15 @@ public class DrainPuzzleUI : MonoBehaviour
     {
         hintButton?.onClick.RemoveListener(ToggleHint);
         closeButton?.onClick.RemoveListener(ClosePanel);
+        StopWaterAudio(); // covers the panel being closed via ClosePanel or SetActive(false)
+    }
+
+    /// <summary>Lets waterVolume be scrubbed live in the Inspector while the puzzle is open in Play
+    /// Mode, instead of only taking effect on the next GeneratePuzzle(). sfxVolume doesn't need this --
+    /// it's read fresh on every PlayOneShot() call anyway.</summary>
+    private void OnValidate()
+    {
+        if (waterAudioSource != null) waterAudioSource.volume = waterVolume;
     }
 
     // =========================================================================
@@ -333,6 +362,31 @@ public class DrainPuzzleUI : MonoBehaviour
         RefreshDSDisplay();
         RefreshAllNodeVisuals();
         SetStatus("Click the INLET node to begin scanning.");
+
+        StartWaterAudio();
+    }
+
+    // ── Audio ────────────────────────────────────────────────────────────────
+    private void StartWaterAudio()
+    {
+        if (waterAudioSource == null || waterLoopClip == null) return;
+        waterAudioSource.clip         = waterLoopClip;
+        waterAudioSource.loop         = true;
+        waterAudioSource.playOnAwake  = false;
+        waterAudioSource.spatialBlend = 0f; // 2D -- same volume regardless of camera position
+        waterAudioSource.volume       = waterVolume;
+        if (!waterAudioSource.isPlaying) waterAudioSource.Play();
+    }
+
+    private void StopWaterAudio()
+    {
+        if (waterAudioSource != null && waterAudioSource.isPlaying) waterAudioSource.Stop();
+    }
+
+    /// <summary>Defensive one-shot helper -- no-ops if either the AudioSource or clip is unassigned.</summary>
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null) sfxAudioSource.PlayOneShot(clip, sfxVolume);
     }
 
     // =========================================================================
@@ -622,6 +676,7 @@ public class DrainPuzzleUI : MonoBehaviour
         // Water drops evenly across all nodes as drain clears
         _waterLevel = Mathf.Max(0f, WaterInitial - (float)_correctScans / _nodes.Count * WaterInitial);
         waterFill?.SetFillLevel(_waterLevel);
+        PlaySfx(flushSound);
 
         // Add children to DS and reveal them.
         // BFS: enqueue left to right (FIFO preserves order naturally).

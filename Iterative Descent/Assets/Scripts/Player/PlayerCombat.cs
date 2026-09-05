@@ -32,8 +32,16 @@ public class PlayerCombat : MonoBehaviour
     public Transform muzzlePoint;
 
     [Header("Pistol - DDA")]
-    [Tooltip("Soft cap used by CombatDDAController to normalise total ammo.")]
+    [Tooltip("Soft cap used by CombatDDAController to normalise total ammo. The upper end " +
+             "of the TotalAmmoNormalised range -- see minAmmoCount below for the lower end.")]
     public int ammoCombatSoftCap = 48;
+    [Tooltip("Absolute floor (total rounds -- mag + spare) below which the player is " +
+             "considered critically low on ammo, regardless of ammoCombatSoftCap. " +
+             "TotalAmmoNormalised treats this as the '0' end of its range instead of true " +
+             "zero, and ItemSpawner's ammo-needs check treats hitting this floor as an " +
+             "automatic 'needs ammo' regardless of the percentage-of-cap check. Must stay " +
+             "below ammoCombatSoftCap.")]
+    public int minAmmoCount = 5;
 
     [Header("Pistol - Reload")]
     [Tooltip("Seconds the reload animation takes before ammo is refilled.")]
@@ -94,8 +102,15 @@ public class PlayerCombat : MonoBehaviour
     public int  CurrentMag  => _currentMag;
     public int  SpareAmmo   => _spareAmmo;
 
+    /// <summary>
+    /// [0,1] ammo signal for CombatDDAController. Uses InverseLerp (not a flat ratio) so
+    /// the range is (minAmmoCount -> 0, ammoCombatSoftCap -> 1) instead of (0 -> 0) --
+    /// matches the same "floor, not raw zero" idiom the time signals already use elsewhere
+    /// in this DDA system (e.g. CombatDDAController's fastCombatTime/slowCombatTime).
+    /// InverseLerp already clamps to [0,1], so no player state can push this out of range.
+    /// </summary>
     public float TotalAmmoNormalised =>
-        Mathf.Clamp01((float)(_currentMag + _spareAmmo) / Mathf.Max(1, ammoCombatSoftCap));
+        Mathf.InverseLerp(minAmmoCount, ammoCombatSoftCap, _currentMag + _spareAmmo);
 
     // --- Private ------------------------------------------------------------
     private Animator       _animator;

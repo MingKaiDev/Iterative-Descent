@@ -511,3 +511,46 @@ will stop being a nonstop attack blender. If you want the Brute to periodically 
 re-approach even while the player stays close (a more "deliberate" combat pacing, matching the
 same theme discussed for CyberSoldier), that's a separate design decision -- let me know and
 I can add a stand-off/reposition beat on top of this fix.
+
+## 16. Death animation -- Loop Time fix + death SFX hook (2026-09-03)
+
+The `Death` state, its `Any State -> Death` transition (`IsDead` bool, Transition Duration 0,
+no Exit Time -- same convention as the other five reactive states, see section 11d), and the
+`Zombie Death` clip assignment already existed in `Phobos.controller` from an earlier pass, but
+two pieces were still incomplete:
+
+**Bug fixed -- Loop Time was checked on the death clip.** `Zombie Death.fbx`'s `Death` clip
+(`Assets/Art/Characters/hulking-cyborg/source/Zombie Death.fbx`, 90 frames) had **Loop Time**
+checked, the same category of mistake as the `Mutant Walk` mis-wiring in section 11a, just the
+opposite symptom: instead of getting stuck, a *looping* death clip restarts the collapse motion
+from frame 0 every ~3s instead of holding the final collapsed pose. Since `EnemyBrute.OnDie()`
+calls `Destroy(gameObject, 3f)`, a mistimed loop could read as the Brute twitching back upright
+right as it disappears. Fixed by unchecking **Loop Time** on the `Death` clip in its Animation
+import inspector (Loop Time is now off, matching every other one-shot reactive clip in this
+controller -- Scream/swipes/Grab are all non-looping by default since they were imported as
+Trigger-driven one-offs, not locomotion).
+
+**Added -- death SFX hook.** `EnemyBrute` had `IsDead`/animation wired but never played a sound
+on death (unlike `EnemyChaser`, which calls `_audio?.PlayDeath()`). Added, mirroring
+`EnemyChaserAudio`'s convention exactly:
+- `BruteAudio.deathClip` (`AudioClip`, optional -- same null-safe pattern as `grabConnectClip`/
+  `neckSnapClip`) + `deathVolume` (default 1).
+- `BruteAudio.PlayDeath()` -- `PlayOneShot(deathClip, deathVolume)`, logs a warning and no-ops if
+  unassigned.
+- `EnemyBrute.OnDie()` now calls `_audio?.PlayDeath()` right after `SetAnimBool(_deadHash, true)`,
+  same spot `EnemyChaser.OnDie()` calls its own `PlayDeath()`.
+
+**Still needed (Editor-only, by hand):** `BruteAudio.deathClip` is unassigned -- drag a clip onto
+it in the Inspector (the Phobos GameObject's `BruteAudio` component). No death SFX exists yet
+under `Assets/Audio/Enemy/Phobos/` -- either add one there, or point `deathClip` at
+`Assets/Audio/Enemy/BasicEnemy/Enemy Death.mp3` (CyberSoldier's death clip) as a placeholder
+until a Brute-specific one is sourced.
+
+**Known non-issue, flagging anyway:** the `Death` state's own return transition (`fileID:
+5187588500647248705`, condition-less, Exit Time ~0.916 of the clip) sends it back to `Idle`
+once the clip finishes playing, same as every attack state's auto-return. For a corpse this
+looks wrong in principle, but `Destroy(gameObject, 3f)` fires before or right around when that
+transition would complete for a 90-frame/30fps (~3s) clip, so it isn't visually reachable in
+practice. If the death clip length or the 3s delay ever changes independently, re-check this --
+the cleanest long-term fix would be removing that return transition entirely (a dead Brute has
+no reason to ever leave `Death`), just not required by anything asked so far.

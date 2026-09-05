@@ -2,8 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// Attach to a trigger collider placed at the Classroom 1 entrance.
-/// When the player walks in, activates a DDA-scaled subset of the
-/// pre-placed dormant EnemyChaser GameObjects in the room.
+/// When the player walks in, activates every pre-placed dormant EnemyChaser
+/// GameObject in the room.
 ///
 /// Fires once per scene load -- re-entry does not re-trigger.
 ///
@@ -15,12 +15,11 @@ using UnityEngine;
 ///   4. Leave playerTarget empty -- it is found automatically via the
 ///      "Player" tag. Assign manually only if you need to override this.
 ///
-/// ── Enemy count scaling ───────────────────────────────────────────────────
-///   baseCount = enemies.Length (all placed enemies = the ceiling).
-///   EnemyDirector.GetScaledCount(baseCount) returns the DDA-adjusted count.
-///   Enemies are activated in array order up to that count.
-///   At Tier 1 (default start) the multiplier is 1.0 so all placed enemies
-///   activate. At Tier 0 the count is floored down (e.g. 3 placed -> 2 active).
+/// ── 2026-09 revamp ────────────────────────────────────────────────────────
+///   DDA-scaled enemy count has been removed. Every enemy in the enemies array
+///   activates every time, regardless of tier. Difficulty now comes entirely
+///   from EnemyDirector's per-enemy toughness/aggression multipliers (health,
+///   mitigation, speed, damage), applied individually as each enemy activates.
 /// </summary>
 public class EncounterTrigger : MonoBehaviour
 {
@@ -28,7 +27,7 @@ public class EncounterTrigger : MonoBehaviour
 
     [Header("Enemies (pre-placed, dormant in scene)")]
     [Tooltip("Any EnemyBase instances placed in this room (EnemyChaser, EnemyRusher, etc). Order matters -- " +
-             "enemies are activated front-to-back up to the DDA-scaled count.")]
+             "enemies are activated front-to-back, though all of them activate regardless of order.")]
     [SerializeField] private EnemyBase[] enemies;
 
     [Header("Player (leave empty to auto-find by tag)")]
@@ -86,17 +85,11 @@ public class EncounterTrigger : MonoBehaviour
             return;
         }
 
-        // Ask EnemyDirector how many enemies to activate for the current DDA tier.
-        // Falls back to full count if EnemyDirector is unavailable.
-        int count = EnemyDirector.Instance != null
-            ? EnemyDirector.Instance.GetScaledCount(enemies.Length)
-            : enemies.Length;
-
-        // Clamp to array size -- pre-placed enemies are the hard ceiling
-        count = Mathf.Clamp(count, 1, enemies.Length);
-
+        // Every pre-placed enemy activates -- DDA no longer withholds enemies by
+        // tier (see class doc comment). Per-enemy toughness/aggression scaling
+        // still happens inside EnemyBase.Activate() / TakeDamage() individually.
         int activated = 0;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < enemies.Length; i++)
         {
             if (enemies[i] == null)
             {
