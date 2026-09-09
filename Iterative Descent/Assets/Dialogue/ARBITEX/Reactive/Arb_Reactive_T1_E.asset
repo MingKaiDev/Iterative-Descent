@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are learning. Slowly. As expected.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: c47e585dc9a9c8f49b601c53ffb11b38, type: 3}

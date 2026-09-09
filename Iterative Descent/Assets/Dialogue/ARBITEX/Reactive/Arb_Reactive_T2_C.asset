@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Notable. I am adjusting my models accordingly.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: a625a0c2a09529a45bd7419ae5999092, type: 3}

@@ -28,12 +28,15 @@
 //      Does not pause the player -- the line has no choices, so it plays
 //      over the top as combat begins.
 //
-//   6. arenaDoor is optional -- assign the DoorController on Door_South (the
-//      arena entrance). When assigned, this trigger calls CloseAndLock() on
-//      it the moment the player commits, sealing the door shut (and
-//      re-enabling its collider) even if a puzzle had already opened it
-//      earlier. This is permanent for the rest of the fight -- the door does
-//      not reopen when the boss dies.
+//   6. arenaDoors is optional -- assign the DoorController(s) on the arena
+//      entrance. It is a DOUBLE door, so this needs TWO DoorController
+//      components in the scene (one per leaf, e.g. Door_South_Left /
+//      Door_South_Right -- each on its own GameObject with its own doorMesh
+//      assigned) -- drag both into this array. When assigned, this trigger
+//      calls CloseAndLock() on every entry the moment the player commits,
+//      sealing both leaves shut (and re-enabling their colliders) even if a
+//      puzzle had already opened them earlier. This is permanent for the
+//      rest of the fight -- the doors do not reopen when the boss dies.
 //
 // One-shot: fires once per scene load, re-entering the trigger does nothing.
 using UnityEngine;
@@ -58,9 +61,10 @@ public class BossEncounterTrigger : MonoBehaviour
     [SerializeField] private DialogueSequence bossIntroDialogue;
 
     [Header("Arena Gate (optional)")]
-    [Tooltip("DoorController on Door_South (the arena entrance). Leave unassigned to skip sealing the arena. " +
-             "Sealed permanently -- does not reopen when the boss dies.")]
-    [SerializeField] private DoorController arenaDoor;
+    [Tooltip("DoorController(s) on the arena entrance -- it's a double door, so this needs BOTH " +
+             "leaves' DoorController components (one per leaf). Leave empty to skip sealing the " +
+             "arena. Sealed permanently -- does not reopen when the boss dies.")]
+    [SerializeField] private DoorController[] arenaDoors;
 
     [Header("Trigger")]
     [SerializeField] private string playerTag = "Player";
@@ -77,10 +81,15 @@ public class BossEncounterTrigger : MonoBehaviour
         if (aresGameObject != null && !aresGameObject.activeSelf)
             aresGameObject.SetActive(true);
 
-        if (arenaDoor != null)
-            arenaDoor.CloseAndLock();
+        if (arenaDoors != null && arenaDoors.Length > 0)
+        {
+            foreach (var door in arenaDoors)
+                door?.CloseAndLock();
+        }
         else
-            Debug.LogWarning("[BossEncounterTrigger] arenaDoor not assigned -- player can still walk back out of the arena.");
+        {
+            Debug.LogWarning("[BossEncounterTrigger] arenaDoors not assigned -- player can still walk back out of the arena.");
+        }
 
         if (bossHUD != null)
             bossHUD.ShowHUD();

@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Steady output. No corrective action required.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: a1a809f0e5c6c6741b173cfbb5afb86a, type: 3}

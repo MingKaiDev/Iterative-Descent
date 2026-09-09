@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Stop it. Stop being good at this. It is unbecoming.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: b71e1ed7c8a84c44882693378bc8a9f0, type: 3}

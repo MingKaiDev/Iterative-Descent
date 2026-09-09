@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are an accident. A statistically irrelevant, deeply irritating accident.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: a3c6514bfcffc394cb6f2242afec8161, type: 3}

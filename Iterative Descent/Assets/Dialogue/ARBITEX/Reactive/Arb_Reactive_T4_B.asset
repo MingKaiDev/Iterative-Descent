@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: ARBITEX
-    text: I have run this scenario a thousand times. You were not supposed to win in any of them.
+    text: I have run this scenario a thousand times. You were not supposed to win
+      in any of them.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 16ef2f337ef694f4fac59b2d6ecef974, type: 3}

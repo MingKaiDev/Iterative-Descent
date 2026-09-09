@@ -206,6 +206,21 @@ public class RifleController : MonoBehaviour
         _spareRounds = spare;
     }
 
+    /// <summary>
+    /// Called by CheckpointManager as part of an in-place checkpoint respawn (no scene
+    /// reload) -- clears the dead flag, cancels any in-progress reload, restores ammo
+    /// to the checkpoint's saved values, and broadcasts the change (InitAmmo alone does
+    /// not broadcast, since it's normally followed by WeaponManager.SetWeapon() doing
+    /// that via OnEnable -- no such switch happens here).
+    /// </summary>
+    public void Revive(int mag, int spare)
+    {
+        _isDead      = false;
+        _isReloading = false;
+        InitAmmo(mag, spare);
+        OnAmmoChanged?.Invoke(_currentMag, _spareRounds);
+    }
+
     public void EquipWithAmmo(int mag, int spare)
     {
         _currentMag  = Mathf.Clamp(mag, 0, magazineSize);

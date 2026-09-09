@@ -23,6 +23,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     public static event Action<float, float> OnHealthChanged;       // (current, max)
     public static event Action<int, int>      OnMedkitCountChanged; // (current, max)
     public static event Action               OnPlayerDied;
+    public static event Action               OnPlayerRespawned;
 
     // ─── Inspector ──────────────────────────────────────────────────────────────
 
@@ -131,6 +132,26 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     }
 
     // ─── Internal ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Called by CheckpointManager after an in-place checkpoint respawn (no scene
+    /// reload) -- restores health/medkits to the checkpoint's saved values and clears
+    /// the dead flag so TakeDamage()/UseMedkit() work again. Fires OnPlayerRespawned so
+    /// DeathScreenUI/CombatHUD (and anything else showing a death UI) can hide themselves.
+    /// </summary>
+    public void Revive(float health, int medkitCount)
+    {
+        _isDead        = false;
+        _currentHealth = Mathf.Clamp(health, 1f, maxHealth); // never come back at 0 HP
+        _medkitCount   = Mathf.Clamp(medkitCount, 0, maxMedkits);
+
+        OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+        OnMedkitCountChanged?.Invoke(_medkitCount, maxMedkits);
+        OnPlayerRespawned?.Invoke();
+
+        Debug.Log($"[PlayerHealth] Respawned at checkpoint. HP: {_currentHealth:F0}/{maxHealth:F0}, " +
+                  $"medkits: {_medkitCount}/{maxMedkits}.");
+    }
 
     void Die()
     {

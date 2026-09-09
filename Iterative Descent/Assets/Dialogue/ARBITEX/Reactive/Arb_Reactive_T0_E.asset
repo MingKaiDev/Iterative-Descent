@@ -17,3 +17,4 @@ MonoBehaviour:
     text: I have seen malfunctioning drones perform with more competence.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 42996c38576c9644eb5b2ea108ca8a0f, type: 3}

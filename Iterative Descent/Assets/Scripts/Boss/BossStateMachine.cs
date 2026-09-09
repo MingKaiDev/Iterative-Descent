@@ -53,7 +53,15 @@ public class BossStateMachine : MonoBehaviour
     // ─── Component References ────────────────────────────────────────────────────
     private NavMeshAgent _agent;
     private Animator     _animator;
+    private BossHealth   _health;
     private Transform    _player;
+
+    // ─── Checkpoint respawn ─────────────────────────────────────────────────────
+    // Captured once in Awake() -- the boss can wander well away from its original
+    // position mid-fight, so ResetForCheckpointRespawn() below needs somewhere concrete
+    // to warp it back to.
+    private Vector3    _spawnPosition;
+    private Quaternion _spawnRotation;
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
@@ -61,6 +69,10 @@ public class BossStateMachine : MonoBehaviour
     {
         _agent    = GetComponent<NavMeshAgent>();
         _animator = GetComponent<Animator>();
+        _health   = GetComponent<BossHealth>();
+
+        _spawnPosition = transform.position;
+        _spawnRotation = transform.rotation;
 
         BossHealth.OnPhaseTwo  += HandlePhaseTwo;
         BossHealth.OnBossDeath += HandleBossDeath;
@@ -201,6 +213,43 @@ public class BossStateMachine : MonoBehaviour
         _animator.SetBool(IsDeadHash, false);
         _animator.SetBool(IsPhase2Hash, false);
         EnterState(BossState.Combat);
+    }
+
+    // ─── Public API (live-game checkpoint respawn) ───────────────────────────────
+
+    /// <summary>
+    /// Full "refight from scratch" reset for a checkpoint respawn while the boss is still
+    /// alive (the player died mid-fight, not to the boss's own death). Distinct from
+    /// ResetForNewEpisode() above -- that one is training-only and assumes the caller
+    /// (BossTrainingEnv) already repositioned/reset everything else itself. This one owns
+    /// the whole sequence:
+    ///   1. Cancels any attack currently mid-execution -- a coroutine that seized manual
+    ///      control (e.g. SprintChargeAttack's NavMeshAgent takeover, PounceAttack's hidden
+    ///      renderers -- see BossAttackBase.CancelAttack()'s own doc comment) would otherwise
+    ///      keep running on stale pre-reset state and clobber what this method sets next.
+    ///   2. Warps the agent back to the boss's original arena spawn position/rotation
+    ///      (captured in Awake()). Agent is enabled first -- Warp()/SetDestination() are
+    ///      silent no-ops on a disabled agent.
+    ///   3. Resets health via BossHealth.ResetHealth().
+    ///   4. Re-arms the state machine via ResetForNewEpisode() so combat resumes immediately
+    ///      -- the player just respawned right there, no need to wait through Idle's
+    ///      detection-radius check.
+    /// No-op if the boss has already died -- killing it ends the demo, there's nothing to
+    /// reset, and CheckpointManager should never reach this case in practice.
+    /// </summary>
+    public void ResetForCheckpointRespawn()
+    {
+        if (_health != null && !_health.IsAlive) return;
+
+        foreach (var attack in GetComponents<BossAttackBase>())
+            attack.CancelAttack();
+
+        _agent.enabled = true;
+        _agent.Warp(_spawnPosition);
+        transform.rotation = _spawnRotation;
+
+        _health?.ResetHealth();
+        ResetForNewEpisode();
     }
 
     // ─── Event Handlers ──────────────────────────────────────────────────────────

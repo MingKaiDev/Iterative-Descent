@@ -100,6 +100,14 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
     /// <summary>True while a DPS-triggered stagger is in progress (NavMesh paused).</summary>
     public bool IsStaggered { get; private set; }
 
+    /// <summary>
+    /// Set by EncounterTrigger (per its resetOnCheckpointRespawn toggle) before this
+    /// enemy can ever die. When true, death does not destroy the GameObject -- see
+    /// HandleCorpseDespawn() -- so CheckpointManager can later call ResetForRetry() to
+    /// bring the whole encounter back for a rematch after a checkpoint respawn.
+    /// </summary>
+    public bool Retryable { get; set; }
+
     // ─── Static Events ────────────────────────────────────────────────────────
 
     /// <summary>
@@ -339,4 +347,96 @@ public abstract class EnemyBase : MonoBehaviour, IEnemy, IDamageable
     /// back into a Chasing state and re-issue SetDestination.
     /// </summary>
     protected virtual void OnStaggerEnd() { }
+
+    // ─── Checkpoint Encounter Reset ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Call instead of a raw Destroy(gameObject, delay) from a subclass's OnDie().
+    /// Non-retryable enemies despawn on the normal delay, unchanged from before this
+    /// system existed. Retryable enemies (see Retryable above) must NOT be destroyed --
+    /// ResetForRetry() needs the GameObject to still exist to revive it later -- but
+    /// they still need their collider out of the way after the same delay, otherwise an
+    /// indefinitely-active corpse blocks the player's path like a solid wall (its
+    /// NavMeshAgent/hitbox colliders are still there even with this component disabled).
+    /// So instead of Destroy(), deactivate the whole GameObject on the same delay --
+    /// that drops rendering + all colliders together, exactly like Destroy() would, but
+    /// ResetForRetry() can SetActive(true) it again later.
+    /// </summary>
+    protected void HandleCorpseDespawn(float delay)
+    {
+        if (Retryable)
+        {
+            Invoke(nameof(DeactivateCorpse), delay);
+            return;
+        }
+        Destroy(gameObject, delay);
+    }
+
+    private void DeactivateCorpse()
+    {
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Restores this enemy to its pre-encounter dormant state at the given spawn
+    /// transform -- full health, not dead, NavMeshAgent/component disabled just like a
+    /// fresh enemy leaves Awake(). Called by EncounterTrigger.ResetEncounter() when
+    /// CheckpointManager rolls the encounter back after a checkpoint respawn. Applies
+    /// unconditionally, whether this enemy was already dead or still alive/mid-fight --
+    /// a rolled-back encounter means EVERY enemy in it fights fresh, not a mix of
+    /// newly-revived and battle-damaged survivors. The EncounterTrigger firing again
+    /// later (Activate()) re-applies DDA scaling and heals to the scaled max, same as
+    /// any normal encounter start.
+    /// </summary>
+    public void ResetForRetry(Vector3 spawnPosition, Quaternion spawnRotation)
+    {
+        // Cancels a pending DeactivateCorpse() Invoke from HandleCorpseDespawn() above --
+        // without this, reviving an enemy within its 3s corpse-despawn window would have
+        // that stale Invoke fire afterwards and hide the freshly-revived, active enemy.
+        CancelInvoke();
+        StopAllCoroutines();
+
+        _isDead     = false;
+        IsStaggered = false;
+        _recentHits.Clear();
+        _staggerResistanceMultiplier = 1f;
+        _lastResistanceChangeTime    = Time.time;
+        _staggerLockedUntil          = 0f;
+
+        if (_agent != null)
+        {
+            if (_agent.enabled && _agent.isOnNavMesh)
+            {
+                _agent.isStopped = true;
+                _agent.ResetPath();
+            }
+            _agent.enabled = false; // same dormant state a fresh enemy starts in -- Activate() re-enables it
+        }
+        enabled = false;
+
+        gameObject.SetActive(true);
+        transform.position = spawnPosition;
+        transform.rotation = spawnRotation;
+        _currentHealth = maxHealth;
+
+        // Force the Animator out of whatever state it died in (typically a terminal "Dead"
+        // state with no return transition). Just flipping the "Dead" bool back to false in
+        // OnResetForRetry() below isn't reliable on its own -- same reasoning as the player's
+        // own Rebind() in PlayerMovement.Revive() -- and without this the enemy can come back
+        // to life stuck in a T-pose instead of its Idle/Walk animation.
+        if (_animator != null)
+        {
+            _animator.Rebind();
+            _animator.Update(0f);
+        }
+
+        OnResetForRetry();
+    }
+
+    /// <summary>
+    /// Called by ResetForRetry() after the shared state above is restored. Default
+    /// no-op -- override to reset your subclass's state-machine field back to Idle and
+    /// clear the "Dead" animator bool (see EnemyChaser/EnemyBrute/EnemyRusher).
+    /// </summary>
+    protected virtual void OnResetForRetry() { }
 }

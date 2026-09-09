@@ -27,12 +27,14 @@ public class DeathScreenUI : MonoBehaviour
 
     void OnEnable()
     {
-        PlayerHealth.OnPlayerDied += ShowDeathScreen;
+        PlayerHealth.OnPlayerDied     += ShowDeathScreen;
+        PlayerHealth.OnPlayerRespawned += HideDeathScreen;
     }
 
     void OnDisable()
     {
-        PlayerHealth.OnPlayerDied -= ShowDeathScreen;
+        PlayerHealth.OnPlayerDied     -= ShowDeathScreen;
+        PlayerHealth.OnPlayerRespawned -= HideDeathScreen;
     }
 
     void ShowDeathScreen()
@@ -44,10 +46,35 @@ public class DeathScreenUI : MonoBehaviour
         Cursor.visible   = true;
     }
 
+    /// <summary>
+    /// Fires when CheckpointManager.RespawnPlayer() revives the player (see
+    /// PlayerHealth.Revive() -> OnPlayerRespawned). Only relevant after RestartGame()
+    /// below has chosen the respawn branch -- hides this panel and unfreezes time so
+    /// the player is dropped straight back into a playable state at the checkpoint.
+    /// </summary>
+    void HideDeathScreen()
+    {
+        Time.timeScale = 1f;
+        deathPanel.SetActive(false);
+    }
+
     // ─── Button Callbacks ────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Wired to the death screen's Restart/Respawn button. If a checkpoint has been
+    /// reached, respawns the player in place there instead of reloading the scene --
+    /// HideDeathScreen() above (via PlayerHealth.OnPlayerRespawned) takes care of
+    /// hiding this panel once that happens. Otherwise (no checkpoint yet -- e.g. dying
+    /// in the very first encounter) falls back to the original full scene reload.
+    /// </summary>
     public void RestartGame()
     {
+        if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint)
+        {
+            CheckpointManager.Instance.RespawnPlayer();
+            return;
+        }
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }

@@ -143,7 +143,14 @@ public class EnemyBrute : EnemyBase
         _audio?.StopEncounterMusic();
 
         // TODO: ragdoll, death VFX, score reward, notify GameManager -- same as EnemyChaser.
-        Destroy(gameObject, 3f);
+        HandleCorpseDespawn(3f);
+    }
+
+    protected override void OnResetForRetry()
+    {
+        _state = State.Idle;
+        SetAnimBool(_deadHash, false);
+        SetAnimFloat(_speedHash, 0f);
     }
 
     protected override void OnHit(float amount, Vector3 hitPoint)

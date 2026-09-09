@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Performance within expected parameters. Continue.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 6218e001c0767484cbf338664bd7f5e8, type: 3}

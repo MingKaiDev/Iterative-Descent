@@ -17,3 +17,4 @@ MonoBehaviour:
     text: I suppose that was... adequate. For a first attempt.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 30509fcd85bb6154e8eaec6444a96b60, type: 3}

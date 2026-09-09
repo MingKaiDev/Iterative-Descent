@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Progress detected. My projections still do not favour you.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 658ddfec5a31cf34b86c5461ea653799, type: 3}

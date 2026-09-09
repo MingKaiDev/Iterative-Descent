@@ -39,6 +39,11 @@
 //      is what calls Unlock() on the other kitchen door -- separate from this script.
 //   4. Assign 'meetingRoomDoor' to the DoorController on the actual meeting
 //      room door.
+//   5. Assign 'jasonAmbushEncounter' / 'jasonDeathDialogue' once the meeting
+//      room's ambush trigger exists -- see the Jason Death Reveal header
+//      below for details. Both left unwired by default. Their GameObjects
+//      (not just the scripts) must start INACTIVE in the scene -- Unity
+//      still delivers OnTriggerEnter to a disabled script's collider.
 using UnityEngine;
 
 [RequireComponent(typeof(InteractableBase))]
@@ -60,6 +65,23 @@ public class MeetingRoomKeyProp : MonoBehaviour, IInteractable
     [Header("Meeting Room Door (unlocked immediately on pickup)")]
     [Tooltip("The DoorController on the actual meeting room door (where Jason is held). Unlocked via DoorController.Unlock() the instant this key is picked up -- same moment doorToClose closes and the puzzle gate above is enabled. Unwired by default; assign in the Inspector.")]
     public DoorController meetingRoomDoor;
+
+    [Header("Jason Death Reveal (activated once the key is picked up)")]
+    [Tooltip("The EncounterTrigger guarding the ambush waiting in the meeting room. IMPORTANT: leave " +
+             "its GameObject INACTIVE in the Inspector by default -- uncheck the box next to its name " +
+             "at the top of the Inspector, NOT just the component's own enabled tickbox. Unity still " +
+             "delivers OnTriggerEnter to a disabled script's collider (physics messages ignore " +
+             "MonoBehaviour.enabled, unlike Update/OnEnable/OnDisable), so only an inactive GameObject " +
+             "reliably keeps this inert until the key is picked up. Activated via SetActive(true) the " +
+             "same instant meetingRoomDoor unlocks.")]
+    public EncounterTrigger jasonAmbushEncounter;
+    [Tooltip("The DialogueTrigger that plays Jason's death-scream reveal when the player walks into " +
+             "the meeting room. Same inactive-GameObject-by-default convention as jasonAmbushEncounter " +
+             "above (see its tooltip) -- can live on the same trigger GameObject as the EncounterTrigger, " +
+             "or a separate one covering the same doorway, whichever is easier to place in the Editor. " +
+             "Assign a DialogueSequence to it (see Assets/Dialogue/Jason/JasonDeath.asset) before this " +
+             "does anything.")]
+    public DialogueTrigger jasonDeathDialogue;
 
     // ── IInteractable ─────────────────────────────────────────────────────────
 
@@ -84,6 +106,8 @@ public class MeetingRoomKeyProp : MonoBehaviour, IInteractable
         else
             Debug.LogWarning("[MeetingRoomKeyProp] No meetingRoomDoor assigned.", this);
 
+        SetJasonEncounterEnabled(true);
+
         Destroy(gameObject);
     }
 
@@ -96,5 +120,18 @@ public class MeetingRoomKeyProp : MonoBehaviour, IInteractable
         if (value && puzzleInteractScript == null && puzzleInteractableBase == null && puzzleInteractableRegistrar == null)
             Debug.LogWarning("[MeetingRoomKeyProp] No puzzle gate references assigned -- nothing was enabled. " +
                               "Assign the future puzzle prop's components once it exists.", this);
+    }
+
+    private void SetJasonEncounterEnabled(bool value)
+    {
+        // GameObject.SetActive(), not .enabled -- Unity still delivers OnTriggerEnter to a disabled
+        // script's collider (physics messages ignore MonoBehaviour.enabled), so toggling .enabled here
+        // would not actually keep the ambush/dialogue inert. An inactive GameObject does, reliably.
+        if (jasonAmbushEncounter != null) jasonAmbushEncounter.gameObject.SetActive(value);
+        if (jasonDeathDialogue != null) jasonDeathDialogue.gameObject.SetActive(value);
+
+        if (value && jasonAmbushEncounter == null && jasonDeathDialogue == null)
+            Debug.LogWarning("[MeetingRoomKeyProp] No Jason death-reveal references assigned -- nothing was activated. " +
+                              "Assign jasonAmbushEncounter/jasonDeathDialogue once the meeting room ambush trigger exists.", this);
     }
 }

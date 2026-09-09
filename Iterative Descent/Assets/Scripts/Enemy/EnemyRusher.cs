@@ -162,7 +162,14 @@ public class EnemyRusher : EnemyBase
         _state = State.Dead;
         ApplyMovementBools(State.Dead);
         SetAnimBool(_deadHash, true);
-        Destroy(gameObject, 3f);
+        HandleCorpseDespawn(3f);
+    }
+
+    protected override void OnResetForRetry()
+    {
+        _state = State.Idle;
+        ApplyMovementBools(State.Idle);
+        SetAnimBool(_deadHash, false);
     }
 
     protected override void OnHit(float amount, Vector3 hitPoint)

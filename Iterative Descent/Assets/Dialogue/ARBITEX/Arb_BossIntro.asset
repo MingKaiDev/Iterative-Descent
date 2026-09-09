@@ -17,3 +17,4 @@ MonoBehaviour:
     text: This is it. There is no escape for you.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 9ac1217dee3a6414b9f58b2cd92bc52d, type: 3}

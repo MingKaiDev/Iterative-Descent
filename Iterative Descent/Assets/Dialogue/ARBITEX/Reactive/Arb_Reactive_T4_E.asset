@@ -18,4 +18,4 @@ MonoBehaviour:
       Wonderful.
     displayDuration: 0
     choices: []
-    voiceClip: {fileID: 0}
+    voiceClip: {fileID: 8300000, guid: d1b733c1e19ac8c4ea6ea891a8f89c36, type: 3}

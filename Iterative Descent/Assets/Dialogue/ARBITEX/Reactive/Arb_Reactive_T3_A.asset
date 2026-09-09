@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are beginning to concern me. Recalculating threat assessment.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 6ec03eca6a4302349808ddb226b93568, type: 3}

@@ -64,6 +64,7 @@ public class CombatHUD : MonoBehaviour
         ShotgunController.OnAmmoChanged   += HandleShotgunAmmoChanged;
         RifleController.OnAmmoChanged     += HandleRifleAmmoChanged;
         PlayerHealth.OnPlayerDied         += HandlePlayerDied;
+        PlayerHealth.OnPlayerRespawned    += HandlePlayerRespawned;
 
         // Death overlay starts hidden.
         if (deathOverlay != null)
@@ -80,6 +81,7 @@ public class CombatHUD : MonoBehaviour
         ShotgunController.OnAmmoChanged   -= HandleShotgunAmmoChanged;
         RifleController.OnAmmoChanged     -= HandleRifleAmmoChanged;
         PlayerHealth.OnPlayerDied         -= HandlePlayerDied;
+        PlayerHealth.OnPlayerRespawned    -= HandlePlayerRespawned;
     }
 
     void Start()
@@ -150,11 +152,31 @@ public class CombatHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Assign to the Restart button's OnClick event in the Inspector.
-    /// Reloads the current scene from the beginning.
+    /// Fires when CheckpointManager.RespawnPlayer() revives the player (see
+    /// PlayerHealth.Revive() -> OnPlayerRespawned). Only relevant after RestartScene()
+    /// below has chosen the respawn branch -- hides this overlay so the player is
+    /// dropped straight back into a playable state at the checkpoint.
+    /// </summary>
+    void HandlePlayerRespawned()
+    {
+        if (deathOverlay != null)
+            deathOverlay.SetActive(false);
+    }
+
+    /// <summary>
+    /// Assign to the Restart button's OnClick event in the Inspector. If a checkpoint
+    /// has been reached, respawns the player in place there instead -- HandlePlayerRespawned()
+    /// above hides this overlay once that happens. Otherwise (no checkpoint yet) reloads
+    /// the current scene from the beginning, same as before this system existed.
     /// </summary>
     public void RestartScene()
     {
+        if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint)
+        {
+            CheckpointManager.Instance.RespawnPlayer();
+            return;
+        }
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

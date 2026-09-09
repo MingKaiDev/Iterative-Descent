@@ -17,3 +17,4 @@ MonoBehaviour:
     text: This deviates from the expected curve. Recalibrating.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 0a14e5d83523bd7498587f23103cb087, type: 3}

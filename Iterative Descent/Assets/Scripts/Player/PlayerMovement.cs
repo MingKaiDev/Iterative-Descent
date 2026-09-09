@@ -390,4 +390,52 @@ public class PlayerMovement : MonoBehaviour
 
         _animator.SetTrigger("Die");
     }
+
+    // --- Checkpoint Respawn ---------------------------------------------------
+
+    /// <summary>
+    /// Moves the player to a checkpoint's saved position/facing without the normal
+    /// CharacterController collision resolution fighting a direct transform.position
+    /// set -- disables the controller for the move, then re-enables it. Called by
+    /// CheckpointManager as part of an in-place respawn (no scene reload).
+    /// </summary>
+    public void TeleportTo(Vector3 position, float yaw)
+    {
+        if (_controller != null) _controller.enabled = false;
+
+        transform.position = position;
+        _yaw   = yaw;
+        _pitch = 0f;
+        transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
+
+        if (cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.identity;
+
+        _velocity         = Vector3.zero;
+        _externalVelocity = Vector3.zero;
+
+        if (_controller != null) _controller.enabled = true;
+    }
+
+    /// <summary>
+    /// Clears the dead flag and re-locks the cursor after a checkpoint respawn. Uses
+    /// Animator.Rebind() to snap the Animator back to its default state -- the "Die"
+    /// trigger drives a terminal death state with no exit transition, so a plain
+    /// SetTrigger can't reverse it, but Rebind() resets the whole controller instantly.
+    /// </summary>
+    public void Revive()
+    {
+        _isDead    = false;
+        IsGrabbed  = false;
+        _grabbedBy = null;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
+
+        if (_animator != null)
+        {
+            _animator.Rebind();
+            _animator.Update(0f);
+        }
+    }
 }

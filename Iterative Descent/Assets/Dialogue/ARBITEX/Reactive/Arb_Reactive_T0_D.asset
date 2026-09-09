@@ -17,3 +17,4 @@ MonoBehaviour:
     text: At this rate, I could disable myself and you would still lose.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 3d6563d022460534cad38366824a059e, type: 3}

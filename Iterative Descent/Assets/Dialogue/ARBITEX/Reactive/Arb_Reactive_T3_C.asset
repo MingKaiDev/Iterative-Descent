@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Anomaly detected. You were not supposed to progress this far.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: f2e9de0108b110641bde4b7e196b93c9, type: 3}

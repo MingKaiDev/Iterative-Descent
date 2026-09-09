@@ -17,3 +17,4 @@ MonoBehaviour:
     text: How did you manage that? My models did not predict this outcome.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 9e3dd970199013b4b977d7402ea650bf, type: 3}

@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are improving. Marginally. Do not let it go to your head.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 8bdaf451b1ecb4e4384803c2a3c274d6, type: 3}

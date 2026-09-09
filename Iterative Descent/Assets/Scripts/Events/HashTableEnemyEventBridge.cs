@@ -3,10 +3,19 @@ using System.Collections;
 
 /// <summary>
 /// Listens for HashTablePuzzleUI.OnHashTablePanelClosed and triggers the
-/// "corpse turns out to be alive" ambush: disables the corpse prop, enables
-/// the dormant Brute enemy hidden in its place, and activates it to start
-/// the combat encounter. Mirrors EnemyEventBridge (LinkedList -> EnemyChaser)
-/// but for the Hash Table puzzle -> EnemyBrute, with an extra corpse-swap step.
+/// "corpse turns out to be alive" ambush: disables the corpse prop, then calls
+/// ActivateEncounter() on an EncounterTrigger holding the dormant Brute. Mirrors
+/// EnemyEventBridge (LinkedList -> EnemyChaser) but for the Hash Table puzzle ->
+/// EnemyBrute, with an extra corpse-swap step.
+///
+/// 2026-09-09: switched from calling bruteEnemy.Activate() directly to routing through
+/// an EncounterTrigger's (now-public) ActivateEncounter(). Reason: Retryable/
+/// ResetForRetry()/checkpoint rollback are wired up entirely inside EncounterTrigger.
+/// Start() (spawn-transform capture, setting enemy.Retryable) and ResetEncounter() --
+/// an enemy activated by a direct .Activate() call from this bridge, bypassing
+/// EncounterTrigger entirely, would never get Retryable set and a CheckpointTrigger
+/// would have nothing to reference to roll it back. Routing through a (colliderless --
+/// see scene setup below) EncounterTrigger gets all of that for free.
 ///
 /// IMPORTANT: this keys off OnHashTablePanelClosed for TIMING, NOT OnHashTableSolved.
 /// OnHashTableSolved fires the instant the round finishes -- while the "LINE
@@ -43,9 +52,14 @@ using System.Collections;
 ///   1. Place the corpse mesh/sprite prop and the EnemyBrute prefab at (roughly)
 ///      the same spot in the room, with the Brute's GameObject INACTIVE by
 ///      default (unchecked in the Inspector) so only the corpse is visible.
-///   2. Attach this script to a persistent GameObject (same object as
-///      HashTableEventHandler works fine).
-///   3. Assign corpseObject, bruteEnemy, and playerTransform in the Inspector.
+///   2. Create an empty GameObject (no collider needed -- it's only used as a
+///      roster/bookkeeping holder here, never physically walked into) with an
+///      EncounterTrigger component. Assign the Brute to its enemies array and
+///      leave resetOnCheckpointRespawn on (default) if you want this ambush to
+///      re-fight after a checkpoint respawn, off if it should stay resolved once.
+///   3. Attach this script to a persistent GameObject (same object as
+///      HashTableEventHandler works fine). Assign corpseObject and bruteEncounter
+///      (the EncounterTrigger from step 2) in the Inspector.
 ///   4. Tune activationDelay -- 0 fires the instant the panel closes; a small
 ///      value (0.3-0.8s) gives the player a beat to notice the room again
 ///      before the scream hits.
@@ -55,11 +69,11 @@ public class HashTableEnemyEventBridge : MonoBehaviour
     [Header("References")]
     [Tooltip("The corpse mesh/sprite prop. Disabled the moment the Brute reveals itself.")]
     [SerializeField] private GameObject corpseObject;
-    [Tooltip("The dormant Brute enemy hidden in the corpse's place. Its GameObject should start " +
-             "INACTIVE in the scene -- this script enables it, then calls Activate().")]
-    [SerializeField] private EnemyBrute bruteEnemy;
-    [Tooltip("The player's root Transform (the one PlayerMovement is on).")]
-    [SerializeField] private Transform playerTransform;
+    [Tooltip("EncounterTrigger holding the dormant Brute in its enemies array -- needs no collider " +
+             "of its own, this script calls its ActivateEncounter() directly. Routing through it " +
+             "(instead of calling Activate() on the Brute directly) is what lets checkpoint rollback " +
+             "(Retryable / ResetEncounter()) reach this Brute -- see class doc comment above.")]
+    [SerializeField] private EncounterTrigger bruteEncounter;
 
     [Header("Timing")]
     [Tooltip("Seconds after the puzzle panel closes before the corpse swap + Brute activation happens. " +
@@ -82,12 +96,14 @@ public class HashTableEnemyEventBridge : MonoBehaviour
     {
         HashTablePuzzleUI.OnHashTableAttemptGraded += HandleAttemptGraded;
         HashTablePuzzleUI.OnHashTablePanelClosed += HandlePanelClosed;
+        if (bruteEncounter != null) bruteEncounter.OnEncounterReset += HandleEncounterReset;
     }
 
     private void OnDisable()
     {
         HashTablePuzzleUI.OnHashTableAttemptGraded -= HandleAttemptGraded;
         HashTablePuzzleUI.OnHashTablePanelClosed -= HandlePanelClosed;
+        if (bruteEncounter != null) bruteEncounter.OnEncounterReset -= HandleEncounterReset;
     }
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -95,6 +111,16 @@ public class HashTableEnemyEventBridge : MonoBehaviour
     private void HandleAttemptGraded(bool passed)
     {
         _lastAttemptPassed = passed;
+    }
+
+    // Mirrors bruteEncounter's own reset -- without this, this bridge's independent
+    // _triggered guard stays true after a checkpoint respawn (even though the Brute and the
+    // EncounterTrigger itself are correctly reset), so re-solving the puzzle silently does
+    // nothing and the Brute never re-activates.
+    private void HandleEncounterReset()
+    {
+        _triggered = false;
+        _lastAttemptPassed = false;
     }
 
     private void HandlePanelClosed()
@@ -123,18 +149,15 @@ public class HashTableEnemyEventBridge : MonoBehaviour
         else
             Debug.LogWarning("[HashTableEnemyEventBridge] corpseObject not assigned.", this);
 
-        // ── Step 2: Reveal + activate the Brute ────────────────────────────────
-        if (bruteEnemy == null || playerTransform == null)
+        // ── Step 2: Reveal + activate the Brute (via its EncounterTrigger -- see class doc) ──
+        if (bruteEncounter == null)
         {
-            Debug.LogWarning("[HashTableEnemyEventBridge] bruteEnemy or playerTransform is null. " +
-                             "Assign both in the Inspector.", this);
+            Debug.LogWarning("[HashTableEnemyEventBridge] bruteEncounter not assigned. " +
+                             "Assign it in the Inspector.", this);
             yield break;
         }
 
-        if (!bruteEnemy.gameObject.activeSelf)
-            bruteEnemy.gameObject.SetActive(true);
-
-        bruteEnemy.Activate(playerTransform);
+        bruteEncounter.ActivateEncounter();
         Debug.Log("[HashTableEnemyEventBridge] Corpse swapped -- Brute activated, encounter begins.");
 
         // Idempotent -- safe even if an earlier encounter already showed this hint.
@@ -146,7 +169,7 @@ public class HashTableEnemyEventBridge : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        if (bruteEnemy != null) Gizmos.DrawLine(transform.position, bruteEnemy.transform.position);
+        if (bruteEncounter != null) Gizmos.DrawLine(transform.position, bruteEncounter.transform.position);
         if (corpseObject != null) Gizmos.DrawLine(transform.position, corpseObject.transform.position);
     }
 }

@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Interesting. You are adapting faster than most subjects.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: f2d404f70695d064ba1b62dc7c3f3e70, type: 3}

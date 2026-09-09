@@ -16,6 +16,7 @@ public class BossHealth : MonoBehaviour, IDamageable
     public static event Action<float, float> OnHealthChanged;  // (current, max)
     public static event Action               OnPhaseTwo;
     public static event Action               OnBossDeath;
+    public static event Action               OnHealthReset;   // fired by ResetHealth() -- see below
 
     // ─── Inspector ──────────────────────────────────────────────────────────────
     [Header("Health")]
@@ -70,8 +71,13 @@ public class BossHealth : MonoBehaviour, IDamageable
     // ─── Public API ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Directly set current HP (used by BossTrainingEnv to reset episodes).
-    /// Does NOT fire phase events -- use only in training/debug contexts.
+    /// Directly set current HP. Originally training-only (BossTrainingEnv resetting
+    /// episodes); also called now by BossStateMachine.ResetForCheckpointRespawn() for a
+    /// live-game checkpoint respawn while the boss is still alive. Does NOT fire
+    /// OnPhaseTwo/OnBossDeath -- those are one-shot story beats, not something a reset
+    /// should replay. Fires OnHealthReset (in addition to OnHealthChanged) so listeners
+    /// like BossHUD can undo any one-shot visual state OnPhaseTwo left behind (e.g. the
+    /// health bar's red phase-2 tint).
     /// </summary>
     public void ResetHealth()
     {
@@ -79,6 +85,7 @@ public class BossHealth : MonoBehaviour, IDamageable
         _isDead        = false;
         _isPhaseTwo    = false;
         OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+        OnHealthReset?.Invoke();
     }
 
     // ─── Debug / Editor Helpers ─────────────────────────────────────────────────

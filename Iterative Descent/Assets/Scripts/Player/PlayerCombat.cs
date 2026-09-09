@@ -379,6 +379,31 @@ public class PlayerCombat : MonoBehaviour
     }
 
     /// <summary>
+    /// Directly sets magazine + spare ammo (clamped to magazineSize) and broadcasts the
+    /// change. Used by CheckpointManager to restore the pistol's ammo on a checkpoint
+    /// respawn -- unlike AddAmmo(), this is an absolute set, not an addition.
+    /// </summary>
+    public void SetAmmo(int mag, int spare)
+    {
+        _currentMag = Mathf.Clamp(mag, 0, magazineSize);
+        _spareAmmo  = Mathf.Max(0, spare);
+        BroadcastAmmo();
+    }
+
+    /// <summary>
+    /// Called by CheckpointManager as part of an in-place checkpoint respawn (no scene
+    /// reload) -- clears the dead flag, cancels any in-progress reload so its coroutine
+    /// doesn't hang on a WaitUntil that can no longer become true, and restores ammo to
+    /// the checkpoint's saved values.
+    /// </summary>
+    public void Revive(int mag, int spare)
+    {
+        _isDead      = false;
+        _isReloading = false;
+        SetAmmo(mag, spare);
+    }
+
+    /// <summary>
     /// Permanently reduces settleTime by the given amount (floored at 0.1s so
     /// aiming never becomes instant), making the reticle reach full accuracy
     /// faster while aiming. Intended for one-time permanent upgrade sources

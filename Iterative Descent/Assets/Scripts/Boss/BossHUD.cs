@@ -31,11 +31,19 @@ public class BossHUD : MonoBehaviour
 
     // ─── Unity Lifecycle ────────────────────────────────────────────────────────
 
+    // Cached in Awake() so HandleHealthReset() below has the un-tinted color to restore --
+    // HandlePhaseTwo() overwrites healthFillImage.color permanently otherwise.
+    private Color _defaultFillColor = Color.white;
+
     void Awake()
     {
+        if (healthFillImage != null)
+            _defaultFillColor = healthFillImage.color;
+
         BossHealth.OnHealthChanged += HandleHealthChanged;
         BossHealth.OnPhaseTwo      += HandlePhaseTwo;
         BossHealth.OnBossDeath     += HandleBossDeath;
+        BossHealth.OnHealthReset   += HandleHealthReset;
     }
 
     void OnDestroy()
@@ -43,6 +51,7 @@ public class BossHUD : MonoBehaviour
         BossHealth.OnHealthChanged -= HandleHealthChanged;
         BossHealth.OnPhaseTwo      -= HandlePhaseTwo;
         BossHealth.OnBossDeath     -= HandleBossDeath;
+        BossHealth.OnHealthReset   -= HandleHealthReset;
     }
 
     // ─── Public API ─────────────────────────────────────────────────────────────
@@ -86,5 +95,13 @@ public class BossHUD : MonoBehaviour
     {
         // Brief pause before hiding so the player sees the bar hit zero.
         Invoke(nameof(HideHUD), 2f);
+    }
+
+    // Undoes HandlePhaseTwo()'s permanent red tint on a checkpoint respawn -- without this,
+    // a boss reset back to Phase 1 would still show the Phase 2 color on a full health bar.
+    void HandleHealthReset()
+    {
+        if (healthFillImage != null)
+            healthFillImage.color = _defaultFillColor;
     }
 }

@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are outperforming every prior subject on record.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: b14c66f0f488e5845b432262d2ab5f81, type: 3}

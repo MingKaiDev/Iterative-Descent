@@ -17,3 +17,4 @@ MonoBehaviour:
     text: Pathetic. Even the maintenance staff performed better than this.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 86352a4662485294c885f542df35bc1c, type: 3}

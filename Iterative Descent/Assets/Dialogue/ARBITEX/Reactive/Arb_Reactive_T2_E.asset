@@ -17,3 +17,4 @@ MonoBehaviour:
     text: You are performing consistently. I will keep watching.
     displayDuration: 0
     choices: []
+    voiceClip: {fileID: 8300000, guid: 8fa878d1beaeb6043b2936da5fc5285d, type: 3}
