@@ -88,6 +88,21 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     // ─── Public API ─────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Re-fires the current health/medkit values on the static change events without
+    /// actually changing anything. Needed after a cross-scene level transition
+    /// (LevelTransitionManager) -- this component survives the scene load via
+    /// PersistentPlayer/DontDestroyOnLoad, so Start()'s one-time initial broadcast
+    /// already happened back in the old scene and never runs again. Without this,
+    /// the new scene's HUD (a fresh CombatHUD that just subscribed in its own OnEnable)
+    /// would show default/blank values until the next real health or medkit change.
+    /// </summary>
+    public void BroadcastCurrentState()
+    {
+        OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+        OnMedkitCountChanged?.Invoke(_medkitCount, maxMedkits);
+    }
+
     /// <summary>Call from herbs / first-aid item pickups, or from UseMedkit() below.</summary>
     public void Heal(float amount)
     {

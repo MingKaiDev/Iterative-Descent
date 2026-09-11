@@ -46,6 +46,13 @@ using TMPro;
 /// </summary>
 public class MatchingPuzzleUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets
+    // MatchingPuzzleProp resolve this shared Canvas panel at runtime instead
+    // of relying only on a serialized Inspector reference, which goes stale
+    // across a Level 1 -> Level 2 -> Level 1 scene reload.
+    public static MatchingPuzzleUI Instance { get; private set; }
+
     // ── Static Event ──────────────────────────────────────────────────────────
 
     /// <summary>
@@ -108,6 +115,8 @@ public class MatchingPuzzleUI : MonoBehaviour
     private bool   _solved;
 
     // ── Unity ─────────────────────────────────────────────────────────────────
+
+    private void Awake() => Instance = this;
 
     private void OnEnable()
     {

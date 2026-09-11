@@ -142,6 +142,41 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Immediately ends whatever dialogue is currently playing (or queued), with no
+    /// typewriter/auto-dismiss wait, and clears the queue. Called by
+    /// LevelTransitionManager right before a scene load fires (e.g. Ming Kai's report:
+    /// dialogue gets stuck "not dismissing" specifically when a transition happens
+    /// while ARBITEX is mid-line).
+    ///
+    /// DialogueManager itself is a DontDestroyOnLoad singleton, so its running
+    /// coroutine is NOT stopped by a scene load on its own -- Unity only stops
+    /// coroutines belonging to an object that gets destroyed, and this object
+    /// survives. The bug is that a coroutine suspended mid-yield (typewriter delay,
+    /// auto-dismiss wait, or a choice WaitUntil) has no guarantee its resumption
+    /// still makes sense once the *scene* underneath it has completely changed --
+    /// and there is a real, previous-scene-only "PlayerInteractor.Pause()" state
+    /// (_didPauseInteractor) that a stuck coroutine would never get the chance to
+    /// undo. Rather than hope a suspended coroutine recovers cleanly across an
+    /// engine-level scene boundary it was never written to expect, this guarantees a
+    /// clean slate every time a transition fires: no leftover subtitle panel, no
+    /// stuck pause flag, nothing left in the queue from the scene being left behind.
+    /// </summary>
+    public void EndImmediate()
+    {
+        StopCurrentRoutine();
+
+        _subtitleUI?.HideLine();
+        _subtitleUI?.HideChoices();
+
+        _waitingForChoice = false;
+        _current = null;
+        _entryIndex = 0;
+        _queue.Clear();
+
+        OnDialogueEnded?.Invoke();
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────────
 
     void BeginSequence(DialogueSequence sequence)

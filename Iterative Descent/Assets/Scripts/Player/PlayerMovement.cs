@@ -418,6 +418,17 @@ public class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
+    /// Re-fires OnPlayerSpawned -- called by LevelTransitionManager right after teleporting
+    /// the persisted player into a newly-loaded level. Start()'s own one-time firing of this
+    /// event already happened back in the previous scene (the Player survives the scene load
+    /// via PersistentPlayer/DontDestroyOnLoad, so Start() never runs again), so anything in the
+    /// new scene that listens for "on spawn" (e.g. an intro dialogue) would otherwise never see
+    /// it fire. Same motivation as Start()'s own doc comment: a trigger collider the player
+    /// already overlaps at spawn is unreliable, so this event is the one to hook instead.
+    /// </summary>
+    public void NotifySpawned() => OnPlayerSpawned?.Invoke();
+
+    /// <summary>
     /// Clears the dead flag and re-locks the cursor after a checkpoint respawn. Uses
     /// Animator.Rebind() to snap the Animator back to its default state -- the "Die"
     /// trigger drives a terminal death state with no exit transition, so a plain

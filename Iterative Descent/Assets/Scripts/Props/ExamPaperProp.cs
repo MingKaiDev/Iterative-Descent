@@ -1,8 +1,10 @@
 // ExamPaperProp.cs
 // IInteractable prop that opens the exam-paper styled quiz overlay.
 // Mirrors PuzzleProp exactly -- same BKT question selection, same DDA hooks,
-// and (as of 2026-08-08) the same concept-tutorial wiring. Use this on any
-// desk / clipboard prop you want to trigger Quiz 2.
+// same concept-tutorial wiring, and (as of the Level 1 <-> Level 2 transition
+// fix) the same cross-scene-safe ExamPaperPuzzleUI.Instance resolution
+// pattern as every other puzzle prop -- see BstPuzzleProp.ResolvePuzzleUI().
+// Use this on any desk / clipboard prop you want to trigger Quiz 2.
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,8 +25,11 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
     [Tooltip("If set, always draws from this concept tag only, bypassing BKT and first-session logic. Leave blank for normal BKT-driven selection.")]
     public string pinnedConceptTag   = "";
 
-    [Header("UI")]
-    [Tooltip("Assign the ExamPaperPanel GameObject in the Canvas.")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- the ExamPaperPanel is resolved at runtime via " +
+             "ExamPaperPuzzleUI.Instance instead, same cross-scene-safe pattern as every other " +
+             "puzzle prop in this project (see BstPuzzleProp.ResolvePuzzleUI()). Only assign " +
+             "this if the panel happens to be placed in THIS SAME scene.")]
     public GameObject examPaperOverlay;
 
     [Header("Outcome Events")]
@@ -49,8 +54,6 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
 
     void Awake()
     {
-        if (examPaperOverlay != null) examPaperOverlay.SetActive(false);
-
         if (!loadFromJson)
         {
             _resolvedQuestions = questions;
@@ -94,9 +97,9 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         _open = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase != null && interactBase.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        // Falls back to the shared PromptPanelUI when this prop's own promptPanel
+        // is unassigned -- same helper every other puzzle prop uses.
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         bool isFirst = !(PlayerMetricsTracker.Instance?.HasStartedAnyQuiz ?? false);
         _pendingSessionQuestions = QuestionSelector.SelectQuestions(
@@ -118,16 +121,44 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         ConceptTutorials.ShowAllUnseenThenContinue(sessionConcepts, OpenExamPaperUI);
     }
 
-    private void OpenExamPaperUI()
+    /// <summary>
+    /// Same-scene override first, otherwise the cross-scene-safe Instance lookup --
+    /// identical shape to BstPuzzleProp.ResolvePuzzleUI(). A plain serialized
+    /// reference to the ExamPaperPanel goes stale across a Level 1 -> Level 2 ->
+    /// Level 1 reload (the freshly-reloaded Canvas is destroyed as a duplicate by
+    /// PersistentUIRoot, taking every panel under it with it).
+    /// </summary>
+    private ExamPaperPuzzleUI ResolveExamPaperUI()
     {
         if (examPaperOverlay != null)
         {
-            examPaperOverlay.SetActive(true);
-
-            // NotifyQuizStarted() is called inside ExamPaperPuzzleUI.Setup()
-            // Do NOT call it here -- same rule as PuzzleProp.
-            examPaperOverlay.GetComponent<ExamPaperPuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle);
+            var local = examPaperOverlay.GetComponent<ExamPaperPuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (ExamPaperPuzzleUI.Instance != null) return ExamPaperPuzzleUI.Instance;
+
+        return FindFirstObjectByType<ExamPaperPuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenExamPaperUI()
+    {
+        var puzzle = ResolveExamPaperUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[ExamPaperProp] No ExamPaperPuzzleUI found. Is the ExamPaperPanel " +
+                            "present under the persisted Canvas, and did you enter play mode " +
+                            "via Level 1 (so the Canvas has actually loaded and persisted " +
+                            "forward)?", this);
+            ClosePuzzle(false);
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+
+        // NotifyQuizStarted() is called inside ExamPaperPuzzleUI.Setup()
+        // Do NOT call it here -- same rule as PuzzleProp.
+        puzzle.Setup(_pendingSessionQuestions, ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -144,7 +175,8 @@ public class ExamPaperProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (examPaperOverlay != null) examPaperOverlay.SetActive(false);
+        var puzzle = ResolveExamPaperUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

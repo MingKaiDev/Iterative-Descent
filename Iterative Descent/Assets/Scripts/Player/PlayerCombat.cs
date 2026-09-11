@@ -372,6 +372,17 @@ public class PlayerCombat : MonoBehaviour
         OnAmmoChanged?.Invoke(_currentMag, _spareAmmo);
     }
 
+    /// <summary>
+    /// Public entry point for LevelTransitionManager to re-fire the current ammo count
+    /// after a cross-scene level transition. The pistol GameObject survives the scene
+    /// load (PersistentPlayer/DontDestroyOnLoad), so OnEnable()'s broadcast only fires
+    /// on an actual weapon-switch, not on a scene load of an already-enabled component --
+    /// without this, a fresh CombatHUD in the new scene would show stale/default ammo
+    /// until the next shot fired or reload. Only meaningful to call while the pistol is
+    /// the currently-equipped weapon; see WeaponManager.BroadcastCurrentWeaponState().
+    /// </summary>
+    public void BroadcastCurrentState() => BroadcastAmmo();
+
     public void AddAmmo(int amount)
     {
         _spareAmmo += amount;

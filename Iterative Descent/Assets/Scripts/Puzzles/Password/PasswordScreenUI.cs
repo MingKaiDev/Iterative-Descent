@@ -11,6 +11,14 @@ using UnityEngine.UI;
 /// </summary>
 public class PasswordScreenUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets
+    // ComputerScreenProp (and PuzzleProp's password-reveal reference) resolve
+    // this shared Canvas panel at runtime instead of relying only on a
+    // serialized Inspector reference, which goes stale across a Level 1 ->
+    // Level 2 -> Level 1 scene reload.
+    public static PasswordScreenUI Instance { get; private set; }
+
     public static event Action OnPC1LoggedIn;
 
     // Static flag — survives regardless of this GameObject's active state
@@ -40,6 +48,8 @@ public class PasswordScreenUI : MonoBehaviour
     public Color unlockedColour = new Color(0.00f, 1.00f, 0.25f, 1f);  // #00FF41 bright phosphor
 
     private Action _onClose;
+
+    void Awake() => Instance = this;
 
     // ── Called by ComputerScreenProp ─────────────────────────────────────────
     public void Setup(Action onClose)

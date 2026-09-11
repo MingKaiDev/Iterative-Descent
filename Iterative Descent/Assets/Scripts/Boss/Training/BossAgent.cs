@@ -115,12 +115,41 @@ public class BossAgent : Agent
     private float   _lastFallbackSampleTime;
     private bool    _hasFallbackSample;
 
+    // Packet-Filter-gated smart/dumb toggle (2026-09-10) -- see SetSmartModeActive() below.
+    private bool _smartModeActive = true;
+
     // ─── ML-Agents Lifecycle ──────────────────────────────────────────────────────
 
     public override void Initialize()
     {
+        // Smart by default -- matches all prior behavior if nothing ever calls
+        // SetSmartModeActive() (e.g. an unwired BossEncounterTrigger, or Training.unity,
+        // which has no Packet Filter puzzle and should always train/run against the real policy).
+        SetSmartModeActive(true);
+    }
+
+    /// <summary>
+    /// Live toggle between BossAgent's trained policy ("smart mode") and
+    /// BossAttackRegistry's original random-attack picker ("dumb mode"). Called once by
+    /// BossEncounterTrigger when the player commits to the arena, based on whether the
+    /// Packet Filter puzzle has been solved (PacketFilterEventHandler.ServerNodeDisabled --
+    /// "cut ARBITEX's connection to ARES"). See project-remaining-work.md's "ARES smart/dumb
+    /// toggle" entry for the full design discussion. Defaults to smart (true) if nothing ever
+    /// calls this, so an unwired trigger just gets today's existing behavior, unchanged.
+    ///
+    /// Deliberately does NOT touch this Agent's own enabled state or ML-Agents' lifecycle --
+    /// the trained policy keeps running underneath even in dumb mode (still collects
+    /// observations, still requests decisions), its output is just discarded in
+    /// OnActionReceived() below. That's a cheap no-op (one inference step per decision
+    /// period) and avoids re-triggering Initialize()/OnEnable() by disabling/enabling this
+    /// component -- exactly the kind of lifecycle re-entrancy that has bitten this Agent
+    /// before (see the OnEnable/OnDisable override bug in project-boss-fight.md).
+    /// </summary>
+    public void SetSmartModeActive(bool active)
+    {
+        _smartModeActive = active;
         if (bossAttackRegistry != null)
-            bossAttackRegistry.enabled = false;
+            bossAttackRegistry.enabled = !active;
     }
 
     // Added 2026-08-27: these MUST be real overrides that chain to base.OnEnable()/
@@ -262,6 +291,11 @@ public class BossAgent : Agent
     {
         int choice = actions.DiscreteActions[0];
         _lastExecutedAttackIndex = -1;
+
+        // Dumb mode -- BossAttackRegistry (re-enabled by SetSmartModeActive()) drives attacks
+        // instead. Still discard this Agent's own choice here rather than skipping decision
+        // requests upstream, so nothing else about the ML-Agents lifecycle has to change.
+        if (!_smartModeActive) return;
 
         if (choice == 0) return; // Idle -- no-op.
 

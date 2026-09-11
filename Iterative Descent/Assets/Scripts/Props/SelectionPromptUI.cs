@@ -19,7 +19,30 @@ public class SelectionPromptUI : MonoBehaviour
 
     // ── Static registry mirrors PlayerInteractor's _inRange ──────
     // PlayerInteractor calls UpdateHint() each frame via singleton.
-    public static SelectionPromptUI Instance { get; private set; }
+    //
+    // This panel starts INACTIVE in the hierarchy by default (like every other puzzle/
+    // HUD overlay), and Unity never runs a GameObject's Awake() while it's inactive --
+    // only once something first calls SetActive(true) on it. Left as a plain auto-
+    // property, that meant Instance could stay null indefinitely (Awake() simply never
+    // firing), silently breaking the "< > 1/2 -- ..." cycle hint with no error anywhere
+    // -- PlayerInteractor only ever reads Instance through a null-safe `?.`/`!= null`
+    // check, so a null Instance never even logs a warning, it just quietly never shows
+    // the hint. FindFirstObjectByType(..., FindObjectsInactive.Include) can locate the
+    // component on an inactive GameObject without needing Awake() to have run first, so
+    // it's used here as a one-time fallback; once found, the result is cached in
+    // _instance so every later read is the cheap direct-field path again. Same fix as
+    // BstPuzzleProp.ResolvePuzzleUI() applies to BstPuzzleUI.Instance, for the same reason.
+    private static SelectionPromptUI _instance;
+    public static SelectionPromptUI Instance
+    {
+        get
+        {
+            if (_instance == null)
+                _instance = FindFirstObjectByType<SelectionPromptUI>(FindObjectsInactive.Include);
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     void Awake()
     {

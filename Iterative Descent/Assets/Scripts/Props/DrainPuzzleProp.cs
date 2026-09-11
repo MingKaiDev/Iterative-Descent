@@ -3,38 +3,34 @@ using UnityEngine;
 /// <summary>
 /// IInteractable prop that opens the BFS/DFS Drain puzzle overlay.
 ///
-/// Mirrors StackPuzzleProp exactly:
+/// Mirrors every other puzzle prop in this project exactly:
 ///   - Pauses PlayerInteractor
 ///   - Unlocks cursor
 ///   - Sets Time.timeScale = 0
 ///   - Restores all of the above on close
+///   - Resolves the overlay at runtime via DrainPuzzleUI.Instance (cross-scene-safe --
+///     see BstPuzzleProp.ResolvePuzzleUI()) instead of relying only on a serialized
+///     reference, which goes stale across a Level 1 -> Level 2 -> Level 1 reload.
 ///
 /// SCENE SETUP
 /// -----------
 ///   1. Attach this script to the DrainTerminal prop GameObject (or a child trigger collider).
 ///   2. Also attach: BoxCollider, InteractableBase, InteractableRegistrar.
-///   3. Set 'drainOverlay' to the Drain Panel in the Canvas (starts inactive).
-///   4. The Canvas Drain Panel needs: DrainPuzzleUI, EventSystem, GraphicRaycaster.
+///   3. 'drainOverlay' is optional -- only needed to force a specific same-scene instance.
 ///
 /// NOTE: NotifyDrainStarted() is called inside DrainPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
 public class DrainPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("UI")]
-    [Tooltip("Drain Panel GameObject in the Canvas (inactive by default).")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via DrainPuzzleUI.Instance.")]
     public GameObject drainOverlay;
 
     // IInteractable
     public string InteractLabel => "Access Drain Terminal";
 
     private bool _puzzleOpen;
-
-    private void Awake()
-    {
-        if (drainOverlay != null)
-            drainOverlay.SetActive(false);
-    }
 
     public void Interact(GameObject interactor)
     {
@@ -47,22 +43,39 @@ public class DrainPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         _puzzleOpen = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase?.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         // First time the player sees this concept, show the tutorial panel
         // before the puzzle overlay opens. See ConceptTutorials.cs.
         ConceptTutorials.ShowIfUnseenThenContinue("bfs_dfs", OpenDrainUI);
     }
 
-    private void OpenDrainUI()
+    private DrainPuzzleUI ResolveDrainUI()
     {
         if (drainOverlay != null)
         {
-            drainOverlay.SetActive(true);
-            drainOverlay.GetComponent<DrainPuzzleUI>().InitPuzzle(ClosePuzzle);
+            var local = drainOverlay.GetComponent<DrainPuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (DrainPuzzleUI.Instance != null) return DrainPuzzleUI.Instance;
+
+        return FindFirstObjectByType<DrainPuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenDrainUI()
+    {
+        var puzzle = ResolveDrainUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[DrainPuzzleProp] No DrainPuzzleUI found. Is the Drain Panel present " +
+                            "under the persisted Canvas, and did you enter play mode via Level 1?", this);
+            ClosePuzzle();
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+        puzzle.InitPuzzle(ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -79,8 +92,8 @@ public class DrainPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (drainOverlay != null)
-            drainOverlay.SetActive(false);
+        var puzzle = ResolveDrainUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

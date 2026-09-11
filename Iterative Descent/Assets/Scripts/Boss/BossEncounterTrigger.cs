@@ -38,6 +38,15 @@
 //      puzzle had already opened them earlier. This is permanent for the
 //      rest of the fight -- the doors do not reopen when the boss dies.
 //
+//   7. aresAgent is optional -- assign the BossAgent component on the boss
+//      root to gate ARES's combat AI on the Packet Filter puzzle ("cut
+//      ARBITEX's connection to ARES"): unsolved plays the trained model at
+//      full strength, solved falls back to BossAttackRegistry's random-attack
+//      picker for the rest of the fight. Checked once here, since the puzzle
+//      is always resolved (or not) before the player ever reaches this
+//      trigger -- never mid-fight. Leave unassigned to skip this and always
+//      use ARES's default smart behavior.
+//
 // One-shot: fires once per scene load, re-entering the trigger does nothing.
 using UnityEngine;
 
@@ -66,6 +75,15 @@ public class BossEncounterTrigger : MonoBehaviour
              "arena. Sealed permanently -- does not reopen when the boss dies.")]
     [SerializeField] private DoorController[] arenaDoors;
 
+    [Header("ARES Combat AI (optional)")]
+    [Tooltip("BossAgent component on the boss root. When assigned, gates ARES's combat AI on " +
+             "the Packet Filter puzzle the moment the player commits to the arena: full " +
+             "trained-model play if the puzzle is still unsolved, or BossAttackRegistry's " +
+             "random-attack fallback if it's been solved (PacketFilterEventHandler." +
+             "ServerNodeDisabled). Leave unassigned to skip this and always use ARES's default " +
+             "smart behavior.")]
+    [SerializeField] private BossAgent aresAgent;
+
     [Header("Trigger")]
     [SerializeField] private string playerTag = "Player";
 
@@ -80,6 +98,11 @@ public class BossEncounterTrigger : MonoBehaviour
 
         if (aresGameObject != null && !aresGameObject.activeSelf)
             aresGameObject.SetActive(true);
+
+        if (aresAgent != null)
+            aresAgent.SetSmartModeActive(!PacketFilterEventHandler.ServerNodeDisabled);
+        else
+            Debug.LogWarning("[BossEncounterTrigger] aresAgent not assigned -- ARES will always use its default (smart) combat mode regardless of the Packet Filter puzzle.");
 
         if (arenaDoors != null && arenaDoors.Length > 0)
         {

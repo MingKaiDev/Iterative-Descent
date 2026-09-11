@@ -87,6 +87,23 @@ public class WeaponManager : MonoBehaviour
         Debug.Log($"[WeaponManager] Rifle unlocked. Mag: {mag}, Spare: {spare}.");
     }
 
+    /// <summary>
+    /// Re-fires the currently-equipped weapon's ammo broadcast without changing anything --
+    /// called by LevelTransitionManager right after a cross-scene level transition, since
+    /// the Player (and every weapon component on it) survives the scene load via
+    /// PersistentPlayer/DontDestroyOnLoad, so none of the normal OnEnable()-driven
+    /// broadcasts refire on their own for the new scene's fresh HUD.
+    /// </summary>
+    public void BroadcastCurrentWeaponState()
+    {
+        switch (_currentIndex)
+        {
+            case 0: _pistol?.BroadcastCurrentState();  break;
+            case 1: _shotgun?.BroadcastCurrentState(); break;
+            case 2: _rifle?.BroadcastCurrentState();   break;
+        }
+    }
+
     // ─── Private ─────────────────────────────────────────────────────────────────
 
     void TrySwitchTo(int index)

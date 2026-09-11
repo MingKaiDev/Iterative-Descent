@@ -63,18 +63,55 @@ public class InteractableBase : MonoBehaviour
                 _outline.OutlineColor = Color.white;
         }
 
-        // Prompt: only for the currently selected object
-        if (promptPanel != null)
+        // Prompt: only for the currently selected object.
+        //
+        // promptPanel/promptLabel are left unassigned (fileID 0) on any prop that
+        // wasn't authored in the same scene as the shared Canvas prompt panel -- e.g.
+        // every prop inside the Library room prefab, edited in isolated Prefab Mode
+        // (confirmed via direct prefab-file audit: BstPuzzleProp's InteractableBase
+        // has both fields at fileID 0). Falling back to PromptPanelUI.Instance means
+        // those props still show the "[E]  ..." prompt without needing a reference
+        // that has nothing in the open scene to drag it from. See PromptPanelUI.cs's
+        // own doc comment for the full explanation -- same shape of fix as
+        // BstPuzzleUI.Instance / SelectionPromptUI.Instance elsewhere in this project.
+        GameObject panel = promptPanel != null ? promptPanel : PromptPanelUI.Instance?.Panel;
+        TMP_Text   label = promptLabel != null ? promptLabel : PromptPanelUI.Instance?.Label;
+
+        if (panel != null)
         {
-            promptPanel.SetActive(inRadius);
-            if (inRadius && promptLabel != null)
-                promptLabel.text = $"[E]  {_handler?.InteractLabel ?? "Interact"}";
+            panel.SetActive(inRadius);
+            if (inRadius && label != null)
+                label.text = $"[E]  {_handler?.InteractLabel ?? "Interact"}";
         }
     }
 
     public void TryInteract(GameObject interactor)
     {
         _handler?.Interact(interactor);
+    }
+
+    /// <summary>
+    /// Force-hides this prop's "[E] ..." prompt immediately, resolving the same
+    /// promptPanel-or-PromptPanelUI.Instance fallback UpdateState() uses. Every puzzle
+    /// prop calls something like this from its own OpenPuzzle() right after pausing --
+    /// PlayerInteractor.Update() returns early while paused, so UpdateState() never
+    /// runs again to naturally drive the panel back to inactive, and the panel would
+    /// otherwise stay stuck showing (bled through on top of the puzzle UI) at whatever
+    /// state it was last in the instant before the pause.
+    ///
+    /// A prop that hides its promptPanel field directly (the old pattern, still fine
+    /// for any prop with that field actually assigned) has always worked. This method
+    /// exists so a prop relying on the PromptPanelUI fallback (promptPanel left null,
+    /// e.g. BstPuzzleProp) hides the SAME shared panel it was actually showing --
+    /// otherwise touching a null promptPanel field directly silently does nothing, and
+    /// the shared prompt bar is left visible over the puzzle overlay. Confirmed via
+    /// screenshot 2026-09-10: opening the BST puzzle left "[E]  Sort the Returns Cart"
+    /// showing on top of the panel.
+    /// </summary>
+    public void HidePrompt()
+    {
+        GameObject panel = promptPanel != null ? promptPanel : PromptPanelUI.Instance?.Panel;
+        if (panel != null) panel.SetActive(false);
     }
 
     void OnDrawGizmosSelected()

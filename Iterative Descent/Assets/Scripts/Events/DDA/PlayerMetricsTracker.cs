@@ -247,6 +247,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         ExamPaperPuzzleUI.OnPuzzleFinished      += HandleQuizFinished;
         ExamPaperPuzzleUI.OnQuestionAnswered    += HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved   += HandleLinkedListSolved;
+        BstPuzzleUI.OnBstSolved                 += HandleBstSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   += HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             += HandleStackSolved;
         HashTablePuzzleUI.OnHashTableSolved     += HandleHashTableSolved;
@@ -265,6 +266,7 @@ public class PlayerMetricsTracker : MonoBehaviour
         ExamPaperPuzzleUI.OnPuzzleFinished      -= HandleQuizFinished;
         ExamPaperPuzzleUI.OnQuestionAnswered    -= HandleQuestionAnswered;
         LinkedListPuzzleUI.OnLinkedListSolved   -= HandleLinkedListSolved;
+        BstPuzzleUI.OnBstSolved                 -= HandleBstSolved;
         SchedulingPuzzleUI.OnSchedulingSolved   -= HandleSchedulingSolved;
         StackPuzzleUI.OnStackSolved             -= HandleStackSolved;
         HashTablePuzzleUI.OnHashTableSolved     -= HandleHashTableSolved;
@@ -645,6 +647,72 @@ public class PlayerMetricsTracker : MonoBehaviour
                   $"Time: {timeTaken:F1}s | Avg attempts: {AverageLinkedListWrongAttempts:F1}");
     }
 
+    // ── BST "Build the Catalog" API ───────────────────────────────────────────
+
+    /// <summary>Total BST catalog puzzles solved this session.</summary>
+    public int   TotalBstSolved            { get; private set; }
+    /// <summary>Wrong branch clicks on the most recently solved catalog puzzle.</summary>
+    public int   LastBstWrongAttempts      { get; private set; }
+    /// <summary>Solve time for the most recently solved catalog puzzle (seconds).</summary>
+    public float LastBstTime               { get; private set; }
+    /// <summary>Running average wrong branch clicks per catalog puzzle.</summary>
+    public float AverageBstWrongAttempts   { get; private set; }
+    /// <summary>Running average solve time per catalog puzzle (seconds).</summary>
+    public float AverageBstTime            { get; private set; }
+
+    private float _bstStartTime;
+    private bool  _bstInProgress;
+
+    /// <summary>
+    /// Call this when the player opens the BST catalog puzzle so we can time it.
+    /// Hook this wherever you call bstPuzzleUI.InitPuzzle().
+    /// </summary>
+    public void NotifyBstStarted()
+    {
+        _bstStartTime = Time.realtimeSinceStartup;
+        _bstInProgress = true;
+        Debug.Log("[Metrics] BST catalog puzzle started.");
+    }
+
+    /// <summary>
+    /// Automatically called via BstPuzzleUI.OnBstSolved event.
+    ///
+    /// 'wrongAttempts' = number of incorrect branch clicks across the whole
+    /// session (every card, every misfiled Lower/Higher guess), not just the
+    /// last card placed.
+    /// </summary>
+    private void HandleBstSolved(int wrongAttempts)
+    {
+        float timeTaken = _bstInProgress
+            ? Time.realtimeSinceStartup - _bstStartTime
+            : 0f;
+
+        LastBstWrongAttempts = wrongAttempts;
+        LastBstTime = timeTaken;
+        _bstInProgress = false;
+        TotalBstSolved++;
+
+        AverageBstWrongAttempts = TotalBstSolved <= 1
+            ? wrongAttempts
+            : (AverageBstWrongAttempts * (TotalBstSolved - 1) + wrongAttempts)
+              / TotalBstSolved;
+
+        AverageBstTime = TotalBstSolved <= 1
+            ? timeTaken
+            : (AverageBstTime * (TotalBstSolved - 1) + timeTaken)
+              / TotalBstSolved;
+
+        // BKT update -- replay each wrong branch click then the final correct state.
+        for (int i = 0; i < wrongAttempts; i++)
+            BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.TreesBst, false);
+        BKT?.UpdateAfterAttempt(BayesianKnowledgeTracker.TreesBst, true);
+
+        UpdateGeneralPool(wrongAttempts, timeTaken);
+
+        Debug.Log($"[Metrics] BST catalog solved | Wrong attempts: {wrongAttempts} | " +
+                  $"Time: {timeTaken:F1}s | Avg attempts: {AverageBstWrongAttempts:F1}");
+    }
+
     // ── Matching Puzzle API ───────────────────────────────────────────────────
 
     /// <summary>Total matching puzzles solved this session.</summary>
@@ -963,6 +1031,14 @@ public class PlayerMetricsTracker : MonoBehaviour
         AverageLinkedListWrongAttempts = 0f;
         AverageLinkedListTime = 0f;
         _linkedListInProgress = false;
+
+        // BST catalog
+        LastBstWrongAttempts = 0;
+        LastBstTime = 0f;
+        TotalBstSolved = 0;
+        AverageBstWrongAttempts = 0f;
+        AverageBstTime = 0f;
+        _bstInProgress = false;
 
         // Scheduling
         LastSchedulingWrongAttempts    = 0;

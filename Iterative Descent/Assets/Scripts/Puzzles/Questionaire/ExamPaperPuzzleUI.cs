@@ -39,6 +39,13 @@ using UnityEngine.UI;
 
 public class ExamPaperPuzzleUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets ExamPaperProp
+    // resolve this shared Canvas panel at runtime instead of relying only on
+    // a serialized Inspector reference, which goes stale across a Level 1 ->
+    // Level 2 -> Level 1 scene reload.
+    public static ExamPaperPuzzleUI Instance { get; private set; }
+
     // ── Static events (identical contract to PuzzleUI) ───────────────────────
 
     /// <summary>Fires per question: conceptTag, wasCorrect.</summary>
@@ -107,6 +114,8 @@ public class ExamPaperPuzzleUI : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
+
         // Safe defaults -- keep buttons non-interactive until Setup() is called
         if (nextButton != null)
         {

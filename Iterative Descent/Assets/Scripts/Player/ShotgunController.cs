@@ -448,4 +448,13 @@ public class ShotgunController : MonoBehaviour
     {
         OnAmmoChanged?.Invoke(_currentMag, _spareShells);
     }
+
+    /// <summary>
+    /// Public entry point for LevelTransitionManager to re-fire the current ammo count
+    /// after a cross-scene level transition -- see PlayerCombat.BroadcastCurrentState()
+    /// for why this is needed (the weapon survives the scene load, so OnEnable()'s
+    /// broadcast doesn't refire on its own). Only meaningful to call while the shotgun
+    /// is the currently-equipped weapon; see WeaponManager.BroadcastCurrentWeaponState().
+    /// </summary>
+    public void BroadcastCurrentState() => BroadcastAmmo();
 }

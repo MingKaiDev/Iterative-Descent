@@ -40,6 +40,13 @@ using UnityEngine.UI;
 /// </summary>
 public class HashTablePuzzleUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets
+    // HashTablePuzzleProp resolve this shared Canvas panel at runtime instead
+    // of relying only on a serialized Inspector reference, which goes stale
+    // across a Level 1 -> Level 2 -> Level 1 scene reload.
+    public static HashTablePuzzleUI Instance { get; private set; }
+
     // ── Tier data ────────────────────────────────────────────────────────────
     [Serializable]
     private struct Tier
@@ -179,6 +186,7 @@ public class HashTablePuzzleUI : MonoBehaviour
     // ── Unity lifecycle ──────────────────────────────────────────────────────
     private void Awake()
     {
+        Instance = this;
         if (orderTemplate != null) orderTemplate.gameObject.SetActive(false);
         if (bucketRowTemplate != null) bucketRowTemplate.gameObject.SetActive(false);
     }

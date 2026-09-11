@@ -3,20 +3,21 @@ using UnityEngine;
 /// <summary>
 /// IInteractable prop that opens the Reagent Routing (Dijkstra) puzzle overlay.
 ///
-/// Mirrors DrainPuzzleProp exactly:
+/// Mirrors every other puzzle prop in this project exactly:
 ///   - Pauses PlayerInteractor
 ///   - Unlocks cursor
 ///   - Sets Time.timeScale = 0
 ///   - Restores all of the above on close
+///   - Resolves the overlay at runtime via ReagentRoutingUI.Instance (cross-scene-safe --
+///     see BstPuzzleProp.ResolvePuzzleUI()) instead of relying only on a serialized
+///     reference, which goes stale across a Level 1 -> Level 2 -> Level 1 reload.
 ///
 /// SCENE SETUP
 /// -----------
 ///   1. Attach this script to the Chemistry Lab reagent terminal prop GameObject
 ///      (or a child trigger collider).
 ///   2. Also attach: BoxCollider, InteractableBase, InteractableRegistrar.
-///   3. Set 'reagentRoutingOverlay' to the Reagent Routing Panel in the Canvas
-///      (starts inactive).
-///   4. The Canvas panel needs: ReagentRoutingUI, EventSystem, GraphicRaycaster.
+///   3. 'reagentRoutingOverlay' is optional -- only needed to force a specific same-scene instance.
 ///
 /// NOTE: NotifyReagentRoutingStarted() is called inside ReagentRoutingUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker,
@@ -31,20 +32,14 @@ using UnityEngine;
 /// </summary>
 public class ReagentRoutingProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("UI")]
-    [Tooltip("Reagent Routing Panel GameObject in the Canvas (inactive by default).")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via ReagentRoutingUI.Instance.")]
     public GameObject reagentRoutingOverlay;
 
     // IInteractable
     public string InteractLabel => "Access Reagent Terminal";
 
     private bool _puzzleOpen;
-
-    private void Awake()
-    {
-        if (reagentRoutingOverlay != null)
-            reagentRoutingOverlay.SetActive(false);
-    }
 
     public void Interact(GameObject interactor)
     {
@@ -57,20 +52,37 @@ public class ReagentRoutingProp : MonoBehaviour, IInteractable, ICloseable
         _puzzleOpen = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase != null && interactBase.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         ConceptTutorials.ShowIfUnseenThenContinue("dijkstra", OpenReagentRoutingUI);
     }
 
-    private void OpenReagentRoutingUI()
+    private ReagentRoutingUI ResolveReagentRoutingUI()
     {
         if (reagentRoutingOverlay != null)
         {
-            reagentRoutingOverlay.SetActive(true);
-            reagentRoutingOverlay.GetComponent<ReagentRoutingUI>().InitPuzzle(ClosePuzzle);
+            var local = reagentRoutingOverlay.GetComponent<ReagentRoutingUI>();
+            if (local != null) return local;
         }
+
+        if (ReagentRoutingUI.Instance != null) return ReagentRoutingUI.Instance;
+
+        return FindFirstObjectByType<ReagentRoutingUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenReagentRoutingUI()
+    {
+        var puzzle = ResolveReagentRoutingUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[ReagentRoutingProp] No ReagentRoutingUI found. Is the Reagent Routing " +
+                            "Panel present under the persisted Canvas, and did you enter play mode via Level 1?", this);
+            ClosePuzzle();
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+        puzzle.InitPuzzle(ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -87,8 +99,8 @@ public class ReagentRoutingProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (reagentRoutingOverlay != null)
-            reagentRoutingOverlay.SetActive(false);
+        var puzzle = ResolveReagentRoutingUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

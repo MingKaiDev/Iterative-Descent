@@ -5,14 +5,25 @@ using UnityEngine;
 /// Opens the NumberLockUI overlay on interact.
 /// correctCode is left empty for now (always-deny).
 /// Wire a code here in a future sprint once the player has a way to find it.
+///
+/// The lock panel is resolved at runtime via NumberLockUI.Instance (cross-scene-safe
+/// -- see BstPuzzleProp.ResolvePuzzleUI()), falling back to a same-scene serialized
+/// reference if one is assigned. This is the same fix applied to every other puzzle
+/// prop in the project: a plain serialized reference goes stale across a Level 1 ->
+/// Level 2 -> Level 1 reload, because the freshly-reloaded Canvas (and every panel
+/// under it, including the Number Lock Panel) is immediately destroyed as a
+/// duplicate by PersistentUIRoot -- this prop's own fresh copy would still point at
+/// that now-destroyed panel, and Unity's overridden null-check on a destroyed
+/// object correctly reports it as null, silently failing the old
+/// "numberLockPanel == null || numberLockUI == null" guard below.
 /// </summary>
 [RequireComponent(typeof(InteractableBase))]
 [RequireComponent(typeof(InteractableRegistrar))]
 public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("Lock UI")]
-    [Tooltip("The root panel GameObject that contains the NumberLockUI component.")]
-    [SerializeField] private GameObject   numberLockPanel;
+    [Header("Lock UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via NumberLockUI.Instance. " +
+             "Only assign this if the Number Lock Panel happens to be placed in THIS SAME scene.")]
     [SerializeField] private NumberLockUI numberLockUI;
 
     [Header("Unlock Config")]
@@ -48,26 +59,39 @@ public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
     // IInteractable
     public string InteractLabel => "Examine Padlock";
 
+    private NumberLockUI ResolveNumberLockUI()
+    {
+        if (numberLockUI != null) return numberLockUI;
+
+        if (NumberLockUI.Instance != null) return NumberLockUI.Instance;
+
+        return FindFirstObjectByType<NumberLockUI>(FindObjectsInactive.Include);
+    }
+
     public void Interact(GameObject interactor)
     {
-        if (numberLockPanel == null || numberLockUI == null)
+        var lockUI = ResolveNumberLockUI();
+        if (lockUI == null)
         {
-            Debug.LogWarning("[PadlockProp] NumberLockPanel or NumberLockUI reference is missing.");
+            Debug.LogError("[PadlockProp] No NumberLockUI found. Is the Number Lock Panel present " +
+                            "under the persisted Canvas, and did you enter play mode via Level 1?", this);
             return;
         }
 
         PlayerInteractor.Pause();
 
-        numberLockUI.OnRequestClose -= HandleClose;
-        numberLockUI.OnRequestClose += HandleClose;
+        GetComponent<InteractableBase>()?.HidePrompt();
 
-        numberLockUI.OnUnlocked -= HandleUnlocked;
-        numberLockUI.OnUnlocked += HandleUnlocked;
+        lockUI.OnRequestClose -= HandleClose;
+        lockUI.OnRequestClose += HandleClose;
 
-        numberLockPanel.SetActive(true);
+        lockUI.OnUnlocked -= HandleUnlocked;
+        lockUI.OnUnlocked += HandleUnlocked;
+
+        lockUI.gameObject.SetActive(true);
 
         string code = string.IsNullOrEmpty(correctCode) ? null : correctCode;
-        numberLockUI.Open(code, CodeRevealed);
+        lockUI.Open(code, CodeRevealed);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -113,11 +137,15 @@ public class PadlockProp : MonoBehaviour, IInteractable, ICloseable
 
     private void CloseUI()
     {
-        numberLockUI.OnRequestClose -= HandleClose;
-        numberLockUI.OnUnlocked     -= HandleUnlocked;
+        var lockUI = ResolveNumberLockUI();
+        if (lockUI != null)
+        {
+            lockUI.OnRequestClose -= HandleClose;
+            lockUI.OnUnlocked     -= HandleUnlocked;
+            lockUI.Close();
+            lockUI.gameObject.SetActive(false);
+        }
 
-        numberLockPanel.SetActive(false);
-        numberLockUI.Close();
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 

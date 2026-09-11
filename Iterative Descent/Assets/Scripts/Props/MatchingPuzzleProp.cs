@@ -3,38 +3,34 @@ using UnityEngine;
 /// <summary>
 /// IInteractable prop that opens the Matching Puzzle overlay.
 ///
-/// Mirrors DrainPuzzleProp exactly:
+/// Mirrors every other puzzle prop in this project exactly:
 ///   - Pauses PlayerInteractor
 ///   - Unlocks cursor
 ///   - Sets Time.timeScale = 0
 ///   - Restores all of the above on close
+///   - Resolves the overlay at runtime via MatchingPuzzleUI.Instance (cross-scene-safe --
+///     see BstPuzzleProp.ResolvePuzzleUI()) instead of relying only on a serialized
+///     reference, which goes stale across a Level 1 -> Level 2 -> Level 1 reload.
 ///
 /// SCENE SETUP
 /// -----------
 ///   1. Attach this script to the matching puzzle terminal prop (or a child trigger collider).
 ///   2. Also attach: BoxCollider (trigger), InteractableBase, InteractableRegistrar.
-///   3. Set 'matchingOverlay' to the MatchingPanel in the Canvas (starts inactive).
-///   4. The Canvas needs a GraphicRaycaster; scene needs an EventSystem.
+///   3. 'matchingOverlay' is optional -- only needed to force a specific same-scene instance.
 ///
 /// NOTE: NotifyMatchingStarted() is called inside MatchingPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
 public class MatchingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("UI")]
-    [Tooltip("MatchingPanel GameObject in the Canvas (inactive by default).")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via MatchingPuzzleUI.Instance.")]
     public GameObject matchingOverlay;
 
     // IInteractable
     public string InteractLabel => "Access Network Terminal";
 
     private bool _puzzleOpen;
-
-    private void Awake()
-    {
-        if (matchingOverlay != null)
-            matchingOverlay.SetActive(false);
-    }
 
     public void Interact(GameObject interactor)
     {
@@ -47,22 +43,39 @@ public class MatchingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         _puzzleOpen = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase?.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         // First time the player sees this concept, show the tutorial panel
         // before the puzzle overlay opens. See ConceptTutorials.cs.
         ConceptTutorials.ShowIfUnseenThenContinue("networking_ports", OpenMatchingUI);
     }
 
-    private void OpenMatchingUI()
+    private MatchingPuzzleUI ResolveMatchingUI()
     {
         if (matchingOverlay != null)
         {
-            matchingOverlay.SetActive(true);
-            matchingOverlay.GetComponent<MatchingPuzzleUI>().InitPuzzle(ClosePuzzle);
+            var local = matchingOverlay.GetComponent<MatchingPuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (MatchingPuzzleUI.Instance != null) return MatchingPuzzleUI.Instance;
+
+        return FindFirstObjectByType<MatchingPuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenMatchingUI()
+    {
+        var puzzle = ResolveMatchingUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[MatchingPuzzleProp] No MatchingPuzzleUI found. Is the MatchingPanel " +
+                            "present under the persisted Canvas, and did you enter play mode via Level 1?", this);
+            ClosePuzzle();
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+        puzzle.InitPuzzle(ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -79,8 +92,8 @@ public class MatchingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (matchingOverlay != null)
-            matchingOverlay.SetActive(false);
+        var puzzle = ResolveMatchingUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

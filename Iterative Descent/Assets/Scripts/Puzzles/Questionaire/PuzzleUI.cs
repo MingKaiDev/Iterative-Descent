@@ -6,6 +6,14 @@ using UnityEngine.UI;
 
 public class PuzzleUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- lets PuzzleProp (and PuzzleProp's own
+    // passwordScreenToReveal-style cross-references) resolve this shared
+    // Canvas panel at runtime instead of relying only on a serialized
+    // Inspector reference, which goes stale across a Level 1 -> Level 2 ->
+    // Level 1 scene reload (see BstPuzzleUI.Instance / PuzzleProp.cs for the
+    // full explanation of why).
+    public static PuzzleUI Instance { get; private set; }
+
     [Header("Text Elements")]
     public TMP_Text questionText;
     public TMP_Text progressText;
@@ -69,6 +77,8 @@ public class PuzzleUI : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
+
         // Defensive TMP config for the two free-text fields. This does not
         // replace giving them a properly sized RectTransform in the Editor,
         // but it guarantees text can never blow past the notebook panel again

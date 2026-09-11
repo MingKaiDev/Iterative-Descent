@@ -13,6 +13,16 @@ https://sketchfab.com/3d-models/mixamo-bot-character-lowpoly-c0c4d8c54d394e50821
 
 "Electric Door Key - 5MB" (https://skfb.ly/oVZqG) by Mehdi Shahsavan is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
+"Coca Cola Bottle" (https://skfb.ly/oEpZu) by MemoRorschach is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Spiral Stairs (Free)" (https://skfb.ly/6XOQM) by wolfgar74 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Wooden Bookcases with Books" (https://skfb.ly/oJpQJ) by Matthew Collings is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Environment - Library" (https://skfb.ly/6CxMN) by anaroeto is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+"Cart" (https://skfb.ly/opT6v) by re1monsen is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
 Guns
 Shotgun - https://sketchfab.com/3d-models/shotgun-5992139018d34eb6897140999a667043
 Industrial Terminal - https://sketchfab.com/3d-models/industrial-terminal-846bb4773f74406bb8a24fcf2f17cf22
@@ -54,6 +64,8 @@ Music by <a href="https://pixabay.com/users/leberch-42823964/?utm_source=link-at
 Music by <a href="https://pixabay.com/users/the_mountain-3616498/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=487014">Dmitrii Kolesnikov</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=487014">Pixabay</a>
 
 Sound Effect by <a href="https://pixabay.com/users/freesound_community-46691455/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=43679">freesound_community</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=43679">Pixabay</a>
+
+Sound Effect by <a href="https://pixabay.com/users/soundshmyak-38417752/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=159283">Ilya</a> from <a href="https://pixabay.com/sound-effects//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=159283">Pixabay</a>
 
 Enemies
 https://www.cgtrader.com/free-3d-models/character/sci-fi-character/battle-droid-korah-rigged-for-unreal-engine-unity-mixamo

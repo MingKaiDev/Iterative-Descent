@@ -250,7 +250,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.0162497
+      value: -8.942
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_LocalPosition.y
@@ -258,7 +258,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.65525
+      value: -5.487
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_LocalRotation.w
@@ -291,6 +291,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_Name
       value: Phobos
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 2f848849160e0bc4d9f510e9e8ac7468, type: 3}
       propertyPath: m_Controller
@@ -356,11 +360,11 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 1.5
+  m_Speed: 3
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
-  m_StoppingDistance: 1
+  m_StoppingDistance: 0.1
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -384,24 +388,25 @@ MonoBehaviour:
   meleeDamage: 18
   comboAHit1TriggerName: SwipeA_Hit1
   comboAHit1Delay: 0.4
-  comboAGapDuration: 0.98
+  comboAGapDuration: 1.2
   comboAHit2TriggerName: SwipeA_Hit2
   comboAHit2Delay: 0.4
-  comboAHit2RecoveryDuration: 0.52
+  comboAHit2RecoveryDuration: 1
   comboBHit1TriggerName: SwipeB_Hit1
   comboBHit1Delay: 0.4
-  comboBGapDuration: 0.98
+  comboBGapDuration: 1.2
   comboBHit2TriggerName: SwipeB_Hit2
   comboBHit2Delay: 0.4
-  comboBHit2RecoveryDuration: 0.52
+  comboBHit2RecoveryDuration: 1
   grabTriggerName: Grab
   grabHitboxDelay: 0.5
   grabHitboxOpenDuration: 0.3667
-  grabRecoveryDuration: 1.2071
+  grabRecoveryDuration: 2
   grabCooldown: 16
-  grabChanceBase: 0.12
-  grabChanceLowHealth: 0.7
-  playerLowHealthThreshold: 0.3
+  grabChanceBase: 0.3
+  grabChanceLowHealth: 0.5
+  playerLowHealthThreshold: 0.5
+  grabDamage: 50
   leftFistBox: {fileID: 4858559785964925735}
   rightFistBox: {fileID: 6255150667228632303}
   grabHitbox: {fileID: 4793365770991167036}
@@ -425,16 +430,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a77b0af81a05c54b9b9fe95daac864b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBrute
-  maxHealth: 500
+  maxHealth: 400
   deathGroundSnapOffset: 0.03
-  staggerDpsThreshold: 75
+  staggerDpsThreshold: 50
   staggerWindowSeconds: 2
   staggerDuration: 1
   staggerCooldown: 1.5
   staggerResistanceGrowth: 1.5
+  staggerResistanceDecayDelay: 4
+  staggerResistanceDecayRate: 0.35
   staggerBigHitDamage: 55
-  chaseSpeed: 2
-  attackRange: 1.5
+  chaseSpeed: 1.6
+  attackRange: 1.2
   pathUpdateRate: 0.2
   speedParamName: Speed
   deadParamName: IsDead
@@ -575,15 +582,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BruteAudio
   footstepClip: {fileID: 8300000, guid: 6b758f07aeaeb244fbba0749aa2aefb1, type: 3}
   screamClip: {fileID: 8300000, guid: f4fd29625dbbdd04e9858c613ddeb700, type: 3}
-  grabConnectClip: {fileID: 0}
-  neckSnapClip: {fileID: 0}
-  deathClip: {fileID: 0}
+  grabConnectClip: {fileID: 8300000, guid: 0ab6714fc019a7f4bbaac5137b5efcdf, type: 3}
+  neckSnapClip: {fileID: 8300000, guid: d86c789b227e0db47a01a4dbcc68cf95, type: 3}
+  deathClip: {fileID: 8300000, guid: 828f0a26f3af63b428e406afce4cd509, type: 3}
   footstepVolume: 0.7
   screamVolume: 1
   grabConnectVolume: 0.9
   neckSnapVolume: 1
   deathVolume: 1
-  encounterMusicClip: {fileID: 0}
+  encounterMusicClip: {fileID: 8300000, guid: 5c3a93594e3f98b4aa7212b98b1ef6f4, type: 3}
   encounterMusicVolume: 0.35
 --- !u!4 &9092312768300401185 stripped
 Transform:

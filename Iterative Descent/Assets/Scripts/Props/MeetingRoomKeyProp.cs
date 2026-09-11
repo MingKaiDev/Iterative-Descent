@@ -13,7 +13,11 @@
 // On pickup:
 //   1. Closes and re-locks doorToClose (via DoorController.CloseAndLock() --
 //      same call BossEncounterTrigger-style arena gates use to seal once
-//      triggered).
+//      triggered), then fires doorCloseDialogue if one is assigned -- e.g.
+//      ARBITEX gloating the instant the kitchen door seals behind the player.
+//      Uses DialogueManager.Interrupt() (same pattern as BossEncounterTrigger's
+//      bossIntroDialogue) so it plays immediately over anything else queued,
+//      since the door has already physically sealed by the time this fires.
 //   2. Enables whatever puzzle prop unlocks the OTHER (kitchen) door -- this
 //      script doesn't care which puzzle it is (Drain/LinkedList/Matching/
 //      PacketFilter/Scheduling/Stack/Subnet/Questionaire/ComputerScreenProp,
@@ -31,6 +35,8 @@
 // Setup:
 //   1. Add InteractableBase + InteractableRegistrar + this script to the key prop GameObject.
 //   2. Assign 'doorToClose' to the DoorController on the door that should close (the open one).
+//      Optionally also assign 'doorCloseDialogue' -- see Assets/Dialogue/ARBITEX/
+//      Arb_KitchenDoorSeal.asset -- to have ARBITEX react the instant it closes.
 //   3. On the puzzle prop GameObject (whichever one ends up being built for this
 //      room, guarding the OTHER, already-locked kitchen door), leave its
 //      InteractableBase + InteractableRegistrar + puzzle script UNCHECKED
@@ -53,6 +59,11 @@ public class MeetingRoomKeyProp : MonoBehaviour, IInteractable
     [Header("Kitchen Door To Close (the currently-open one)")]
     [Tooltip("The door currently standing open in the kitchen. Closed and re-locked the moment this key is picked up. This is NOT the door the puzzle unlocks -- that's a different door, referenced on the puzzle prop's own script instead.")]
     public DoorController doorToClose;
+    [Tooltip("Optional. Dialogue asset played via DialogueManager.Interrupt() the instant doorToClose " +
+             "closes and locks behind the player -- e.g. ARBITEX gloating that the door will not open " +
+             "again. See Assets/Dialogue/ARBITEX/Arb_KitchenDoorSeal.asset. Only fires if doorToClose " +
+             "itself is assigned and closes; leave empty to skip.")]
+    public DialogueSequence doorCloseDialogue;
 
     [Header("Puzzle Gate (enabled once the key is picked up; guards the OTHER, already-locked kitchen door)")]
     [Tooltip("The puzzle prop's own IInteractable script -- whatever puzzle ends up being built to unlock the other kitchen door (DrainPuzzleProp, SubnetPuzzleProp, ComputerScreenProp, a new one, etc.). Leave disabled in the Inspector by default.")]
@@ -95,7 +106,17 @@ public class MeetingRoomKeyProp : MonoBehaviour, IInteractable
         _collected = true;
 
         if (doorToClose != null)
+        {
             doorToClose.CloseAndLock();
+
+            if (doorCloseDialogue != null)
+            {
+                if (DialogueManager.Instance != null)
+                    DialogueManager.Instance.Interrupt(doorCloseDialogue);
+                else
+                    Debug.LogWarning("[MeetingRoomKeyProp] DialogueManager.Instance is null -- doorCloseDialogue will not play.", this);
+            }
+        }
         else
             Debug.LogWarning("[MeetingRoomKeyProp] No doorToClose assigned.", this);
 

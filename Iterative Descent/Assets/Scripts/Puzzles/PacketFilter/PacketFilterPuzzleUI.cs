@@ -66,6 +66,13 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class PacketFilterPuzzleUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets
+    // PacketFilterProp resolve this shared Canvas panel at runtime instead of
+    // relying only on a serialized Inspector reference, which goes stale
+    // across a Level 1 -> Level 2 -> Level 1 scene reload.
+    public static PacketFilterPuzzleUI Instance { get; private set; }
+
     // =========================================================================
     // Types
     // =========================================================================
@@ -279,6 +286,7 @@ public class PacketFilterPuzzleUI : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         initiateButton?.onClick.AddListener(OnInitiateScan);
         addRuleButton ?.onClick.AddListener(OnAddRule);
         commitButton  ?.onClick.AddListener(OnCommitRules);

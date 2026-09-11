@@ -13,6 +13,13 @@ using UnityEngine.UI;
 /// </summary>
 public class NumberLockUI : MonoBehaviour
 {
+    // Singleton set in Awake() -- same cross-scene-safe pattern as every other
+    // puzzle UI in this project (see BstPuzzleUI.Instance). Lets PadlockProp
+    // resolve this panel at runtime instead of relying only on a serialized
+    // Inspector reference, which goes stale across a Level 1 -> Level 2 ->
+    // Level 1 scene reload.
+    public static NumberLockUI Instance { get; private set; }
+
     [Header("Digit Displays")]
     [SerializeField] private TextMeshProUGUI[] digitTexts;       // 4 elements, index 0 = leftmost
     [SerializeField] private Image[]           digitHighlights;  // 4 background images, tinted on selection
@@ -45,6 +52,7 @@ public class NumberLockUI : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         // Panel visibility is controlled by PadlockProp -- do not self-deactivate here.
     }
 

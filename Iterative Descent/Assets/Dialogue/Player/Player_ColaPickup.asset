@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9674574299bbcbd419550892c492773f, type: 3}
+  m_Name: Player_ColaPickup
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
+  entries:
+  - speakerName: 
+    text: All this for a bottle of cola.
+    displayDuration: 0
+    choices: []
+    voiceClip: {fileID: 8300000, guid: 468c4deb6579ffd459ca78f87d386969, type: 3}

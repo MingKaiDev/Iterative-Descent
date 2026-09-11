@@ -3,38 +3,34 @@ using UnityEngine;
 /// <summary>
 /// IInteractable prop that opens the CPU Scheduling (SJF) puzzle overlay.
 ///
-/// Mirrors the PuzzleProp / ComputerScreenProp pattern exactly:
+/// Mirrors every other puzzle prop in this project exactly:
 ///   • Pauses PlayerInteractor
 ///   • Unlocks cursor
 ///   • Sets Time.timeScale = 0
 ///   • Restores all of the above on close
+///   • Resolves the overlay at runtime via SchedulingPuzzleUI.Instance (cross-scene-safe --
+///     see BstPuzzleProp.ResolvePuzzleUI()) instead of relying only on a serialized
+///     reference, which goes stale across a Level 1 -> Level 2 -> Level 1 reload.
 ///
 /// SCENE SETUP
 /// ───────────
 ///   1. Attach this script to Prop_Whiteboard (or a child trigger collider).
 ///   2. Also attach: BoxCollider, InteractableBase, InteractableRegistrar.
-///   3. Set 'schedulingOverlay' to the Scheduling Panel in the Canvas (starts inactive).
-///   4. The Canvas Scheduling Panel needs: SchedulingPuzzleUI, EventSystem, GraphicRaycaster.
+///   3. 'schedulingOverlay' is optional -- only needed to force a specific same-scene instance.
 ///
 /// NOTE: NotifySchedulingStarted() is called inside SchedulingPuzzleUI.InitPuzzle()
 /// — do NOT call it here too (would double-count attempts in PlayerMetricsTracker).
 /// </summary>
 public class SchedulingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("UI")]
-    [Tooltip("Scheduling Panel GameObject in the Canvas (inactive by default).")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via SchedulingPuzzleUI.Instance.")]
     public GameObject schedulingOverlay;
 
     // IInteractable
     public string InteractLabel => "Examine Interface";
 
     private bool _puzzleOpen;
-
-    private void Awake()
-    {
-        if (schedulingOverlay != null)
-            schedulingOverlay.SetActive(false);
-    }
 
     public void Interact(GameObject interactor)
     {
@@ -48,22 +44,39 @@ public class SchedulingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.Pause();
 
         // Hide interaction prompt while puzzle is open
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase?.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         // First time the player sees this concept, show the tutorial panel
         // before the puzzle overlay opens. See ConceptTutorials.cs.
         ConceptTutorials.ShowIfUnseenThenContinue("cpu_scheduling", OpenSchedulingUI);
     }
 
-    private void OpenSchedulingUI()
+    private SchedulingPuzzleUI ResolveSchedulingUI()
     {
         if (schedulingOverlay != null)
         {
-            schedulingOverlay.SetActive(true);
-            schedulingOverlay.GetComponent<SchedulingPuzzleUI>().InitPuzzle(ClosePuzzle);
+            var local = schedulingOverlay.GetComponent<SchedulingPuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (SchedulingPuzzleUI.Instance != null) return SchedulingPuzzleUI.Instance;
+
+        return FindFirstObjectByType<SchedulingPuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenSchedulingUI()
+    {
+        var puzzle = ResolveSchedulingUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[SchedulingPuzzleProp] No SchedulingPuzzleUI found. Is the Scheduling " +
+                            "Panel present under the persisted Canvas, and did you enter play mode via Level 1?", this);
+            ClosePuzzle();
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+        puzzle.InitPuzzle(ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -80,8 +93,8 @@ public class SchedulingPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (schedulingOverlay != null)
-            schedulingOverlay.SetActive(false);
+        var puzzle = ResolveSchedulingUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

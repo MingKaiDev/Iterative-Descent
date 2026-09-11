@@ -11,7 +11,7 @@ using UnityEngine;
 ///   GENERAL PUZZLE GROUP  (default 30% combined)
 ///     [20%] Average wrong attempts before solving  (fewer = harder)
 ///     [10%] Average solve time                     (faster = harder)
-///     Pools: LinkedList, Scheduling, Stack, Drain, Matching, Subnet,
+///     Pools: LinkedList, Bst, Scheduling, Stack, Drain, Matching, Subnet,
 ///            PacketFilter + any future puzzle types.
 ///
 /// Evaluates immediately after any puzzle completes (event-driven, no timer fallback).
@@ -50,7 +50,7 @@ public class PuzzleDDAController : MonoBehaviour
     [SerializeField] private float slowQuizTime = 90f;
 
     // ── Inspector: General Puzzle Weights ──────────────────────────────────
-    // Pools ALL non-quiz puzzle types: LinkedList, Scheduling, Stack, Drain,
+    // Pools ALL non-quiz puzzle types: LinkedList, Bst, Scheduling, Stack, Drain,
     // Matching, Subnet, PacketFilter + any future puzzles.
     // To add a new puzzle: subscribe its solved event to OnGeneralPuzzleSolved below
     // AND call UpdateGeneralPool() in its PlayerMetricsTracker handler.
@@ -106,6 +106,18 @@ public class PuzzleDDAController : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        // PlayerMetricsTracker (holding BKT) lives on its own "PlayerMetrics"
+        // GameObject and calls DontDestroyOnLoad on itself, so it survives the
+        // Level 1 -> Level 2 scene load. This component lives on a SEPARATE
+        // "Game Manager" GameObject that never got the same call -- so it was
+        // being destroyed on every scene transition, silently nulling Instance.
+        // BKT itself kept tracking correctly (that's PlayerMetricsTracker's own
+        // data), but anything reading tier through
+        // PuzzleDDAController.Instance.GetTierForConcept(...) -- e.g.
+        // BstPuzzleUI.CurrentTier() -- fell back to its hardcoded default (2)
+        // in whichever scene "Game Manager" hadn't just been (re)created in,
+        // regardless of how far the player's actual BKT knowledge had climbed.
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()
@@ -114,6 +126,7 @@ public class PuzzleDDAController : MonoBehaviour
         ExamPaperPuzzleUI.OnPuzzleFinished        += OnQuizFinished;
         // General pool -- add new puzzle types here only; no other file changes needed.
         LinkedListPuzzleUI.OnLinkedListSolved     += OnGeneralPuzzleSolved;
+        BstPuzzleUI.OnBstSolved                   += OnGeneralPuzzleSolved;
         SchedulingPuzzleUI.OnSchedulingSolved     += OnGeneralPuzzleSolved;
         StackPuzzleUI.OnStackSolved               += OnGeneralPuzzleSolved;
         HashTablePuzzleUI.OnHashTableSolved       += OnGeneralPuzzleSolved;
@@ -130,6 +143,7 @@ public class PuzzleDDAController : MonoBehaviour
         PuzzleUI.OnPuzzleFinished                 -= OnQuizFinished;
         ExamPaperPuzzleUI.OnPuzzleFinished        -= OnQuizFinished;
         LinkedListPuzzleUI.OnLinkedListSolved     -= OnGeneralPuzzleSolved;
+        BstPuzzleUI.OnBstSolved                   -= OnGeneralPuzzleSolved;
         SchedulingPuzzleUI.OnSchedulingSolved     -= OnGeneralPuzzleSolved;
         StackPuzzleUI.OnStackSolved               -= OnGeneralPuzzleSolved;
         HashTablePuzzleUI.OnHashTableSolved       -= OnGeneralPuzzleSolved;

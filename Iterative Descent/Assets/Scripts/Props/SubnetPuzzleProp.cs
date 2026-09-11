@@ -4,38 +4,34 @@ using UnityEngine;
 /// IInteractable prop that opens the Subnet Puzzle overlay.
 /// Place on the exterior wall panel of the server room door.
 ///
-/// Mirrors MatchingPuzzleProp exactly:
+/// Mirrors every other puzzle prop in this project exactly:
 ///   - Pauses PlayerInteractor
 ///   - Unlocks cursor
 ///   - Sets Time.timeScale = 0
 ///   - Restores all of the above on close
+///   - Resolves the overlay at runtime via SubnetPuzzleUI.Instance (cross-scene-safe --
+///     see BstPuzzleProp.ResolvePuzzleUI()) instead of relying only on a serialized
+///     reference, which goes stale across a Level 1 -> Level 2 -> Level 1 reload.
 ///
 /// SCENE SETUP
 /// -----------
 ///   1. Attach this script to the subnet terminal prop GO.
 ///   2. Also attach: BoxCollider (trigger), InteractableBase, InteractableRegistrar.
-///   3. Set 'subnetOverlay' to SubnetPanel in the Canvas (starts inactive).
-///   4. The Canvas needs a GraphicRaycaster; scene needs an EventSystem.
+///   3. 'subnetOverlay' is optional -- only needed to force a specific same-scene instance.
 ///
 /// NOTE: NotifySubnetStarted() is called inside SubnetPuzzleUI.InitPuzzle()
 /// -- do NOT call it here too (would double-count in PlayerMetricsTracker).
 /// </summary>
 public class SubnetPuzzleProp : MonoBehaviour, IInteractable, ICloseable
 {
-    [Header("UI")]
-    [Tooltip("SubnetPanel GameObject in the Canvas (inactive by default).")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- resolved at runtime via SubnetPuzzleUI.Instance.")]
     public GameObject subnetOverlay;
 
     // IInteractable
     public string InteractLabel => "Access Server Room Panel";
 
     private bool _puzzleOpen;
-
-    private void Awake()
-    {
-        if (subnetOverlay != null)
-            subnetOverlay.SetActive(false);
-    }
 
     public void Interact(GameObject interactor)
     {
@@ -48,22 +44,39 @@ public class SubnetPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         _puzzleOpen = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase?.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         // First time the player sees this concept, show the tutorial panel
         // before the puzzle overlay opens. See ConceptTutorials.cs.
         ConceptTutorials.ShowIfUnseenThenContinue("computer_networks", OpenSubnetUI);
     }
 
-    private void OpenSubnetUI()
+    private SubnetPuzzleUI ResolveSubnetUI()
     {
         if (subnetOverlay != null)
         {
-            subnetOverlay.SetActive(true);
-            subnetOverlay.GetComponent<SubnetPuzzleUI>().InitPuzzle(ClosePuzzle);
+            var local = subnetOverlay.GetComponent<SubnetPuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (SubnetPuzzleUI.Instance != null) return SubnetPuzzleUI.Instance;
+
+        return FindFirstObjectByType<SubnetPuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private void OpenSubnetUI()
+    {
+        var puzzle = ResolveSubnetUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[SubnetPuzzleProp] No SubnetPuzzleUI found. Is the SubnetPanel present " +
+                            "under the persisted Canvas, and did you enter play mode via Level 1?", this);
+            ClosePuzzle();
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+        puzzle.InitPuzzle(ClosePuzzle);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
@@ -80,8 +93,8 @@ public class SubnetPuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume();
 
-        if (subnetOverlay != null)
-            subnetOverlay.SetActive(false);
+        var puzzle = ResolveSubnetUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;

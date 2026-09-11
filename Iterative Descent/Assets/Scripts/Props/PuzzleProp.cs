@@ -1,4 +1,4 @@
-﻿// PuzzleProp.cs
+// PuzzleProp.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,8 +26,15 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
              "Leave blank to use normal BKT-driven selection.")]
     public string pinnedConceptTag = "";
 
-    [Header("UI")]
-    [Tooltip("Assign the Puzzle Panel GameObject in the Canvas.")]
+    [Header("UI (optional override)")]
+    [Tooltip("Leave empty in the normal case -- the Puzzle Panel is resolved at runtime via " +
+             "PuzzleUI.Instance instead, same cross-scene-safe pattern as every other puzzle " +
+             "prop in this project (see BstPuzzleProp.ResolvePuzzleUI()). A plain serialized " +
+             "reference here goes stale the moment Level 1 is unloaded and reloaded (returning " +
+             "from Level 2), because the fresh Canvas instantiated on reload is immediately " +
+             "destroyed as a duplicate by PersistentUIRoot -- this prop's own fresh copy would " +
+             "still point at that now-destroyed panel. Only assign this if the Puzzle Panel " +
+             "happens to be placed in THIS SAME scene and you want to force a specific instance.")]
     public GameObject puzzleOverlay;
 
     [Header("Pre-Quiz Briefing (optional)")]
@@ -43,7 +50,8 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
              "correctPassword directly on the completion screen, e.g. 'Access granted. " +
              "Password: X'. The password string itself always comes from the PasswordScreenUI " +
              "component, never duplicated here, so the two can never drift out of sync. " +
-             "Leave blank for a normal quiz with no password reward text.")]
+             "Leave blank to fall back to PasswordScreenUI.Instance (the normal case -- there's " +
+             "only one password screen), or for a normal quiz with no password reward text.")]
     [SerializeField] private PasswordScreenUI passwordScreenToReveal;
 
     [Header("Outcome Events")]
@@ -68,8 +76,6 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
 
     void Awake()
     {
-        if (puzzleOverlay != null) puzzleOverlay.SetActive(false);
-
         if (!loadFromJson)
         {
             _resolvedQuestions = questions;
@@ -112,9 +118,10 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         _puzzleOpen = true;
         PlayerInteractor.Pause();
 
-        var interactBase = GetComponent<InteractableBase>();
-        if (interactBase != null && interactBase.promptPanel != null)
-            interactBase.promptPanel.SetActive(false);
+        // Falls back to the shared PromptPanelUI when this prop's own promptPanel
+        // is unassigned -- same helper every other puzzle prop uses (see
+        // InteractableBase.HidePrompt()).
+        GetComponent<InteractableBase>()?.HidePrompt();
 
         // isFirst is global: true only before the player has opened any quiz terminal
         // this session. Per-prop tracking caused every new terminal to always give
@@ -158,18 +165,56 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
             ContinueToConceptTutorials();
     }
 
-    private void OpenPuzzleUI()
+    /// <summary>
+    /// Same-scene override first, otherwise the cross-scene-safe Instance lookup --
+    /// identical shape to BstPuzzleProp.ResolvePuzzleUI(). Needed because a plain
+    /// serialized reference to the Puzzle Panel goes stale across a Level 1 ->
+    /// Level 2 -> Level 1 reload: the freshly-reloaded Canvas (and every panel
+    /// under it) is immediately destroyed as a duplicate by PersistentUIRoot,
+    /// leaving this prop's own freshly-reloaded copy pointing at a dead object.
+    /// FindFirstObjectByType(..., FindObjectsInactive.Include) also covers the
+    /// very first open of the session, before PuzzleUI.Awake() has necessarily
+    /// run (the panel starts inactive in the hierarchy).
+    /// </summary>
+    private PuzzleUI ResolvePuzzleUI()
     {
         if (puzzleOverlay != null)
         {
-            puzzleOverlay.SetActive(true);
-
-            string reveal = passwordScreenToReveal != null ? passwordScreenToReveal.correctPassword : null;
-
-            // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
-            // here too or TotalQuizAttempts gets incremented twice per quiz.
-            puzzleOverlay.GetComponent<PuzzleUI>().Setup(_pendingSessionQuestions, ClosePuzzle, reveal);
+            var local = puzzleOverlay.GetComponent<PuzzleUI>();
+            if (local != null) return local;
         }
+
+        if (PuzzleUI.Instance != null) return PuzzleUI.Instance;
+
+        return FindFirstObjectByType<PuzzleUI>(FindObjectsInactive.Include);
+    }
+
+    private PasswordScreenUI ResolvePasswordScreen()
+    {
+        if (passwordScreenToReveal != null) return passwordScreenToReveal;
+        return PasswordScreenUI.Instance;
+    }
+
+    private void OpenPuzzleUI()
+    {
+        var puzzle = ResolvePuzzleUI();
+        if (puzzle == null)
+        {
+            Debug.LogError("[PuzzleProp] No PuzzleUI found. Is the Puzzle Panel present under " +
+                            "the persisted Canvas, and did you enter play mode via Level 1 (so " +
+                            "the Canvas has actually loaded and persisted forward)?", this);
+            ClosePuzzle(false);
+            return;
+        }
+
+        puzzle.gameObject.SetActive(true);
+
+        string reveal = ResolvePasswordScreen()?.correctPassword;
+
+        // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
+        // here too or TotalQuizAttempts gets incremented twice per quiz.
+        puzzle.Setup(_pendingSessionQuestions, ClosePuzzle, reveal);
+
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -185,7 +230,9 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
         PlayerInteractor.DeregisterCloseable();
         PlayerInteractor.Resume(); // re-enables interactor
 
-        if (puzzleOverlay != null) puzzleOverlay.SetActive(false);
+        var puzzle = ResolvePuzzleUI();
+        if (puzzle != null) puzzle.gameObject.SetActive(false);
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         Time.timeScale = 1f;

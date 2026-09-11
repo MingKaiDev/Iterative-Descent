@@ -1,0 +1,270 @@
+fileFormatVersion: 2
+guid: a86edce2340cdcf4caffa215413a387d
+ModelImporter:
+  serializedVersion: 24200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: barandilla
+    second: {fileID: 2100000, guid: 4966d1d51da7d95489d5dc7b0a31aad4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel1
+    second: {fileID: 2100000, guid: ae660ccce4d51e548b90e40e4c091bbc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel2
+    second: {fileID: 2100000, guid: 24d86d634d699534595a069b432eee35, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel3
+    second: {fileID: 2100000, guid: adc84605ec3f63743b71c725ad712682, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel4
+    second: {fileID: 2100000, guid: eadfa41205ed8f84e88b0b7dd9c86cdf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel5
+    second: {fileID: 2100000, guid: 789b48ddc4ab5f344a1f68b6f4c8208b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel6
+    second: {fileID: 2100000, guid: 57938e011cbf54c48984183fe345fbd1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartel7
+    second: {fileID: 2100000, guid: 3d9f480a2d2aaec4a991e17d1864272a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: estanteria-madera
+    second: {fileID: 2100000, guid: 9772919a7dfedef4f8082655b8bdfbe6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: estanteria-marco
+    second: {fileID: 2100000, guid: 1e6a7be649404ae40ad2ee4139190503, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lampMesa-bombilla_emis
+    second: {fileID: 2100000, guid: 9e808c4bac387a040aa0e4d159e2fd95, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lampMesa-casquillo
+    second: {fileID: 2100000, guid: e8611a7cd096a2f438114f969ee91145, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lampMesa-metal
+    second: {fileID: 2100000, guid: 1e941aae9e7b7a94bac6c4d4f85ed1e5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lampMesa-tulipa
+    second: {fileID: 2100000, guid: b74a818a69ece82498e54fc36d7266ce, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lamparaTecho-bombilla_emis
+    second: {fileID: 2100000, guid: b5141f0ec89279c4ba32a7c7f4907225, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lamparaTecho-casquillo
+    second: {fileID: 2100000, guid: 520042ffbc925f94bbf9142b660dc85c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lamparaTecho-metal
+    second: {fileID: 2100000, guid: ac941f8e7e5e64a489528bd8644e2620, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: libEstanterias-hojas1
+    second: {fileID: 2100000, guid: e5b331bc64a903344b3b72ebf25779f4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: libEstanterias-hojas2
+    second: {fileID: 2100000, guid: 2c53f013686270548aef9ff6d311a170, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: libEstanterias-lomos1
+    second: {fileID: 2100000, guid: 2ef7b416863ed8b42990dda3a23e4cec, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: libEstanterias-lomos2
+    second: {fileID: 2100000, guid: 52d76cd891702f1449fe86c8108983df, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: madera
+    second: {fileID: 2100000, guid: a873379e5b8b6844daf9b33315b7d6d2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: madera_mesas_sillas
+    second: {fileID: 2100000, guid: e0b2061e5dadaeb4ebb9564e0d4589ea, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: pared
+    second: {fileID: 2100000, guid: 8bd2ab2cce79ee34f97e0bae342f1c03, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: pared2
+    second: {fileID: 2100000, guid: eb1bc816a8f7d9e4eb58a2e100e88f79, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: remates
+    second: {fileID: 2100000, guid: 632cc062c2760ad47a2c54c610a80521, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: suelo
+    second: {fileID: 2100000, guid: 100af9dd9b7552e41aab2be1533dba31, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: suelo2
+    second: {fileID: 2100000, guid: 2f56bc71abb81e04b94a68ebee14757b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: techo
+    second: {fileID: 2100000, guid: 7628055e3bd6fef4c97c9e54d084750a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: troncos_ventanas_puertas-madera
+    second: {fileID: 2100000, guid: 3d7412b77daa12f4ba43ff3e4d265d30, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: troncos_ventanas_puertas-metal
+    second: {fileID: 2100000, guid: 0cf5af048b7aedc48817288d08240e9a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ventana
+    second: {fileID: 2100000, guid: 5abffea3a8ed9f44aa890012f28b8fff, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
