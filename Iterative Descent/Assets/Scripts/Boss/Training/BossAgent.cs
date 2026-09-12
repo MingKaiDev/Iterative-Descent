@@ -278,7 +278,8 @@ public class BossAgent : Agent
             bool allowed = canAttack && attack != null &&
                            !attack.IsOnCooldown &&
                            !attack.IsOnVarietyCooldown &&
-                           distance <= attack.maxRange;
+                           distance <= attack.maxRange &&
+                           !IsPermanentlyDisabled(attack);
 
             actionMask.SetActionEnabled(0, i + 1, allowed);
         }
@@ -286,6 +287,15 @@ public class BossAgent : Agent
         // action per branch, and Idle is always a safe fallback (boss keeps chasing via
         // BossStateMachine.Combat regardless of what this Agent picks).
     }
+
+    /// <summary>True if AresAttackDisableManager has permanently disabled this attack --
+    /// the library-loop reward (project-level2-library.md, step 7). Masked out of the
+    /// trained policy's action space here (inference-time only, no retraining needed),
+    /// same as the cooldown/variety-cooldown/range checks above. Safe to call before that
+    /// manager exists in the scene yet -- Instance is simply null until then, so nothing is
+    /// ever disabled by default (Training.unity, which never has one, is unaffected).</summary>
+    bool IsPermanentlyDisabled(BossAttackBase attack) =>
+        AresAttackDisableManager.Instance != null && AresAttackDisableManager.Instance.IsDisabled(attack);
 
     public override void OnActionReceived(ActionBuffers actions)
     {

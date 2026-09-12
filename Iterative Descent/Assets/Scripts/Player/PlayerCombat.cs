@@ -255,9 +255,15 @@ public class PlayerCombat : MonoBehaviour
         Vector3   spawnPos = muzzlePoint != null ? muzzlePoint.position
                                                  : cam.position + cam.forward * 0.5f;
 
+        // Aim toward whatever the crosshair (screen center) is actually pointing at, not just
+        // parallel to the camera's forward axis -- see GetCrosshairAimDirection()'s doc comment.
+        // No-op today since muzzlePoint is unassigned here (spawnPos already sits on cam.forward),
+        // but keeps the pistol correct too if a visible off-axis muzzlePoint is ever wired up.
+        Vector3 aimDir = GetCrosshairAimDirection(cam, spawnPos);
+
         // Spread shrinks as AccuracyT rises (wide on fresh aim, tight when settled).
         float   spread = Mathf.Lerp(maxSpreadAngle, minSpreadAngle, AccuracyT);
-        Vector3 dir    = ApplySpread(cam.forward, cam.right, cam.up, spread);
+        Vector3 dir    = ApplySpread(aimDir, cam.right, cam.up, spread);
 
         GameObject    bulletObj = Instantiate(bulletPrefab, spawnPos, Quaternion.LookRotation(dir));
         ShotgunPellet bullet    = bulletObj.GetComponent<ShotgunPellet>();
@@ -281,6 +287,32 @@ public class PlayerCombat : MonoBehaviour
         }
 
         bullet.Launch(dir, bulletSpeed);
+    }
+
+    /// <summary>
+    /// Direction from spawnOrigin toward whatever the camera's center (crosshair) is actually
+    /// aiming at -- a raycast out along cam.forward, ignoring the Player layer so the ray never
+    /// immediately self-hits the player's own collider around the camera. Falls back to a
+    /// fixed-distance point along cam.forward if nothing is hit within range. When spawnOrigin
+    /// is already on the camera's forward axis (muzzlePoint unassigned), this is equivalent to
+    /// cam.forward -- no behaviour change in that case. Same fix as ShotgunController/
+    /// RifleController's identical helper -- see either for the full "why" (an off-axis visible
+    /// weapon model's muzzlePoint otherwise fires parallel to, but permanently offset from, the
+    /// crosshair, since the old code aimed along cam.forward regardless of spawn origin).
+    /// </summary>
+    static Vector3 GetCrosshairAimDirection(Transform cam, Vector3 spawnOrigin)
+    {
+        const float aimRayDistance = 500f;
+        // Computed here rather than cached in a static field -- LayerMask.GetMask() calls into
+        // engine APIs that Unity does not allow from a MonoBehaviour's static field initializer
+        // (throws "NameToLayer is not allowed to be called from a MonoBehaviour constructor").
+        int nonPlayerLayers = ~LayerMask.GetMask("Player");
+        Vector3 aimPoint = Physics.Raycast(cam.position, cam.forward, out RaycastHit aimHit, aimRayDistance, nonPlayerLayers)
+            ? aimHit.point
+            : cam.position + cam.forward * aimRayDistance;
+
+        Vector3 dir = aimPoint - spawnOrigin;
+        return dir.sqrMagnitude > 0.0001f ? dir.normalized : cam.forward;
     }
 
     static Vector3 ApplySpread(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)

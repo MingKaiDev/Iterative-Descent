@@ -202,6 +202,13 @@ public class RifleController : MonoBehaviour
 
     public void InitAmmo(int mag, int spare)
     {
+        // Same fix as ShotgunController.InitAmmo() -- see that file's comment for the full
+        // explanation. Clears a stale _isDead left over from a death that happened before this
+        // weapon was ever unlocked (CheckpointManager.RespawnPlayer() only revives weapons
+        // already unlocked at respawn time, so a later first-time pickup would otherwise never
+        // clear it and the rifle would look equipped but never fire/aim/reload).
+        _isDead      = false;
+        _isReloading = false;
         _currentMag  = Mathf.Clamp(mag, 0, magazineSize);
         _spareRounds = spare;
     }
@@ -223,6 +230,9 @@ public class RifleController : MonoBehaviour
 
     public void EquipWithAmmo(int mag, int spare)
     {
+        // See InitAmmo() above -- same stale-_isDead fix, for the no-WeaponManager fallback path.
+        _isDead      = false;
+        _isReloading = false;
         _currentMag  = Mathf.Clamp(mag, 0, magazineSize);
         _spareRounds = spare;
         enabled      = true;
@@ -290,9 +300,17 @@ public class RifleController : MonoBehaviour
         Vector3   spawnOrigin = muzzlePoint != null ? muzzlePoint.position
                                                      : cam.position + cam.forward * 0.5f;
 
+        // Aim toward whatever the crosshair (screen center) is actually pointing at, not just
+        // parallel to the camera's forward axis. The rifle's visible FPS model sits off the
+        // camera's centerline (fpsLocalPosition), so an Inspector-assigned muzzlePoint is
+        // off-axis too -- firing purely along cam.forward from that offset origin sends the
+        // round down a line parallel to, but permanently offset from, the crosshair, so shots
+        // never converge on the reticle the way the pistol's centered-fallback muzzle does.
+        Vector3 aimDir = GetCrosshairAimDirection(cam, spawnOrigin);
+
         // Spread narrows as AccuracyT rises -- settleTime is deliberately slow for the rifle.
         float   spread = Mathf.Lerp(maxSpreadAngle, minSpreadAngle, AccuracyT);
-        Vector3 dir    = GetSpreadDirection(cam.forward, cam.right, cam.up, spread);
+        Vector3 dir    = GetSpreadDirection(aimDir, cam.right, cam.up, spread);
 
         GameObject    bulletObj = Instantiate(bulletPrefab, spawnOrigin, Quaternion.LookRotation(dir));
         ShotgunPellet round     = bulletObj.GetComponent<ShotgunPellet>();
@@ -327,6 +345,29 @@ public class RifleController : MonoBehaviour
         yield return new WaitForSeconds(cockDelay);
         if (_isDead) yield break;
         OnCocked?.Invoke();
+    }
+
+    /// <summary>
+    /// Direction from spawnOrigin toward whatever the camera's center (crosshair) is actually
+    /// aiming at -- a raycast out along cam.forward, ignoring the Player layer so the ray never
+    /// immediately self-hits the player's own collider around the camera. Falls back to a
+    /// fixed-distance point along cam.forward if nothing is hit within range. When spawnOrigin
+    /// is already on the camera's forward axis (muzzlePoint unassigned, same as the pistol's
+    /// own fallback), this is equivalent to cam.forward -- no behaviour change in that case.
+    /// </summary>
+    Vector3 GetCrosshairAimDirection(Transform cam, Vector3 spawnOrigin)
+    {
+        const float aimRayDistance = 500f;
+        // Computed here rather than cached in a static field -- LayerMask.GetMask() calls into
+        // engine APIs that Unity does not allow from a MonoBehaviour's static field initializer
+        // (throws "NameToLayer is not allowed to be called from a MonoBehaviour constructor").
+        int nonPlayerLayers = ~LayerMask.GetMask("Player");
+        Vector3 aimPoint = Physics.Raycast(cam.position, cam.forward, out RaycastHit aimHit, aimRayDistance, nonPlayerLayers)
+            ? aimHit.point
+            : cam.position + cam.forward * aimRayDistance;
+
+        Vector3 dir = aimPoint - spawnOrigin;
+        return dir.sqrMagnitude > 0.0001f ? dir.normalized : cam.forward;
     }
 
     Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)

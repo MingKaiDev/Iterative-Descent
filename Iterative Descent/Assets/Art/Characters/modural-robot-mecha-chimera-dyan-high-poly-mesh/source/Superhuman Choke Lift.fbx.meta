@@ -18,14 +18,7 @@ ModelImporter:
     motionNodeName: 
     animationImportErrors: 
     animationImportWarnings: 
-    animationRetargetingWarnings: "\nRetargeting quality report for clip 'mixamo.com':\n\tLeftLowerLeg
-      average position error 16.4 mm and maximum position error 58.7 mm at time 3:16
-      (46.3%) Frame 106\n\tLeftFoot average position error 3.4 mm and maximum position
-      error 10.7 mm at time 3:16 (46.3%) Frame 106\n\tRightLowerLeg average position
-      error 2.9 mm and maximum position error 30.9 mm at time 5:17 (72.9%) Frame
-      167\n\tRightFoot average position error 0.7 mm and maximum position error 6.9
-      mm at time 5:17 (72.9%) Frame 167\n\tRightLowerArm average position error 0.1
-      mm and maximum position error 2.4 mm at time 4:28 (64.6%) Frame 148\n"
+    animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
@@ -52,7 +45,7 @@ ModelImporter:
       loopTime: 1
       loopBlend: 0
       loopBlendOrientation: 0
-      loopBlendPositionY: 0
+      loopBlendPositionY: 1
       loopBlendPositionXZ: 0
       keepOriginalOrientation: 0
       keepOriginalPositionY: 1
@@ -61,7 +54,28 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.20754717
+        functionName: OnHitboxOpen
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.25024673
+        functionName: OnHitboxClose
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.8325
+        functionName: OnAttackAnimEnd
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}

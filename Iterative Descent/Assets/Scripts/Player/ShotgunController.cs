@@ -192,6 +192,19 @@ public class ShotgunController : MonoBehaviour
 
     public void InitAmmo(int mag, int spare)
     {
+        // Clear any stale dead/reloading state. WeaponManager.UnlockShotgun() calls this on
+        // first pickup -- if the player died (and respawned) at any point *before* ever
+        // picking up the shotgun, HandlePlayerDied() below already set _isDead = true on this
+        // component (its OnPlayerDied subscription runs from Awake() regardless of the
+        // component being disabled/unlocked). CheckpointManager.RespawnPlayer() only revives
+        // weapons that are already unlocked *at respawn time*, so a first-ever pickup that
+        // happens after that point never goes through Revive() and _isDead would otherwise
+        // stay stuck true forever -- the shotgun would show up equipped (model + HUD ammo)
+        // but Update()'s "if (_isDead) return;" guard would silently block firing, aiming,
+        // and reloading forever. See EquipWithAmmo() below for the no-WeaponManager fallback,
+        // which needs the same fix.
+        _isDead      = false;
+        _isReloading = false;
         _currentMag  = Mathf.Clamp(mag, 0, magazineSize);
         _spareShells = spare;
     }
@@ -213,6 +226,9 @@ public class ShotgunController : MonoBehaviour
 
     public void EquipWithAmmo(int mag, int spare)
     {
+        // See InitAmmo() above -- same stale-_isDead fix, for the no-WeaponManager fallback path.
+        _isDead      = false;
+        _isReloading = false;
         _currentMag  = Mathf.Clamp(mag, 0, magazineSize);
         _spareShells = spare;
         enabled      = true;
@@ -278,6 +294,14 @@ public class ShotgunController : MonoBehaviour
         Vector3   spawnOrigin = muzzlePoint != null ? muzzlePoint.position
                                                      : cam.position + cam.forward * 0.5f;
 
+        // Aim toward whatever the crosshair (screen center) is actually pointing at, not just
+        // parallel to the camera's forward axis. The shotgun's visible FPS model sits off the
+        // camera's centerline (fpsLocalPosition), so an Inspector-assigned muzzlePoint is
+        // off-axis too -- firing purely along cam.forward from that offset origin sends every
+        // pellet down a line parallel to, but permanently offset from, the crosshair, so shots
+        // never converge on the reticle the way the pistol's centered-fallback muzzle does.
+        Vector3 aimDir = GetCrosshairAimDirection(cam, spawnOrigin);
+
         // Spread narrows as AccuracyT rises, capped at minSpreadAngle (50% of maxSpreadAngle by design).
         float spread = Mathf.Lerp(maxSpreadAngle, minSpreadAngle, AccuracyT);
 
@@ -289,7 +313,7 @@ public class ShotgunController : MonoBehaviour
 
         for (int i = 0; i < pelletCount; i++)
         {
-            Vector3 dir = GetSpreadDirection(cam.forward, cam.right, cam.up, spread);
+            Vector3 dir = GetSpreadDirection(aimDir, cam.right, cam.up, spread);
 
             GameObject    pelletObj = Instantiate(pelletPrefab, spawnOrigin, Quaternion.LookRotation(dir));
             ShotgunPellet pellet    = pelletObj.GetComponent<ShotgunPellet>();
@@ -349,6 +373,29 @@ public class ShotgunController : MonoBehaviour
         float hitFraction = (float)volley.hits / volley.expected;
         if (hitFraction >= pelletHitFractionForDDA)
             PlayerMetricsTracker.Instance?.NotifyShotLanded();
+    }
+
+    /// <summary>
+    /// Direction from spawnOrigin toward whatever the camera's center (crosshair) is actually
+    /// aiming at -- a raycast out along cam.forward, ignoring the Player layer so the ray never
+    /// immediately self-hits the player's own collider around the camera. Falls back to a
+    /// fixed-distance point along cam.forward if nothing is hit within range. When spawnOrigin
+    /// is already on the camera's forward axis (muzzlePoint unassigned, same as the pistol's
+    /// own fallback), this is equivalent to cam.forward -- no behaviour change in that case.
+    /// </summary>
+    Vector3 GetCrosshairAimDirection(Transform cam, Vector3 spawnOrigin)
+    {
+        const float aimRayDistance = 500f;
+        // Computed here rather than cached in a static field -- LayerMask.GetMask() calls into
+        // engine APIs that Unity does not allow from a MonoBehaviour's static field initializer
+        // (throws "NameToLayer is not allowed to be called from a MonoBehaviour constructor").
+        int nonPlayerLayers = ~LayerMask.GetMask("Player");
+        Vector3 aimPoint = Physics.Raycast(cam.position, cam.forward, out RaycastHit aimHit, aimRayDistance, nonPlayerLayers)
+            ? aimHit.point
+            : cam.position + cam.forward * aimRayDistance;
+
+        Vector3 dir = aimPoint - spawnOrigin;
+        return dir.sqrMagnitude > 0.0001f ? dir.normalized : cam.forward;
     }
 
     Vector3 GetSpreadDirection(Vector3 forward, Vector3 right, Vector3 up, float angleDeg)

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9674574299bbcbd419550892c492773f, type: 3}
+  m_Name: StudyHallTerminalInstructions
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
+  entries:
+  - speakerName: Terminal
+    text: 'SYSTEM ONLINE. Six data terminals are active throughout the library.'
+    displayDuration: 0
+    choices: []
+    voiceClip: {fileID: 0}
+  - speakerName: Terminal
+    text: Solve them in order, one through six. Each one unlocks the next.
+    displayDuration: 0
+    choices: []
+    voiceClip: {fileID: 0}
+  - speakerName: Terminal
+    text: Clearing the sixth terminal will override the lock on the Deimos Hall access door.
+    displayDuration: 0
+    choices: []
+    voiceClip: {fileID: 0}

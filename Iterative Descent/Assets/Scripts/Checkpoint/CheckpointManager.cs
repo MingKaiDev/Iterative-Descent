@@ -66,6 +66,8 @@ public class CheckpointManager : MonoBehaviour
         public int     rifleSpare;
         public EncounterTrigger[] encountersToReset;
         public BossStateMachine   bossToReset;
+        public DeimosStateMachine deimosToReset;
+        public EncounterTrigger   phobosToReset;
     }
     private Snapshot _snap;
 
@@ -91,7 +93,8 @@ public class CheckpointManager : MonoBehaviour
     /// </summary>
     public void SaveCheckpoint(Transform respawnPoint, PlayerHealth health, PlayerCombat pistol,
                                 WeaponManager weapons, ShotgunController shotgun, RifleController rifle,
-                                EncounterTrigger[] encountersToReset = null, BossStateMachine bossToReset = null)
+                                EncounterTrigger[] encountersToReset = null, BossStateMachine bossToReset = null,
+                                DeimosStateMachine deimosToReset = null, EncounterTrigger phobosToReset = null)
     {
         if (respawnPoint == null || health == null || pistol == null)
         {
@@ -128,6 +131,8 @@ public class CheckpointManager : MonoBehaviour
 
         snap.encountersToReset = encountersToReset;
         snap.bossToReset       = bossToReset;
+        snap.deimosToReset     = deimosToReset;
+        snap.phobosToReset     = phobosToReset;
 
         _snap         = snap;
         HasCheckpoint = true;
@@ -210,6 +215,20 @@ public class CheckpointManager : MonoBehaviour
         // boss has already died. See BossStateMachine.ResetForCheckpointRespawn() for exactly
         // what "reset" means for the boss (full HP, Phase 1, back to its arena spawn point).
         _snap.bossToReset?.ResetForCheckpointRespawn();
+
+        // Deimos is architecturally the same situation as ARES -- its own separate
+        // DeimosStateMachine/DeimosHealth, no EncounterTrigger involvement -- so it gets the
+        // same explicit reset call. No-ops if Deimos has already died. See
+        // DeimosStateMachine.ResetForCheckpointRespawn().
+        _snap.deimosToReset?.ResetForCheckpointRespawn();
+
+        // Phobos (the Hash Table Brute) is an ordinary EncounterTrigger-routed enemy, unlike
+        // ARES/Deimos -- this is just the same ResetEncounter() call the generic
+        // encountersToReset loop above already makes, exposed as its own named slot so it's
+        // explicit and easy to confirm at a glance rather than buried in that array. Whoever
+        // wired the CheckpointTrigger should have assigned Phobos's EncounterTrigger here OR in
+        // encountersToReset, not both -- see CheckpointTrigger's phobosToReset tooltip.
+        _snap.phobosToReset?.ResetEncounter();
 
         Debug.Log("[CheckpointManager] Player respawned at checkpoint.");
     }

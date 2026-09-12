@@ -55,6 +55,29 @@ public class CheckpointTrigger : MonoBehaviour
              "no-ops safely if the boss has already died.")]
     [SerializeField] private BossStateMachine bossToReset;
 
+    [Header("Deimos Checkpoint (optional)")]
+    [Tooltip("Assign ONLY for a checkpoint placed inside/near Deimos's room. If the player " +
+             "dies mid-fight and respawns here, Deimos gets a full reset -- back to full HP " +
+             "and its original spawn position -- via " +
+             "DeimosStateMachine.ResetForCheckpointRespawn(). Leave unassigned everywhere else; " +
+             "no-ops safely if Deimos has already died. Independent of bossToReset above -- " +
+             "assign whichever boss(es) this checkpoint actually guards.")]
+    [SerializeField] private DeimosStateMachine deimosToReset;
+
+    [Header("Phobos Checkpoint (optional)")]
+    [Tooltip("Assign ONLY for a checkpoint placed just before Phobos (the Hash Table Brute -- " +
+             "unlike ARES/Deimos it's an ordinary EnemyBase routed through an EncounterTrigger, " +
+             "see HashTableEnemyEventBridge.bruteEncounter). If the player dies after reaching " +
+             "this checkpoint and respawns here, Phobos's EncounterTrigger gets ResetEncounter() " +
+             "called on it -- same reset call the generic encountersToReset array below already " +
+             "makes, just called out as its own explicit slot so it isn't lost inside a longer " +
+             "array and is easy to confirm at a glance in the Inspector. Assign Phobos's " +
+             "EncounterTrigger EITHER here OR in encountersToReset above, never both -- " +
+             "ResetEncounter() isn't harmful to call twice, but it will log/reactivate twice for " +
+             "no reason. Leave unassigned everywhere else; no-ops safely if Phobos was never " +
+             "engaged or resetOnCheckpointRespawn is off on its EncounterTrigger.")]
+    [SerializeField] private EncounterTrigger phobosToReset;
+
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag(playerTag)) return;
@@ -74,7 +97,8 @@ public class CheckpointTrigger : MonoBehaviour
 
         CheckpointManager.Instance.SaveCheckpoint(
             respawnPoint != null ? respawnPoint : transform,
-            health, pistol, weapons, shotgun, rifle, encountersToReset, bossToReset);
+            health, pistol, weapons, shotgun, rifle, encountersToReset, bossToReset, deimosToReset,
+            phobosToReset);
 
         Debug.Log($"[CheckpointTrigger] '{checkpointID}' reached and saved -- deactivating so " +
                   "backtracking through it later can't re-save/regress the checkpoint.");

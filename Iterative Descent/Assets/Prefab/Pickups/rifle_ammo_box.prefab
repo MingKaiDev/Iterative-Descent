@@ -117,4 +117,4 @@ MonoBehaviour:
   bobHeight: 0.08
   bobSpeed: 2.2
   rotateSpeed: 55
-  roundAmount: 3
+  roundAmount: 5

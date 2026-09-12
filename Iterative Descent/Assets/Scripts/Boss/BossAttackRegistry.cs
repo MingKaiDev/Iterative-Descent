@@ -76,11 +76,16 @@ public class BossAttackRegistry : MonoBehaviour
 
         float distToPlayer = Vector3.Distance(transform.position, _player.position);
 
-        // Collect attacks that are off cooldown AND within range.
+        // Collect attacks that are off cooldown, within range, AND not permanently disabled
+        // (AresAttackDisableManager -- the library-loop reward, project-level2-library.md
+        // step 7. Registry is the "dumb mode" fallback; the trained PPO policy honors the
+        // same disable via BossAgent.WriteDiscreteActionMask()'s own IsPermanentlyDisabled
+        // check, so a permanently-disabled attack stays off regardless of which system is
+        // currently picking ARES's attacks).
         var available = new List<BossAttackBase>();
         foreach (var attack in _attacks)
         {
-            if (!attack.IsOnCooldown && distToPlayer <= attack.maxRange)
+            if (!attack.IsOnCooldown && distToPlayer <= attack.maxRange && !IsPermanentlyDisabled(attack))
                 available.Add(attack);
         }
 
@@ -90,6 +95,12 @@ public class BossAttackRegistry : MonoBehaviour
         _stateMachine.EnterAttacking();
         chosen.Execute();
     }
+
+    /// <summary>True if AresAttackDisableManager has permanently disabled this attack (the
+    /// library-loop reward). Safe to call before that manager exists in the scene yet --
+    /// Instance is simply null until then, so nothing is ever disabled by default.</summary>
+    bool IsPermanentlyDisabled(BossAttackBase attack) =>
+        AresAttackDisableManager.Instance != null && AresAttackDisableManager.Instance.IsDisabled(attack);
 
     // ─── Public API (RL/training only, called by BossTrainingEnv) ───────────────
 
