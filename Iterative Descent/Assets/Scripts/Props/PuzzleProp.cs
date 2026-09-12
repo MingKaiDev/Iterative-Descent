@@ -46,13 +46,27 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
     [SerializeField] private string briefingMessage = "";
 
     [Header("Password Reveal (optional)")]
-    [Tooltip("If assigned, passing this quiz (60% or higher) reveals this PasswordScreenUI's " +
-             "correctPassword directly on the completion screen, e.g. 'Access granted. " +
-             "Password: X'. The password string itself always comes from the PasswordScreenUI " +
-             "component, never duplicated here, so the two can never drift out of sync. " +
-             "Leave blank to fall back to PasswordScreenUI.Instance (the normal case -- there's " +
-             "only one password screen), or for a normal quiz with no password reward text.")]
+    [Tooltip("If assigned, passing this quiz (60% or higher) can reveal this PasswordScreenUI's " +
+             "correctPassword on the completion screen -- use the {password} placeholder in " +
+             "Success Message below to show it. The password string itself always comes from " +
+             "the PasswordScreenUI component, never duplicated here, so the two can never drift " +
+             "out of sync. Leave blank to fall back to PasswordScreenUI.Instance (the normal " +
+             "case -- there's only one password screen), or if this quiz has nothing to do with " +
+             "the password puzzle at all.")]
     [SerializeField] private PasswordScreenUI passwordScreenToReveal;
+
+    [Header("Completion Message (optional)")]
+    [Tooltip("Shown on the completion screen when the player passes (60% or higher). " +
+             "Every generic MCQ terminal in the project shares the same PuzzleUI panel, so " +
+             "leaving this blank on a terminal that isn't the password reward prop used to " +
+             "always show 'Computer Password is X' -- this field is what lets each prop say " +
+             "something that actually fits it (e.g. 'Terminal cleared.'). " +
+             "Placeholders: {password} (from Password Reveal above, blank if unset), " +
+             "{correct} and {total} (score for this session). " +
+             "Leave blank to fall back to the old default: the password-reveal line if " +
+             "Password Reveal is assigned, otherwise a generic pass/fail summary.")]
+    [TextArea(2, 4)]
+    [SerializeField] private string successMessage = "";
 
     [Header("Outcome Events")]
     [Tooltip("Fired when the player completes the quiz (clicks Close after all questions). Wire up door unlocks, enemy spawns, etc. here.")]
@@ -213,7 +227,7 @@ public class PuzzleProp : MonoBehaviour, IInteractable, ICloseable
 
         // NotifyQuizStarted() is called inside PuzzleUI.Setup() -- don't call it
         // here too or TotalQuizAttempts gets incremented twice per quiz.
-        puzzle.Setup(_pendingSessionQuestions, ClosePuzzle, reveal);
+        puzzle.Setup(_pendingSessionQuestions, ClosePuzzle, reveal, successMessage);
 
         PlayerInteractor.RegisterCloseable(this);
         Cursor.lockState = CursorLockMode.None;

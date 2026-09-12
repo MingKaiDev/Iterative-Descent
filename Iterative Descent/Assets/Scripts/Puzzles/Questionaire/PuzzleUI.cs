@@ -67,11 +67,18 @@ public class PuzzleUI : MonoBehaviour
     private bool _answered;
 
     // Optional -- if set via Setup(), and the player passes this quiz session
-    // (see the threshold in ShowCompletion), this literal string is shown on
-    // the completion screen instead of the generic pass/fail text. Used by
-    // the Prop_Desk_Folder quiz to reveal the PC password as the reward.
+    // (see the threshold in ShowCompletion), this literal string is available
+    // to _successMessageTemplate via the {password} placeholder, or (if no
+    // template is set) shown directly via the old hardcoded reveal line.
     // Left null for every other quiz that reuses this same PuzzleUI panel.
     private string _passwordToReveal;
+
+    // Optional -- set per-prop via Setup() so each terminal that shares this
+    // one PuzzleUI panel can word its own completion screen instead of every
+    // password-reveal prop saying "Computer Password is X" regardless of
+    // what the terminal actually is. Supports {password}, {correct}, {total}
+    // placeholders. Left blank falls back to the pre-existing default text.
+    private string _successMessageTemplate;
 
     // ────────────────────────────────────────────────────────────
 
@@ -114,12 +121,13 @@ public class PuzzleUI : MonoBehaviour
         }
     }
 
-    public void Setup(QuestionData[] questions, Action<bool> onClose, string passwordToReveal = null)
+    public void Setup(QuestionData[] questions, Action<bool> onClose, string passwordToReveal = null, string successMessageTemplate = null)
     {
         PlayerMetricsTracker.Instance?.NotifyQuizStarted();
         _questions = questions;
         _onClose = onClose;
         _passwordToReveal = passwordToReveal;
+        _successMessageTemplate = successMessageTemplate;
         _currentIndex = 0;
         _correctCount = 0;
         _answered = false;
@@ -249,8 +257,20 @@ public class PuzzleUI : MonoBehaviour
         int required = Mathf.CeilToInt(_questions.Length * 0.6f);
         bool passed = _correctCount >= required;
 
-        if (passed && !string.IsNullOrEmpty(_passwordToReveal))
+        if (passed && !string.IsNullOrEmpty(_successMessageTemplate))
         {
+            // Per-prop message, set via PuzzleProp's Inspector "Success Message"
+            // field -- lets each terminal say something that actually fits it
+            // instead of every password-reveal prop reusing the same hardcoded line.
+            questionText.text = _successMessageTemplate
+                .Replace("{password}", _passwordToReveal ?? "")
+                .Replace("{correct}", _correctCount.ToString())
+                .Replace("{total}", _questions.Length.ToString());
+        }
+        else if (passed && !string.IsNullOrEmpty(_passwordToReveal))
+        {
+            // Legacy default for props that assigned a Password Reveal but never
+            // set a Success Message -- keeps existing terminals working unchanged.
             questionText.text = $"Computer Password is {_passwordToReveal}";
         }
         else

@@ -14,17 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
   entries:
   - speakerName: Terminal
-    text: 'SYSTEM ONLINE. Six data terminals are active throughout the library.'
-    displayDuration: 0
+    text: SYSTEM ONLINE. Six books terminals are active throughout the library.
+    displayDuration: 1
     choices: []
     voiceClip: {fileID: 0}
   - speakerName: Terminal
     text: Solve them in order, one through six. Each one unlocks the next.
-    displayDuration: 0
+    displayDuration: 1
     choices: []
     voiceClip: {fileID: 0}
   - speakerName: Terminal
-    text: Clearing the sixth terminal will override the lock on the Deimos Hall access door.
-    displayDuration: 0
+    text: Clearing the sixth terminal will override the lock on the Deimos Hall access
+      door.
+    displayDuration: 1
     choices: []
     voiceClip: {fileID: 0}
