@@ -30,6 +30,13 @@ using UnityEngine;
 /// that signal is excluded and the remaining weights are re-normalised, matching
 /// the puzzle DDA approach.
 ///
+/// Player death (PlayerHealth.OnPlayerDied) is handled separately from the normal
+/// per-encounter evaluation above: a death does NOT wait for OnEncounterEnd (which
+/// may never fire if the player died before the last enemy was killed). Instead it
+/// forces a hard, heavily-weighted low raw score straight into the smoothing step
+/// -- see OnPlayerDied() -- so dying is a strong, immediate tier-drop signal rather
+/// than something that only shows up diluted inside the next encounter's average.
+///
 /// Output: CurrentScore [0,1] + CurrentTier [0-4] via Debug.Log.
 /// Attach to the same persistent GameManager GameObject as PlayerMetricsTracker.
 /// </summary>
@@ -57,6 +64,19 @@ public class CombatDDAController : MonoBehaviour
     [SerializeField] private float fastCombatTime = 15f;
     [Tooltip("Encounter duration considered 'slow' — kills at or over this time score 0.0 on the time signal.")]
     [SerializeField] private float slowCombatTime = 90f;
+
+    // ── Inspector: Death Penalty ───────────────────────────────────────────
+    [Header("Death Penalty")]
+    [Tooltip("Raw score forced in on player death, bypassing the weighted signals above entirely " +
+             "(a death is a hard failure regardless of how accuracy/health/time/ammo looked up to " +
+             "that point). 0 = worst possible score.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float deathPenaltyScore = 0f;
+    [Tooltip("Smoothing applied to the death penalty specifically -- deliberately lower than the " +
+             "normal Score Smoothing above so a death lands as an immediate, large tier drop instead " +
+             "of being eased in the same way an ordinary encounter result is.")]
+    [Range(0f, 0.95f)]
+    [SerializeField] private float deathSmoothing = 0.2f;
 
     // ── Public State ───────────────────────────────────────────────────────
     public float CurrentScore { get; private set; } = 0.30f; // mid Tier 1
@@ -95,14 +115,16 @@ public class CombatDDAController : MonoBehaviour
     private void OnEnable()
     {
         PlayerMetricsTracker.OnEncounterEnd += OnEncounterEnd;
+        PlayerHealth.OnPlayerDied += OnPlayerDied;
     }
 
     private void OnDisable()
     {
         PlayerMetricsTracker.OnEncounterEnd -= OnEncounterEnd;
+        PlayerHealth.OnPlayerDied -= OnPlayerDied;
     }
 
-    // ── Event Handler ──────────────────────────────────────────────────────
+    // ── Event Handlers ─────────────────────────────────────────────────────
 
     private void OnEncounterEnd()
     {
@@ -111,6 +133,40 @@ public class CombatDDAController : MonoBehaviour
         if (_playerCombat == null) _playerCombat = FindFirstObjectByType<PlayerCombat>();
 
         Evaluate();
+    }
+
+    /// <summary>
+    /// Player died. This is scored on its own -- it does NOT go through Evaluate()'s
+    /// weighted-signal path, because OnEncounterEnd may never fire for this encounter
+    /// at all (the player can die before the last enemy is killed, in which case the
+    /// normal per-encounter evaluation simply never triggers). A death is treated as
+    /// the strongest possible negative signal: deathPenaltyScore is forced straight in
+    /// as the raw score, blended with deathSmoothing (deliberately low, so the drop is
+    /// large and immediate rather than eased in like a normal encounter result).
+    /// </summary>
+    private void OnPlayerDied()
+    {
+        float rawScore = deathPenaltyScore;
+        LastRawScore = rawScore;
+        CurrentScore = Mathf.Lerp(rawScore, CurrentScore, deathSmoothing);
+
+        int newTier = ScoreToTier(CurrentScore);
+        if (newTier != CurrentTier)
+        {
+            CurrentTier = newTier;
+            OnCombatTierChanged?.Invoke(newTier);
+        }
+
+        Debug.Log($"[CombatDDA] Player died — forcing raw score {rawScore:F2}. " +
+                  $"Smoothed: {CurrentScore:F3} | Tier: {CurrentTier} ({TierNames[CurrentTier]})");
+
+        // The encounter the player just died in may still have enemies alive. Checkpoint
+        // respawn (CheckpointManager.RespawnPlayer -> EncounterTrigger.ResetEncounter) calls
+        // Activate() again on every enemy in that encounter, dead or alive, which re-fires
+        // NotifyEnemyActivated() for survivors that were never actually killed. Zeroing the
+        // active-enemy count here first means that re-activation rebuilds the count cleanly
+        // from 0 instead of stacking on top of the still-alive count from before death.
+        PlayerMetricsTracker.Instance?.ResetActiveEncounter();
     }
 
     // ── Core Evaluation ────────────────────────────────────────────────────

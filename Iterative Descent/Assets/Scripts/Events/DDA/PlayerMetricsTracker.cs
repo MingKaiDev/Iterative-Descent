@@ -984,6 +984,22 @@ public class PlayerMetricsTracker : MonoBehaviour
     }
 
     /// <summary>
+    /// Zeroes the active-enemy counter without firing OnEncounterEnd. Called by
+    /// CombatDDAController when the player dies, so that a checkpoint respawn's
+    /// EncounterTrigger.ResetEncounter() -- which calls Activate() again on every
+    /// enemy in the encounter, including ones that survived the death and were
+    /// never actually killed -- rebuilds the count cleanly from 0 instead of
+    /// stacking new NotifyEnemyActivated() calls on top of the pre-death count.
+    /// CombatDDAController already scores the death itself separately (a hard
+    /// penalty applied immediately on death, not deferred to OnEncounterEnd), so
+    /// this call intentionally does not evaluate or fire any DDA event on its own.
+    /// </summary>
+    public void ResetActiveEncounter()
+    {
+        _activeEnemyCount = 0;
+    }
+
+    /// <summary>
     /// Call when the player fires a shot (not a dry fire).
     /// Called from PlayerCombat.HandleFiring().
     /// </summary>

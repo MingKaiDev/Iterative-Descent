@@ -8,8 +8,8 @@ OcclusionCullingSettings:
     smallestOccluder: 5
     smallestHole: 0.25
     backfaceThreshold: 100
-  m_SceneGUID: 00000000000000000000000000000000
-  m_OcclusionCullingData: {fileID: 0}
+  m_SceneGUID: 20e7be197bc778344a2333672ed2a7a6
+  m_OcclusionCullingData: {fileID: 36300000, guid: 8e13c0c76857e794bb06ce7c11457eaf, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -1607,6 +1607,10 @@ PrefabInstance:
       propertyPath: combatStingerClip
       value: 
       objectReference: {fileID: 8300000, guid: 448f53519aa94a040aa18feb7a8a05f4, type: 3}
+    - target: {fileID: 6890463176716954587, guid: 224b9b2c24aaaac49b40148d8ef8e671, type: 3}
+      propertyPath: maxHealth
+      value: 550
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7504,7 +7508,7 @@ Transform:
   m_GameObject: {fileID: 699263299}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.226, y: 0.643, z: 1.637}
+  m_LocalPosition: {x: 0.43, y: 0.643, z: 1.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
