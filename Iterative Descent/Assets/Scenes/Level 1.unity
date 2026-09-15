@@ -101427,7 +101427,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 3671237405859864938, guid: 4d2b4bd804f1cdf43bd8cd7be74f934d, type: 3}
   bulletSpeed: 200
   muzzlePoint: {fileID: 0}
-  ammoCombatSoftCap: 36
+  ammoCombatSoftCap: 48
   minAmmoCount: 12
   reloadTime: 1.8
   fireAnimationDuration: 0.5
@@ -150913,6 +150913,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1918366187}
     m_Modifications:
+    - target: {fileID: 1317956183229975496, guid: 30eba76a7b532e148b5f09a3c1c0c264, type: 3}
+      propertyPath: ammoAmount
+      value: 12
+      objectReference: {fileID: 0}
     - target: {fileID: 4623956210820420900, guid: 30eba76a7b532e148b5f09a3c1c0c264, type: 3}
       propertyPath: m_LocalScale.x
       value: 300
@@ -172378,6 +172382,8 @@ MonoBehaviour:
   ammoWeight: 0.15
   fastCombatTime: 15
   slowCombatTime: 90
+  deathPenaltyScore: 0
+  deathSmoothing: 0.2
 --- !u!114 &1665895004
 MonoBehaviour:
   m_ObjectHideFlags: 0
