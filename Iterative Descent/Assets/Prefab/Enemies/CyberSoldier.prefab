@@ -465,13 +465,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1830140ab6b91042ad649bcbe7dfd06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyChaser
-  maxHealth: 120
+  maxHealth: 110
   deathGroundSnapOffset: 0.3
   staggerDpsThreshold: 40
   staggerWindowSeconds: 1
   staggerDuration: 1
   staggerCooldown: 1.5
   staggerResistanceGrowth: 1.25
+  staggerResistanceDecayDelay: 4
+  staggerResistanceDecayRate: 0.35
+  staggerBigHitDamage: 99999
   chaseSpeed: 2
   attackRange: 0.85
   pathUpdateRate: 0.2

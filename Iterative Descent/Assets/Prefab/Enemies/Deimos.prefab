@@ -310,7 +310,7 @@ MonoBehaviour:
   combatStingerClip: {fileID: 0}
   footstepClip: {fileID: 8300000, guid: 56a3c7437129f2d40b3f26b39b1ce313, type: 3}
   phaseTwoClip: {fileID: 0}
-  hitClip: {fileID: 0}
+  hitClip: {fileID: 8300000, guid: 35406f37bb91b5544b9891d383406ca5, type: 3}
   deathClip: {fileID: 0}
   combatMusicClip: {fileID: 8300000, guid: 3d01e9d5d73693742b46c7f05039f7b9, type: 3}
   combatStingerVolume: 1
