@@ -584,9 +584,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4479,9 +4495,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8778,9 +8810,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11332,9 +11380,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11807,6 +11871,73 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1102363938}
   m_Mesh: {fileID: -3122520393111480907, guid: ade3c54c121ff414f90617d050e2e010, type: 3}
+--- !u!1 &1117339985
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1117339988}
+  - component: {fileID: 1117339987}
+  - component: {fileID: 1117339986}
+  m_Layer: 0
+  m_Name: Checkpoint Trigger (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1117339986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117339985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3fa6001ed4e8844ea70ffbb5eef3a5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillBox
+  playerTag: Player
+--- !u!65 &1117339987
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117339985}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &1117339988
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117339985}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: -0.7071068}
+  m_LocalPosition: {x: 0, y: -21.7, z: 0}
+  m_LocalScale: {x: 200, y: 1, z: 200}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1119415993
 GameObject:
   m_ObjectHideFlags: 0
@@ -12731,9 +12862,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15270,9 +15417,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -17349,9 +17512,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -21380,9 +21559,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3315954688725367957, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
       propertyPath: m_Name
       value: chad_console (4)
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349694551228206062, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 1470045426301153842, guid: c8e00fd1bc19ea641919ad9a7ee09c42, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -632164,6 +632359,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 681001090}
   - {fileID: 96052200}
+  - {fileID: 1117339988}
   - {fileID: 67619287}
   - {fileID: 6656224461558598963}
   - {fileID: 1584711443}

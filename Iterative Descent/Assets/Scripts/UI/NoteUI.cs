@@ -6,7 +6,8 @@
 //   2. Assign _titleText, _authorText, _authorRow, _bodyText in the Inspector.
 //   3. Wrap _bodyText in a ScrollRect for long notes (see setup guide).
 //
-// The panel starts inactive. NoteProp.OpenNote() calls Show(); E key or ESC closes it.
+// The panel starts inactive. NoteProp.OpenNote() calls Show(); E key, ESC, or the close
+// button (assign _closeButton in the Inspector) all close it.
 // Time is paused while the note is open (handled by NoteProp -- do NOT touch timeScale here).
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -41,6 +42,11 @@ public class NoteUI : MonoBehaviour
     [Tooltip("Optional label telling the player how to close. E.g. 'Press Esc to close'")]
     [SerializeField] private TextMeshProUGUI _closeHintText;
 
+    [Header("Close Button")]
+    [Tooltip("Optional clickable close button (e.g. an X icon in the panel's corner). " +
+             "Wired to Close() here, so it works no matter how the button is placed in the prefab.")]
+    [SerializeField] private Button _closeButton;
+
     // ── Runtime ────────────────────────────────────────────────────────────────
     private System.Action _onClose;
 
@@ -55,12 +61,18 @@ public class NoteUI : MonoBehaviour
             return;
         }
         Instance = this;
+
+        if (_closeButton != null)
+            _closeButton.onClick.AddListener(Close);
+
         gameObject.SetActive(false);
     }
 
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        if (_closeButton != null)
+            _closeButton.onClick.RemoveListener(Close);
     }
 
     void Update()
@@ -82,11 +94,11 @@ public class NoteUI : MonoBehaviour
     {
         _onClose = onClose;
 
-        if (_titleText  != null) _titleText.text  = data.title;
-        if (_bodyText   != null) _bodyText.text   = data.body;
+        if (_titleText != null) _titleText.text = data.title;
+        if (_bodyText != null) _bodyText.text = data.body;
 
         bool hasAuthor = !string.IsNullOrEmpty(data.author);
-        if (_authorRow  != null) _authorRow.SetActive(hasAuthor);
+        if (_authorRow != null) _authorRow.SetActive(hasAuthor);
         if (_authorText != null) _authorText.text = hasAuthor ? $"-- {data.author}" : "";
 
         if (_closeHintText != null) _closeHintText.text = "[Esc] Close";
